@@ -1,0 +1,19 @@
+# Archivos y documentacion de planificacion interna
+plan.md
+informe_final.pdf
+
+# Entornos y dependencias generales
+node_modules/
+.env
+.env.local
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+dist/
+build/
+.idea/
+.vscode/
+*.swp
+*.log
