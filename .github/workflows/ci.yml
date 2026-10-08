@@ -41,8 +41,10 @@ jobs:
 
       - name: Execute Pytest Suite with Coverage
         working-directory: ./backend
+        env:
+          PYTHONPATH: .
         run: |
-          pytest tests/ -v --cov=app --cov-report=term-missing
+          python -m pytest tests/ -v --cov=app --cov-report=term-missing
 
   # ==============================================================================
   # Frontend Testing & Code Quality
