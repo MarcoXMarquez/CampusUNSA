@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://campusunsa_user:campusunsa_dev_password@localhost:5432/campusunsa_dev"
+      ],
+      "env": {}
+    }
+  }
+}
