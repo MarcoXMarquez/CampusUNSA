@@ -1,5 +1,15 @@
 # CampusUNSA: Progressive Web Application & Academic Hub
 
+[![CI Pipeline](https://img.shields.io/github/actions/workflow/status/MarcoXMarquez/CampusUNSA/ci.yml?branch=main&label=CI%20Pipeline&logo=github)](https://github.com/MarcoXMarquez/CampusUNSA/actions)
+[![Python Version](https://img.shields.io/badge/python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)](https://redis.io/)
+[![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Coverage Target](https://img.shields.io/badge/coverage-%3E%3D80%25-brightgreen)](https://github.com/MarcoXMarquez/CampusUNSA)
+[![Sprint Cadence](https://img.shields.io/badge/sprints-9%20Weeks-purple)](https://github.com/users/MarcoXMarquez/projects/5)
+
 > Official Engineering Repository for CampusUNSA  
 > Universidad Nacional de San Agustín de Arequipa (UNSA) — School of Systems Engineering  
 > Academic Course: Software Project Management | Delivery Cycle: October - December 2026
