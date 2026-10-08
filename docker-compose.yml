@@ -66,7 +66,7 @@ services:
       - REDIS_PORT=6379
       - SECRET_KEY=${SECRET_KEY:-temporary_development_secret_key_change_in_production}
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "${BACKEND_PORT:-9000}:8000"
     volumes:
       - ./backend:/app
     depends_on:
@@ -119,7 +119,7 @@ services:
       - REDIS_ENABLED=true
       - REDIS_URI=redis://redis:6379/1
     ports:
-      - "${EVOLUTION_PORT:-8080}:8080"
+      - "${EVOLUTION_PORT:-9080}:8080"
     volumes:
       - evolution_instances:/evolution/instances
     depends_on:
