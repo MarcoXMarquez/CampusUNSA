@@ -8,6 +8,9 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: [],
+    cache: {
+      dir: "/tmp/vitest",
+    },
   },
   resolve: {
     alias: {
