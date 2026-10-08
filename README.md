@@ -1,27 +1,84 @@
-# CampusUNSA: Progressive Web Application & Academic Hub
+# CampusUNSA — Intelligent Academic & Administrative Hub
 
-> Official Engineering Repository for CampusUNSA  
-> Universidad Nacional de San Agustín de Arequipa (UNSA) — School of Systems Engineering  
-> Academic Course: Software Project Management | Delivery Cycle: October - December 2026
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="docs/assets/campusunsa-banner-dark.png">
+    <img src="docs/assets/campusunsa-banner-dark.png" alt="CampusUNSA — Academic Flow Without Friction">
+  </picture>
+</p>
+
+<p align="center">
+  <a href="https://github.com/MarcoXMarquez/CampusUNSA/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/MarcoXMarquez/CampusUNSA/ci.yml?branch=main&style=flat-square&label=ci&logo=github" alt="CI status"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python version"></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-0.110-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI version"></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js&logoColor=white" alt="Next.js version"></a>
+  <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL version"></a>
+  <a href="https://redis.io/"><img src="https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis version"></a>
+  <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose"></a>
+  <a href="https://github.com/MarcoXMarquez/CampusUNSA"><img src="https://img.shields.io/badge/coverage-%3E%3D80%25-brightgreen?style=flat-square" alt="Coverage target"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License: MIT"></a>
+  <a href="https://github.com/users/MarcoXMarquez/projects/5"><img src="https://img.shields.io/badge/sprints-9%20Weeks-purple?style=flat-square" alt="Sprint cadence"></a>
+</p>
+
+CampusUNSA is an offline-resilient academic operating hub engineered for the 25,000+ students and faculty members of Universidad Nacional de San Agustin de Arequipa (UNSA). It unifies fragmented academic workflows across three physical campuses (Ingenierias, Biomedicas, Sociales) into two synchronized channels: an offline-first Next.js 14 Progressive Web Application (PWA) and an automated conversational WhatsApp assistant orchestrated via FastAPI and Evolution API.
+
+**Sovereign, lightweight, and zero-friction.** State, schedules, and credentials remain within university-governed containers. Single Sign-On is strictly anchored to institutional `@unsa.edu.pe` Google Workspace accounts with automated domain rejection. Students inspect countdown schedules, task urgency boards, and faculty paperwork procedures from any mobile viewport (>= 360px) or direct messaging chat without proprietary app store friction or third-party messaging subscription costs.
+
+[Documentation](docs/) · [Requirements (SRS)](docs/requirements/software-requirements-specification.md) · [System Architecture (SAD)](docs/architecture/system-architecture.md) · [Agile Sprint Plan](docs/planning/agile-sprint-plan.md) · [Project Board](https://github.com/users/MarcoXMarquez/projects/5) · [Contributing](CONTRIBUTING.md) · [License](LICENSE)
 
 ---
 
-## 1. System Overview & Problem Statement
+## Quick Start
 
-Universidad Nacional de San Agustín (UNSA) accommodates over 25,000 undergraduate and graduate students across three geographically dispersed areas:
-* **Campus Ingenierías** (Av. Paucarpata)
-* **Campus Biomédicas** (Av. Alcides Carrión)
-* **Campus Sociales** (Av. Venezuela)
+The containerized stack runs identically across macOS, Linux, and Windows using Docker Compose.
 
-Students face critical academic friction:
-1. **Academic Dispersion:** Coursework, announcements, and assignments are fragmented between Google Classroom, informal messaging groups, institutional email, and legacy SISUNSA portals. Students miss critical submission deadlines and lack a unified timetable indicating their next physical classroom.
-2. **Administrative Bureaucracy & Queuing:** University procedures (enrollment rectification, course withdrawal, fee waivers) require navigating complex multi-step paperwork with zero real-time guidance, resulting in long counter queues at faculty secretarial offices.
+### macOS / Linux / WSL2
 
-**CampusUNSA** solves these challenges as a unified, offline-resilient Progressive Web Application (PWA) coupled with an intelligent conversational WhatsApp assistant.
+```bash
+# Clone repository and enter directory
+git clone https://github.com/MarcoXMarquez/CampusUNSA.git
+cd CampusUNSA
+
+# Create environment configuration
+cp .env.example .env
+
+# Bootstrap all microservices in background
+docker compose up -d
+
+# Verify runtime health of all containers
+docker compose ps
+```
+
+### Windows (PowerShell)
+
+```powershell
+# Clone repository and enter directory
+git clone https://github.com/MarcoXMarquez/CampusUNSA.git
+cd CampusUNSA
+
+# Create environment configuration
+Copy-Item .env.example .env
+
+# Bootstrap all microservices in background
+docker compose up -d
+
+# Verify runtime health of all containers
+docker compose ps
+```
+
+### Local Endpoint Directory
+
+| Service | Runtime Target | Port | Access URL |
+| :--- | :--- | :---: | :--- |
+| **Frontend PWA** | Next.js 14 (Node 18) | `3000` | `http://localhost:3000` |
+| **Backend Core** | FastAPI (Python 3.11) | `9000` (internal 8000) | `http://localhost:9000/docs` |
+| **Evolution API** | Node.js Gateway | `9080` (internal 8080) | `http://localhost:9080` |
+| **Relational Database** | PostgreSQL 16 | `5432` | `localhost:5432` |
+| **In-Memory Cache & OTP**| Redis 7 | `6379` | `localhost:6379` |
 
 ---
 
-## 2. Core Capabilities & Architecture
+## How It Fits Together
 
 ```mermaid
 flowchart TD
@@ -64,44 +121,77 @@ flowchart TD
     NLPMod --> RedisCache
 ```
 
-### Core Product Capabilities (Release v1.0)
-1. **Institutional Single Sign-On (Google OAuth):** Restricts access exclusively to verified `@unsa.edu.pe` institutional accounts with strict domain-level rejection of external emails.
-2. **Google Classroom Sync Engine:** Automated background ingestion of enrolled courses and pending assignments directly into a unified student database.
-3. **Urgency-Coded Academic Task Board:** Real-time visual kanban/list board color-coding submissions: Red (<24h), Yellow (24h-72h), and Green (>72h).
-4. **Dynamic Schedule & "Next Class" Widget:** Algorithmic countdown engine displaying physical room codes and pavilions for the student's next scheduled class.
-5. **100% Offline Operational Mode (PWA):** Sub-500ms dashboard access inside campus buildings without cellular coverage via Service Worker caching and IndexedDB persistence.
-6. **WhatsApp NLP Conversational Assistant:** Self-hosted Evolution API integration parsing informal notes (e.g., *"remind me to submit compilers lab this Friday at 6pm"*) into structured tasks using LLM parsing, backed by 5-minute OTP phone pairing.
-7. **Administrative Bureaucracy Guide & Secretarial Handoff:** Interactive flowchart navigation for academic procedures and formal ticket escalation for faculty secretaries.
+- **The Frontend PWA** is the primary visual client: built with Next.js 14 App Router and Tailwind CSS, caching critical academic data in IndexedDB for sub-500ms offline access.
+- **The Backend Core** is the async control plane: built with FastAPI and SQLAlchemy 2.0, providing strict Pydantic schemas, JWT authentication, and automatic OpenAPI documentation.
+- **The Messaging Gateway** bridges WhatsApp interactions: self-hosted Evolution API connects student phone numbers to backend NLP services via secure webhooks.
+- **The Persistence & Caching Tier** enforces ACID integrity and speed: PostgreSQL 16 stores relational academic state while Redis 7 manages rate limits and 5-minute OTP phone verification lifecycles.
 
 ---
 
-## 3. Technology Stack
+## Core Capabilities
 
-| Layer | Technologies & Frameworks | Rationale & Selection Criteria |
-| :--- | :--- | :--- |
-| **Frontend PWA** | Next.js 14 (App Router), React 18, Tailwind CSS, Workbox / `next-pwa` | Mobile-first responsiveness (>= 360px), zero app-store download friction, offline caching. |
-| **Backend Core** | FastAPI (Python 3.11), SQLAlchemy 2.0, Pydantic v2 | High-throughput asynchronous performance, strict schema validation, automated OpenAPI docs. |
-| **NLP Inference** | Gemini Flash / Ollama (Structured JSON output) | Zero-cost local inference with fallback to high-speed cloud parsing for informal Spanish syntax. |
-| **Messaging Gateway** | Evolution API (Baileys engine) | Self-hosted WhatsApp protocol gateway eliminating Meta Cloud API per-conversation messaging costs. |
-| **Persistence & Cache** | PostgreSQL 16, Redis 7 | ACID transactional guarantees for academic tasks, sub-millisecond Redis TTL for 5-minute OTP lifecycle. |
-| **Orchestration & CI** | Docker Compose, GitHub Actions | Identical containerized runtime across development, testing, and production environments. |
-
----
-
-## 4. Engineering Standards & Quality Assurance
-
-* **Hybrid Pragmatic Testing Strategy:**
-  * **Selective TDD (Pytest):** Test-First (Red-Green-Refactor) development for core domain logic: NLP parsing fixtures, 5-minute OTP expiration lifecycles, RBAC authorization guards, and schedule calculation algorithms.
-  * **Behavior-Driven Development (BDD):** Acceptance criteria specified in formal Gherkin (`Given-When-Then`) syntax across all User Stories.
-  * **Component Testing (Vitest):** Isolated UI component verification for task boards and schedule views.
-* **Coverage Baseline:** Minimum 80% line and branch test coverage enforced on backend business logic.
-* **Definition of Done (DoD):** Clean linter run (`ruff`, `eslint`), all automated tests passing in GitHub Actions CI, and peer code review approved before merging to `main`.
+1. **Institutional Single Sign-On (Google OAuth):** Restricts access exclusively to verified `@unsa.edu.pe` institutional accounts with strict domain-level rejection.
+2. **Google Classroom Sync Engine:** Automated background ingestion of enrolled courses, announcements, and assignments into a unified database.
+3. **Urgency-Coded Academic Task Board:** Real-time visual kanban board categorizing deadlines: Red (<24h), Yellow (24h-72h), and Green (>72h).
+4. **Dynamic Schedule & "Next Class" Countdown:** Algorithmic widget displaying physical classroom codes and campus pavilions for upcoming classes.
+5. **100% Offline Operational Mode (PWA):** Seamless dashboard operation inside shielded campus buildings without cellular coverage via Workbox Service Workers and IndexedDB.
+6. **WhatsApp Conversational Assistant:** Self-hosted NLP engine parsing natural language messages into structured tasks backed by 5-minute OTP phone pairing.
+7. **Administrative Bureaucracy Guide & Secretarial Handoff:** Interactive flowchart navigation for academic procedures with escalation to faculty secretarial queues.
 
 ---
 
-## 5. Agile Lifecycle & Sprint Cadence
+## Security & Privacy
 
-The engineering roadmap spans 9 one-week sprints concluding in December 2026, with weekly milestone reviews every Wednesday at 18:00 UTC-5:
+- **Domain Isolation:** OAuth flow rejects any email domain outside `@unsa.edu.pe`.
+- **Role-Based Access Control (RBAC):** Distinct permission sets for Students, Faculty Secretaries, and System Administrators.
+- **OTP Pairing Lifecycle:** WhatsApp phone numbers pair using random 6-digit codes stored with a strict 300-second Redis TTL.
+- **Confidentiality:** Zero third-party telemetry, self-hosted messaging infrastructure, and encrypted credentials in `.env`.
+
+---
+
+## Documentation
+
+| Goal | Start here |
+| :--- | :--- |
+| Functional & non-functional requirements | [Software Requirements Specification (SRS v1.0)](docs/requirements/software-requirements-specification.md) |
+| System architecture, C4 views, and data models | [System Architecture Document (SAD v1.0)](docs/architecture/system-architecture.md) |
+| Agile roadmap, sprint workload, and velocity | [Agile Sprint Plan](docs/planning/agile-sprint-plan.md) · [GitHub Project Board](https://github.com/users/MarcoXMarquez/projects/5) |
+| Containerized environment setup | [Quick Start](#quick-start) · [docker-compose.yml](docker-compose.yml) |
+| Testing strategy, TDD, and test execution | [Development & Testing](#development--testing) |
+| Contribution workflow & Definition of Done | [CONTRIBUTING.md](CONTRIBUTING.md) |
+
+---
+
+## Development & Testing
+
+### Running Tests Locally
+
+```bash
+# Execute backend Pytest suite with test coverage
+docker compose exec backend python -m pytest tests/ -v --cov=app --cov-report=term-missing
+
+# Execute frontend Vitest component suite
+docker compose exec frontend npm run test
+
+# Run backend code formatting and lint verification
+docker compose exec backend ruff check app tests
+```
+
+### Database Migrations (Alembic)
+
+```bash
+# Generate migration after modifying SQLAlchemy models
+docker compose exec backend alembic revision --autogenerate -m "describe_migration"
+
+# Apply pending database migrations
+docker compose exec backend alembic upgrade head
+```
+
+---
+
+## Governance & Agile Cadence
+
+CampusUNSA is developed under an Agile Scrum methodology across 9 one-week sprints concluding in December 2026. Peer reviews, sprint milestones, and release gates are audited every Wednesday at 18:00 UTC-5.
 
 | Sprint | Timeline | Focus Area | Deliverable Milestone |
 | :---: | :---: | :--- | :--- |
@@ -117,59 +207,34 @@ The engineering roadmap spans 9 one-week sprints concluding in December 2026, wi
 
 ---
 
-## 6. Development Team & Engineering Roles
+## Contributors
 
-| Engineer | GitHub Handle | Primary Engineering Ownership | Secondary Responsibility |
-| :--- | :--- | :--- | :--- |
-| **Marco Antonio Marquez Herrera** | `@MarcoXMarquez` | Tech Lead, Architecture & Backend Core | Google Classroom API, Secretary Handoff, Release |
-| **Ricardo Mauricio Chambilla Perca** | `@rikich3` | Backend Services, NLP & QA Lead | RBAC Middleware, OTP Security, LLM Parser, RAG |
-| **Alejandro Sebastian Alfonso Huacasi** | `@Sebastianzzzin` | Fullstack Web & DevOps Lead | Docker Stack, Task Board UI, PWA Offline, Load Tests |
-| **Italo Frankdux Ccoscco Alvis** | `@iccoscco` | Frontend Web & UX / Testing Lead | OAuth Integration, Procedure Flowcharts, Ticketing UI |
+Developed with dedication by the CampusUNSA engineering team:
 
----
+<p align="center">
+  <a href="https://github.com/MarcoXMarquez">
+    <img src="https://avatars.githubusercontent.com/u/121210351?v=4" width="70" height="70" alt="Marco Antonio Marquez Herrera" style="border-radius: 50%; margin: 6px;">
+  </a>
+  <a href="https://github.com/rikich3">
+    <img src="https://avatars.githubusercontent.com/u/133660409?v=4" width="70" height="70" alt="Ricardo Mauricio Chambilla Perca" style="border-radius: 50%; margin: 6px;">
+  </a>
+  <a href="https://github.com/Sebastianzzzin">
+    <img src="https://avatars.githubusercontent.com/u/120695582?v=4" width="70" height="70" alt="Alejandro Sebastian Alfonso Huacasi" style="border-radius: 50%; margin: 6px;">
+  </a>
+  <a href="https://github.com/iccoscco">
+    <img src="https://avatars.githubusercontent.com/u/93270242?v=4" width="70" height="70" alt="Italo Frankdux Ccoscco Alvis" style="border-radius: 50%; margin: 6px;">
+  </a>
+</p>
 
-## 7. Getting Started (Local Development)
-
-### Prerequisites
-* Docker Engine 24.0+ and Docker Compose v2.20+
-* Git 2.40+
-* Node.js 18+ and Python 3.11+ (for local IDE development)
-
-### Quickstart Execution
-```bash
-# 1. Clone repository
-git clone https://github.com/MarcoXMarquez/CampusUNSA.git
-cd CampusUNSA
-
-# 2. Configure environment variables
-cp .env.example .env
-
-# 3. Bootstrap containerized stack
-docker compose up -d
-
-# 4. Verify service health
-docker compose ps
-```
-
-* **Frontend PWA:** `http://localhost:3000`
-* **FastAPI Backend & Swagger Docs:** `http://localhost:8000/docs`
-* **Evolution API Management:** `http://localhost:8080`
-
-### Running Automated Test Suites
-```bash
-# Execute backend Pytest suite with coverage
-docker compose exec backend pytest --cov=app --cov-report=term-missing
-
-# Execute frontend Vitest component tests
-docker compose exec frontend npm run test
-```
+| Engineer | GitHub Handle | Primary Role & Ownership |
+| :--- | :--- | :--- |
+| **Marco Antonio Marquez Herrera** | [`@MarcoXMarquez`](https://github.com/MarcoXMarquez) | Tech Lead, Software Architecture & Backend Core |
+| **Ricardo Mauricio Chambilla Perca** | [`@rikich3`](https://github.com/rikich3) | Backend Services, NLP Inference & Quality Assurance Lead |
+| **Alejandro Sebastian Alfonso Huacasi** | [`@Sebastianzzzin`](https://github.com/Sebastianzzzin) | Fullstack Web & DevOps Lead |
+| **Italo Frankdux Ccoscco Alvis** | [`@iccoscco`](https://github.com/iccoscco) | Frontend Web & UX / Testing Lead |
 
 ---
 
-## 8. Project Documentation & Specifications
+## License
 
-* **Software Requirements Specification (SRS v1.0):** [docs/requirements/software-requirements-specification.md](docs/requirements/software-requirements-specification.md)
-* **System Architecture Document (SAD v1.0):** [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md)
-* **Agile Sprint Plan & Workload Matrix:** [docs/planning/agile-sprint-plan.md](docs/planning/agile-sprint-plan.md)
-* **Engineering Standards & Contributing Guide:** [CONTRIBUTING.md](CONTRIBUTING.md)
-* **Interactive Backlog & Sprint Board:** [GitHub Projects Board #5](https://github.com/users/MarcoXMarquez/projects/5)
+This project is licensed under the [MIT License](LICENSE) © 2026 CampusUNSA Contributors.

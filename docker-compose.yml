@@ -1,0 +1,145 @@
+services:
+  # ==============================================================================
+  # Primary Relational Database: PostgreSQL 16
+  # ==============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: campusunsa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-campusunsa}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-campusunsa}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - campusunsa-net
+
+  # ==============================================================================
+  # In-Memory Cache & Message Broker: Redis 7
+  # ==============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: campusunsa-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - campusunsa-net
+
+  # ==============================================================================
+  # Backend Core API: FastAPI (Python 3.11)
+  # ==============================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: campusunsa-backend
+    restart: unless-stopped
+    environment:
+      - PROJECT_NAME=${PROJECT_NAME:-CampusUNSA}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-True}
+      - POSTGRES_SERVER=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_dev_password}
+      - POSTGRES_DB=${POSTGRES_DB:-campusunsa}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SECRET_KEY=${SECRET_KEY:-temporary_development_secret_key_change_in_production}
+    ports:
+      - "${BACKEND_PORT:-9000}:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - campusunsa-net
+
+  # ==============================================================================
+  # Frontend Application: Next.js 14 PWA
+  # ==============================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: campusunsa-frontend
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+      - PORT=3000
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - campusunsa-net
+
+  # ==============================================================================
+  # WhatsApp Protocol Gateway: Evolution API v1.8
+  # ==============================================================================
+  evolution-api:
+    image: evoapicloud/evolution-api:latest
+    container_name: campusunsa-evolution
+    restart: unless-stopped
+    environment:
+      - SERVER_PORT=8080
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-dev_evolution_secret_key_12345}
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_dev_password}@postgres:5432/${POSTGRES_DB:-campusunsa}
+      - REDIS_ENABLED=true
+      - REDIS_URI=redis://redis:6379/1
+    ports:
+      - "${EVOLUTION_PORT:-9080}:8080"
+    volumes:
+      - evolution_instances:/evolution/instances
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - campusunsa-net
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  evolution_instances:
+    driver: local
+
+networks:
+  campusunsa-net:
+    driver: bridge
