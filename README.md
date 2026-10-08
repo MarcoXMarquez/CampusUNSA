@@ -23,34 +23,45 @@ Students face critical academic friction:
 
 ## 2. Core Capabilities & Architecture
 
-```
-                          +-------------------------------------------------+
-                          |             STUDENT TOUCHPOINTS                 |
-                          |  +--------------------+   +-------------------+ |
-                          |  | Next.js 14 PWA     |   | WhatsApp Channel  | |
-                          |  | (Offline / Indexed)|   | (Evolution API)   | |
-                          +--+---------+----------+---+---------+---------+-+
-                                       |                        |
-                                       | HTTPS / REST           | Webhook Events
-                                       v                        v
-                          +-------------------------------------------------+
-                          |             FASTAPI APPLICATION CORE            |
-                          |  +--------------------+   +-------------------+ |
-                          |  | OAuth & RBAC Auth  |   | NLP Task Parser   | |
-                          |  | (Google @unsa.pe)  |   | (Gemini / Ollama) | |
-                          |  +--------------------+   +-------------------+ |
-                          |  | Academic Service   |   | Secretarial Desk  | |
-                          |  | (Classroom Sync)   |   | (Handoff/Tickets) | |
-                          +--+---------+----------+---+---------+---------+-+
-                                       |                        |
-                                       v                        v
-                          +-------------------------------------------------+
-                          |           DATA PERSISTENCE & CACHING            |
-                          |  +--------------------+   +-------------------+ |
-                          |  | PostgreSQL 16      |   | Redis 7           | |
-                          |  | (Users, Tasks,     |   | (TTL Caching,     | |
-                          |  |  Tickets, Audit)   |   |  Queue, OTP Auth) | |
-                          +-----------------------+---+---------------------+
+```mermaid
+flowchart TD
+    subgraph Clients["Student Touchpoints"]
+        PWA["Next.js 14 PWA<br>(Offline / IndexedDB)"]
+        WA["WhatsApp Channel<br>(Student Mobile Access)"]
+    end
+
+    subgraph Ingress["Messaging Gateway"]
+        EvoAPI["Evolution API Gateway<br>(WhatsApp Protocol Engine)"]
+    end
+
+    subgraph Backend["FastAPI Application Core"]
+        AuthMod["Auth & RBAC Module<br>(Google OAuth @unsa.edu.pe)"]
+        ClassroomMod["Classroom Sync Service<br>(Google Classroom REST API)"]
+        NLPMod["NLP Parser Service<br>(Gemini Flash / Ollama)"]
+        SupportMod["Secretarial Desk Service<br>(Procedures & Ticketing)"]
+    end
+
+    subgraph DataTier["Data Persistence & Caching Tier"]
+        Postgres[("PostgreSQL 16<br>Users, Courses, Tasks, Tickets")]
+        RedisCache[("Redis 7<br>TTL Caching, Queues, 5-min OTP")]
+    end
+
+    WA -->|Inbound Messages| EvoAPI
+    EvoAPI -->|Webhook Events| Backend
+    PWA -->|HTTPS / REST| Backend
+
+    Backend --> AuthMod
+    Backend --> ClassroomMod
+    Backend --> NLPMod
+    Backend --> SupportMod
+
+    AuthMod --> Postgres
+    ClassroomMod --> Postgres
+    SupportMod --> Postgres
+    NLPMod --> Postgres
+
+    AuthMod --> RedisCache
+    NLPMod --> RedisCache
 ```
 
 ### Core Product Capabilities (Release v1.0)
@@ -157,6 +168,8 @@ docker compose exec frontend npm run test
 
 ## 8. Project Documentation & Specifications
 
-* **Functional Requirements Specification (SRS v1.0):** [REQUISITOS_ATOMICOS.md](REQUISITOS_ATOMICOS.md)
-* **Agile Planning & Workload Matrix:** [PLANIFICACION_CAMPUSUNSA.md](PLANIFICACION_CAMPUSUNSA.md)
+* **Software Requirements Specification (SRS v1.0):** [docs/requirements/software-requirements-specification.md](docs/requirements/software-requirements-specification.md)
+* **System Architecture Document (SAD v1.0):** [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md)
+* **Agile Sprint Plan & Workload Matrix:** [docs/planning/agile-sprint-plan.md](docs/planning/agile-sprint-plan.md)
+* **Engineering Standards & Contributing Guide:** [CONTRIBUTING.md](CONTRIBUTING.md)
 * **Interactive Backlog & Sprint Board:** [GitHub Projects Board #5](https://github.com/users/MarcoXMarquez/projects/5)

@@ -1,4 +1,5 @@
 # CampusUNSA: Software Requirements Specification (SRS)
+
 ## Document Identifier: SRS-CAMPUSUNSA-2026-V1.0
 ### System: Progressive Web Application & Academic Hub for Universidad Nacional de San Agustín (UNSA)
 ### Document Status: Approved Baseline (Sprint Planning Phase)
@@ -67,7 +68,7 @@ The following requirements have been analyzed and formally excluded from the v1.
 
 | Requirement ID | Domain | Deferred Capability | Architectural & Operational Justification for Deferral |
 | :--- | :--- | :--- | :--- |
-| **REQ-04** | Digital ID | Visual Virtual ID Card Replica | Deferral approved. Operating as an unofficial graphic replica introduces student confusion at gates unless backed by institutional security protocol. |
+| **REQ-04** | Digital ID | Visual Virtual ID Card Replica | Operating as an unofficial graphic replica introduces student confusion at gates unless backed by institutional security protocol. |
 | **REQ-05** | Digital ID | Virtual Code 128 Barcode | Requires optical barcode scanners calibrated for smartphone screen glare across turnstiles; university hardware does not officially support digital screen scanning. |
 | **REQ-07** | Digital ID | Gatekeeper Security App Module | Requires procurement of dedicated institutional mobile devices and formal training for university private security contractors across 3 campuses. |
 | **REQ-21** | Dining Hall | Real-Time Occupancy Traffic Light | Dining hall attendance is erratic and depends on manual counter updates by cafeteria staff who lack official integration into the project. |
@@ -93,7 +94,7 @@ The following requirements have been analyzed and formally excluded from the v1.
 
 ## 6. Document Approval & Lifecycle
 
-* **Authors:** Marco Marquez, rchambillap, Sebastian, iccoscco
+* **Authors:** Marco Antonio Marquez Herrera, Ricardo Mauricio Chambilla Perca, Alejandro Sebastian Alfonso Huacasi, Italo Frankdux Ccoscco Alvis
 * **Engineering Methodology:** Hybrid BDD (Gherkin acceptance criteria) + Selective TDD (Pytest unit suites for domain core)
 * **Target Delivery:** 9 One-Week Sprints (S1 through S9, October - December 2026)
 * **Weekly Review Milestones:** Every Wednesday at 18:00 UTC-5
