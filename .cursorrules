@@ -1,0 +1,22 @@
+# Cursor Rules — CampusUNSA
+
+# Universal Guidelines
+Refer to `AGENTS.md` for project architecture, environment setup, and test commands.
+
+# Inviolable Constraints
+- STRICTLY ZERO EMOJIS in code, comments, documentation, commit messages, and PRs.
+- English Only: All code, docstrings, inline comments, markdown files, and commits must be in English.
+- Reject email domains outside `@unsa.edu.pe` with HTTP 403 Forbidden and code `DOMAIN_NOT_ALLOWED`.
+- Strict typing: use Pydantic v2 schemas in Python and strict TypeScript interfaces (no `any`).
+- Follow Conventional Commits: `feat`, `fix`, `test`, `docs`, `refactor`, `ci`.
+- All code changes must pass tests before submission (`./scripts/verify.ps1` or `./scripts/verify.sh`).
+
+# Backend (backend/)
+- FastAPI with Python 3.11, SQLAlchemy 2.0, Pydantic v2.
+- Testing with Pytest and coverage >= 80%.
+- Linter: Ruff.
+- Migrations: Alembic.
+
+# Frontend (frontend/)
+- Next.js 14 App Router with React 18 and Tailwind CSS.
+- Component testing with Vitest and React Testing Library.

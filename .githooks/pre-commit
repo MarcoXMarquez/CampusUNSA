@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# CampusUNSA — Local Pre-Commit Quality Gate
+# Enforces: Zero-Emoji Policy and Basic Staged Files Integrity.
+# ==============================================================================
+
+set -eo pipefail
+
+echo "==> [pre-commit] Checking staged files against CampusUNSA quality gates..."
+
+# 1. Zero-Emoji Scanner on staged changes
+EMOJI_REGEX='[\x{1F600}-\x{1F64F}\x{1F300}-\x{1F5FF}\x{1F680}-\x{1F6FF}\x{1F700}-\x{1F77F}\x{1F780}-\x{1F7FF}\x{1F800}-\x{1F8FF}\x{1F900}-\x{1F9FF}\x{1FA00}-\x{1FA6F}\x{1FA70}-\x{1FAFF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}]'
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -n "$STAGED_FILES" ]; then
+    EMOJI_DETECTED=0
+    for FILE in $STAGED_FILES; do
+        if [ -f "$FILE" ]; then
+            # Scan file content for emojis
+            if grep -P -q "$EMOJI_REGEX" "$FILE" 2>/dev/null; then
+                echo "  [FAIL] Emoji detected in staged file: $FILE"
+                EMOJI_DETECTED=1
+            fi
+        fi
+    done
+
+    if [ $EMOJI_DETECTED -eq 1 ]; then
+        echo ""
+        echo "  [ABORT] Commit rejected: Zero-Emoji policy violated in staged files."
+        echo "  Please remove all emojis before committing."
+        exit 1
+    fi
+fi
+
+echo "==> [pre-commit] Quality gates passed cleanly."
+exit 0

@@ -1,0 +1,91 @@
+name: User Story (BDD & TDD)
+description: Create a formal agile user story with Gherkin acceptance criteria and TDD tasks.
+title: "[US-XX] "
+labels: ["Must Have"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please fill out this form to register an official agile user story for CampusUNSA.
+        All fields must be completed in technical English.
+
+  - type: textarea
+    id: user_story
+    attributes:
+      label: User Story Narrative
+      description: Follow the standard Connextra format.
+      placeholder: |
+        **As an** active UNSA student,
+        **I want** to view my next physical class location and countdown,
+        **So that** I arrive on time without navigating legacy portals.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context_requirements
+    attributes:
+      label: Context & Requirements
+      description: Link to specific SRS requirements and architectural considerations.
+      placeholder: |
+        * **SRS Requirement:** REQ-06 (Dynamic Schedule).
+        * **Architecture:** Ingestion worker cached in Redis with sub-500ms retrieval.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria (Gherkin / BDD)
+      description: Specify formal Given-When-Then scenarios.
+      placeholder: |
+        ### Scenario 1: Normal Schedule Countdown
+        * **Given** an authenticated student with registered courses,
+        * **When** accessing the schedule dashboard,
+        * **Then** the upcoming class room code and countdown timer must be displayed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tdd_tasks
+    attributes:
+      label: Technical TDD Tasks
+      description: Detail implementation steps following Test-First (Red -> Green -> Refactor).
+      placeholder: |
+        1. **Unit Tests (Red):** Pytest test cases verifying schedule calculation edge cases.
+        2. **Implementation (Green):** FastAPI endpoint and SQLAlchemy queries.
+        3. **Refactor:** Optimize Redis caching queries with 60s TTL.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sprint
+    attributes:
+      label: Target Sprint
+      description: Select the sprint iteration for this story.
+      options:
+        - "Sprint 1: Setup Infraestructura, C4 & Spike Móvil"
+        - "Sprint 2: Identidad, Auth & Control de Acceso"
+        - "Sprint 3: Ingestión Académica (Google Classroom)"
+        - "Sprint 4: Hub Académico & PWA Offline"
+        - "Sprint 5: Gateway de Mensajería & Auth OTP"
+        - "Sprint 6: Parser NLP de Tareas & Agendamiento"
+        - "Sprint 7: Trámites Estudiantiles & Mesa de Partes"
+        - "Sprint 8: Extensiones Candidatas & Pruebas de Carga"
+        - "Sprint 9: Hardening del Sistema & Release v1.0"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: definition_of_done
+    attributes:
+      label: Definition of Done (DoD)
+      description: Criteria that must be satisfied before closing this story.
+      options:
+        - label: "Unit tests written and passing with >= 80% coverage"
+          required: true
+        - label: "Verification oracle passed cleanly (./scripts/verify.ps1 or .sh)"
+          required: true
+        - label: "Zero emojis policy strictly respected in code and commits"
+          required: true
+        - label: "Code review approved by peer developer"
+          required: true

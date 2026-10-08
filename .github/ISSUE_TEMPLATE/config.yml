@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: CampusUNSA Engineering Backlog
+    url: https://github.com/users/MarcoXMarquez/projects/5
+    about: View the official 9-week agile sprint backlog and review milestones.
+  - name: Architecture & SRS Documentation
+    url: https://github.com/MarcoXMarquez/CampusUNSA/tree/main/docs
+    about: Consult official system specifications and architecture documents.

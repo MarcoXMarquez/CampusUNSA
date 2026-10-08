@@ -1,0 +1,53 @@
+name: Defect / Bug Report
+description: Report a reproducible defect or test failure in CampusUNSA.
+title: "[BUG] "
+labels: ["Bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please provide detailed reproduction steps and logs.
+        All fields must be filled in technical English without emojis.
+
+  - type: textarea
+    id: problem_description
+    attributes:
+      label: Defect Description
+      description: Concise summary of what went wrong.
+      placeholder: Describe the observed malfunction and expected behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to reproduce the issue locally or in CI.
+      placeholder: |
+        1. Start Docker stack with `docker compose up -d`
+        2. Send POST request to `/api/v1/auth/google/callback` with payload...
+        3. Observe response status code...
+    validations:
+      required: true
+
+  - type: textarea
+    id: terminal_logs
+    attributes:
+      label: Terminal Logs & Error Trace
+      description: Relevant output from container logs, pytest, or browser console.
+      render: shell
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Component
+      options:
+        - "Backend (FastAPI / SQLAlchemy / Redis)"
+        - "Frontend (Next.js 14 / Tailwind / PWA)"
+        - "Messaging (Evolution API / WhatsApp Gateway)"
+        - "Infrastructure (Docker Compose / GitHub Actions)"
+        - "Documentation / Specifications"
+    validations:
+      required: true
