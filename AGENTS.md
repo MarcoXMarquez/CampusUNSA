@@ -54,6 +54,10 @@ Every AI agent modifying or generating code in this repository MUST strictly fol
    * In Python: All functions must include comprehensive `typing` annotations. Input and output schemas must be modeled using Pydantic v2.
    * In TypeScript: Using `any` is strictly prohibited. Use strict interfaces and types.
 
+6. **PROHIBITION OF FORCE FLAGS (Strict No-Force Policy):**
+   * Executing `git push --force`, `git push -f`, `--force-with-lease`, `git commit --amend` on published commits, or force merges is strictly prohibited across all branches.
+   * Rewriting published Git history is forbidden and blocked both server-side on GitHub and client-side via `.githooks/pre-push`.
+
 ### 3.1 Execution Discipline & Evidence Gates
 
 1. **Root Cause Analysis Before Editing:**

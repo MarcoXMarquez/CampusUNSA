@@ -9,6 +9,7 @@ Refer to `AGENTS.md` for project architecture, environment setup, and test comma
 - Reject email domains outside `@unsa.edu.pe` with HTTP 403 Forbidden and code `DOMAIN_NOT_ALLOWED`.
 - Strict typing: use Pydantic v2 schemas in Python and strict TypeScript interfaces (no `any`).
 - Follow Conventional Commits: `feat`, `fix`, `test`, `docs`, `refactor`, `ci`.
+- Strict No-Force: Never run `git push --force`, `--force-with-lease`, or rewrite published Git history.
 - All code changes must pass tests before submission (`./scripts/verify.ps1` or `./scripts/verify.sh`).
 
 # Backend (backend/)

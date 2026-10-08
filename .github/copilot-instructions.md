@@ -8,4 +8,5 @@ You are acting as an AI pair-programmer on the CampusUNSA engineering repository
 3. Domain Restriction: Google OAuth must strictly accept only `@unsa.edu.pe` email addresses. External domains must be rejected with HTTP 403 Forbidden and code `DOMAIN_NOT_ALLOWED`.
 4. Test-First (TDD): Write unit tests first before business logic. Maintain backend coverage >= 80%.
 5. Conventional Commits: Use format `<type>(<scope>): <description>` without emojis.
-6. Refer to Root Directives: All system architecture, testing commands, and engineering policies are defined in `AGENTS.md`. Always align with the standards defined there.
+6. No Force Flags: Never execute `git push --force`, `--force-with-lease`, or rewrite published Git history.
+7. Refer to Root Directives: All system architecture, testing commands, and engineering policies are defined in `AGENTS.md`. Always align with the standards defined there.
