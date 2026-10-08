@@ -1,63 +1,74 @@
-# Plan Maestro de Planificacion Agil y GitHub Projects: CampusUNSA (Secretario Jorge)
+# CampusUNSA: Agile Project Plan & Engineering Workload Matrix
 
-> Asignatura: Gestion de Proyectos de Software — Universidad Nacional de San Agustin (UNSA)  
-> Fecha de Inicio: Miercoles, 7 de octubre de 2026  
-> Fecha de Cierre: Lunes, 7 de diciembre de 2026  
-> Cadencia Agil: Sprints semanales (1 semana de duracion) con demostraciones cada Miercoles  
-> Repositorio Oficial: https://github.com/MarcoXMarquez/CampusUNSA  
-> Tablero de Proyecto: CampusUNSA - Product Backlog & Board  
-
----
-
-## 1. Equipo de Desarrollo y Roles
-
-| Integrante | Usuario GitHub | Rol Principal | Especialidad Tecnica |
-| :--- | :--- | :--- | :--- |
-| Marco Antonio Marquez Herrera | @MarcoXMarquez | Tech Lead & Backend / IA Lead | FastAPI, Ollama (RAG), PostgreSQL / pgvector |
-| Alejandro Sebastian Alfonso Huacasi | @Sebastianzzzin | Fullstack & Mensajeria / DevOps Lead | Evolution API (Baileys), n8n Community, Docker |
-| Italo Frankdux Ccoscco Alvis | @iccoscco | Frontend Web Lead & UI/UX Lead | React, Vite, Tailwind CSS, Responsive Design |
-| Chambilla Perca Ricardo Mauricio | @rikich3 | Mobile Developer Lead & QA Lead | Android Nativo (Kotlin), Room, Pruebas de Calidad |
+> Academic Course: Software Project Management — Universidad Nacional de San Agustín (UNSA)  
+> Project Identifier: PLAN-CAMPUSUNSA-2026-V1.0  
+> Execution Cadence: 9 One-Week Sprints (October 07, 2026 to December 09, 2026)  
+> Milestone Demonstrations: Every Wednesday at 18:00 UTC-5  
+> Repository: https://github.com/MarcoXMarquez/CampusUNSA  
+> Interactive Board: [GitHub Projects Board #5](https://github.com/users/MarcoXMarquez/projects/5)
 
 ---
 
-## 2. Definicion del Producto Minimo Viable (PMV / MVP)
+## 1. Engineering Team & Ownership Matrix
 
-El sistema resuelve la ineficiencia en la orientacion universitaria presencial reduciendo el tiempo de atencion de 40 minutos a 2 minutos mediante atencion 24/7 en WhatsApp, Telegram, Portal Web y App Android, respaldada por inferencia local con Ollama y derivacion a Secretaria.
+The engineering workload is distributed evenly across all 4 team members utilizing a Pair Programming (Lead Developer + Peer Reviewer) model:
 
----
-
-## 3. Catalogo de Backlog Consolidado (21 Issues de Ingenieria)
-
-| # | Titulo del Issue | Sprint | Fechas | Asignado(s) | Prioridad |
-| :-: | :--- | :---: | :---: | :--- | :---: |
-| #1 | [DevOps] Infraestructura local Docker (PostgreSQL + pgvector, n8n y Evolution API) | Sprint 1 | 07/10 - 14/10 | @MarcoXMarquez, @Sebastianzzzin | Must Have |
-| #2 | [Arquitectura] Contratos C4 Nivel 3 y 4: DTOs y puertos de interfaz para FastAPI | Sprint 1 | 07/10 - 14/10 | @MarcoXMarquez | Must Have |
-| #3 | [Frontend] Scaffolding del portal web con React, Vite y Tailwind CSS | Sprint 1 | 07/10 - 14/10 | @iccoscco | Must Have |
-| #4 | [Spike Movil] Viabilidad tecnica de permisos de accesibilidad y bloqueo en Android | Sprint 1 | 07/10 - 14/10 | @rikich3 | Must Have |
-| #5 | [Feature] Registro y verificacion de cuentas institucionales (@unsa.edu.pe) | Sprint 2 | 14/10 - 21/10 | @iccoscco, @MarcoXMarquez | Must Have |
-| #6 | [Feature] Autenticacion segura con JWT, revocacion y control de acceso por roles (RBAC) | Sprint 2 | 14/10 - 21/10 | @MarcoXMarquez, @Sebastianzzzin, @iccoscco | Must Have |
-| #7 | [Feature] Publicacion y administracion de fuentes oficiales vigentes para Secretaria | Sprint 3 | 21/10 - 28/10 | @iccoscco, @Sebastianzzzin | Must Have |
-| #8 | [Feature] Motor RAG local con Ollama, generacion de embeddings y politica estricta de citas | Sprint 3 | 21/10 - 28/10 | @MarcoXMarquez, @rikich3 | Must Have |
-| #9 | [Canal] Atencion conversacional en WhatsApp con Evolution API y n8n Community | Sprint 4 | 28/10 - 04/11 | @Sebastianzzzin, @MarcoXMarquez, @rikich3 | Must Have |
-| #10 | [Canal] Bot interactivo de Telegram y seccion de acceso QR en el portal web | Sprint 4 | 28/10 - 04/11 | @Sebastianzzzin, @iccoscco | Must Have |
-| #11 | [Feature] Vinculacion segura de canales de mensajeria mediante codigo OTP de 5 minutos | Sprint 5 | 04/11 - 11/11 | @Sebastianzzzin, @MarcoXMarquez, @iccoscco | Must Have |
-| #12 | [Feature] Derivacion asistida a Secretaria (Handoff), gestion de tickets y aislamiento de datos | Sprint 5 | 04/11 - 11/11 | @iccoscco, @MarcoXMarquez, @rikich3 | Must Have |
-| #13 | [Frontend/Backend] Consolidacion del portal web responsive (360px+) con tickets, paginacion y alertas | Sprint 6 | 11/11 - 18/11 | @iccoscco, @MarcoXMarquez, @Sebastianzzzin, @rikich3 | Must Have |
-| #14 | [Mobile] App Android nativa en Kotlin con arquitectura MVVM, cache Room y sincronizacion ligera | Sprint 7 | 18/11 - 25/11 | @rikich3, @MarcoXMarquez | Must Have |
-| #15 | [Mobile] Temporizador de sesiones de concentracion de estudio (5 a 120 min) y resiliencia local | Sprint 7 | 18/11 - 25/11 | @rikich3, @Sebastianzzzin | Must Have |
-| #16 | [Mobile] Recordatorios programados de sesiones de estudio con AlarmManager y notificaciones | Sprint 8 | 25/11 - 02/12 | @rikich3 | Should Have |
-| #17 | [Mobile] Restriccion consentida de aplicaciones distractoras durante sesiones de estudio | Sprint 8 | 25/11 - 02/12 | @rikich3 | Should Have |
-| #18 | [QA/DevOps] Pruebas integrales E2E multi-canal y afinamiento de memoria de Ollama local | Sprint 8 | 25/11 - 02/12 | @Sebastianzzzin, @MarcoXMarquez, @iccoscco | Must Have |
-| #19 | [Entrega] Piloto con 30 estudiantes, balance presupuestario, metricas de exito y Release v1.0 | Sprint 9 | 02/12 - 07/12 | @MarcoXMarquez, @Sebastianzzzin, @iccoscco, @rikich3 | Must Have |
-| #20 | [Future] Panel de analitica y metricas de atencion anonimizadas para Secretaria (Could Have) | Posterior | Post-PMV | @iccoscco | Could Have |
-| #21 | [Future] Integracion directa con el sistema universitario de matricula (Won't Have) | Posterior | Post-PMV | @MarcoXMarquez | Won't Have |
+| Team Member | GitHub Handle | Primary Responsibilities | Secondary / QA Responsibilities | Assigned Stories (Count) |
+| :--- | :--- | :--- | :--- | :---: |
+| **Marco Antonio Marquez Herrera** | `@MarcoXMarquez` | Architecture, Google OAuth, Classroom API, Secretarial Desk | Code Review, Security Auditing, Pilot Coordination | 8 Stories |
+| **Ricardo Mauricio Chambilla Perca** | `@rikich3` | Backend Domain Services, NLP Parsing, OTP Security, RAG | Schedule Algorithms, QA Testing, Pilot | 8 Stories |
+| **Alejandro Sebastian Alfonso Huacasi** | `@Sebastianzzzin` | Frontend Web, Task Board UI, PWA Offline, Docker & Load Tests | Webhooks, Procedures Flowchart, Pilot | 8 Stories |
+| **Italo Frankdux Ccoscco Alvis** | `@iccoscco` | Frontend UI/UX, Procedure Guides, Ticketing Console, Auth UI | PWA Testing, Usability Auditing, Pilot | 7 Stories |
 
 ---
 
-## 4. Estructura de Vistas Optimizadas en GitHub Projects
+## 2. Complete Engineering Backlog (Issues #1 to #21)
 
-1. Vista 1: Sprint Activo (Kanban) — Filtro: Iteracion activa. Columnas: Backlog, Ready for Dev, In Progress, In Review, Done.
-2. Vista 2: Mi Trabajo — Filtro: assignee:@me is:open.
-3. Vista 3: Roadmap Semanal — Grafico de Gantt agrupado por Sprint semanal.
-4. Vista 4: Backlog General — Tabla completa agrupada por Sprint con estado y prioridad.
-5. Vista 5: Balance por Asignado — Columnas agrupadas por miembro del equipo.
+| Issue # | Story Code | Issue Title | Sprint | Review Date | Lead Developer | Peer Reviewer | MoSCoW Priority |
+| :---: | :---: | :--- | :---: | :---: | :--- | :--- | :---: |
+| **#1** | `US-01` | Fully Reproducible Containerized Development Environment | Sprint 1 | Wed Oct 14 | `@MarcoXMarquez` | `@rikich3` | Must Have |
+| **#2** | `US-02` | Institutional Google OAuth Login & Profile Provisioning | Sprint 2 | Wed Oct 21 | `@MarcoXMarquez` | `@iccoscco` | Must Have |
+| **#3** | `US-03` | Role-Based Access Control (RBAC) Security Middleware | Sprint 2 | Wed Oct 21 | `@rikich3` | `@Sebastianzzzin` | Must Have |
+| **#4** | `US-04` | Google Classroom Course & Assignment Sync Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@Sebastianzzzin` | Must Have |
+| **#5** | `US-05` | Visual Academic Task Board with Urgency Traffic Lights | Sprint 4 | Wed Nov 04 | `@Sebastianzzzin` | `@iccoscco` | Must Have |
+| **#6** | `US-06` | Dynamic Weekly Class Schedule & Next Class Widget | Sprint 4 | Wed Nov 04 | `@rikich3` | `@MarcoXMarquez` | Must Have |
+| **#7** | `US-07` | PWA Service Worker Caching & 100% Offline Mode | Sprint 4 | Wed Nov 04 | `@Sebastianzzzin` | `@iccoscco` | Must Have |
+| **#8** | `US-08` | Secure 5-Minute OTP WhatsApp Phone Binding Lifecycle | Sprint 5 | Wed Nov 11 | `@rikich3` | `@MarcoXMarquez` | Must Have |
+| **#9** | `US-09` | Evolution API Inbound Webhook Ingestion Gateway | Sprint 5 | Wed Nov 11 | `@Sebastianzzzin` | `@rikich3` | Must Have |
+| **#10** | `US-10` | NLP Task Extraction via Structured LLM Parsing | Sprint 6 | Wed Nov 18 | `@rikich3` | `@MarcoXMarquez` | Must Have |
+| **#11** | `US-11` | Automated Task Insertion with WhatsApp Confirmation | Sprint 6 | Wed Nov 18 | `@iccoscco` | `@Sebastianzzzin` | Must Have |
+| **#12** | `US-12` | Interactive University Procedures and Bureaucracy Flowcharts | Sprint 7 | Wed Nov 25 | `@iccoscco` | `@Sebastianzzzin` | Must Have |
+| **#13** | `US-13` | Human Secretarial Escalation & Ticket Management Console | Sprint 7 | Wed Nov 25 | `@MarcoXMarquez` | `@iccoscco` | Must Have |
+| **#14** | `US-14` | Official Regulations Knowledge Base & RAG Query Engine | Sprint 8 | Wed Dec 02 | `@rikich3` | `@MarcoXMarquez` | Should Have |
+| **#15** | `US-15` | Automated Load and Stress Verification (1,000 Users) | Sprint 8 | Wed Dec 02 | `@Sebastianzzzin` | `@iccoscco` | Should Have |
+| **#16** | `US-16` | System Hardening, 30-Student Live Pilot & Release v1.0 | Sprint 9 | Wed Dec 09 | `@MarcoXMarquez` | All Team Members | Must Have |
+| **#17** | `Candidate` | Campus GIS Navigation & Classroom Locator | Sprint 8 | Wed Dec 02 | `@Sebastianzzzin` | `@iccoscco` | Should Have |
+| **#18** | `Candidate` | Community Lost & Found Hub with Verified Claims | Sprint 8 | Wed Dec 02 | `@rikich3` | `@iccoscco` | Should Have |
+| **#19** | `Candidate` | Study Session Pomodoro Focus Timer & iCal Export | Sprint 8 | Wed Dec 02 | `@MarcoXMarquez` | `@Sebastianzzzin` | Should Have |
+| **#20** | `Future` | Digital Student ID Barcode & Turnstile Integration | Posterior | Post-v1.0 | `@MarcoXMarquez` | `@rikich3` | Won't Have |
+| **#21** | `Future` | Dining Hall Occupancy Geofencing & SISUNSA Scraping | Posterior | Post-v1.0 | `@Sebastianzzzin` | `@iccoscco` | Won't Have |
+
+---
+
+## 3. Sprint Timeline & Delivery Dates
+
+* **Sprint 1 (Architecture & DevOps Foundation):** October 07 - October 14, 2026 (Demo: Oct 14)
+* **Sprint 2 (Identity & Security Enforcement):** October 14 - October 21, 2026 (Demo: Oct 21)
+* **Sprint 3 (Academic Ingestion - Classroom):** October 21 - October 28, 2026 (Demo: Oct 28)
+* **Sprint 4 (Academic Hub & PWA Offline):** October 28 - November 04, 2026 (Demo: Nov 04)
+* **Sprint 5 (Messaging Gateway & OTP Auth):** November 04 - November 11, 2026 (Demo: Nov 11)
+* **Sprint 6 (NLP Task Extraction & Board Sync):** November 11 - November 18, 2026 (Demo: Nov 18)
+* **Sprint 7 (Student Guidance & Secretarial Desk):** November 18 - November 25, 2026 (Demo: Nov 25)
+* **Sprint 8 (Candidate Extensions & Load Verification):** November 25 - December 02, 2026 (Demo: Dec 02)
+* **Sprint 9 (System Hardening, 30-Student Pilot & v1.0 Release):** December 02 - December 09, 2026 (Final Demo: Dec 09)
+
+---
+
+## 4. Definition of Done (DoD) Criteria
+
+Every User Story and engineering task must satisfy the following checklist prior to merging into `main` and closing its corresponding GitHub issue:
+1. **Automated Unit & Integration Tests:** Pytest or Vitest test suites passing with zero errors.
+2. **Test Coverage Threshold:** Core business logic maintains >= 80% line and branch test coverage.
+3. **Static Analysis & Linting:** Clean run on `ruff`, `black`, and `eslint`.
+4. **Peer Review:** Pull Request approved by the designated secondary reviewer.
+5. **Acceptance Criteria Verification:** All Gherkin scenarios verified in the containerized staging environment.
