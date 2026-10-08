@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # ==============================================================================
   # Primary Relational Database: PostgreSQL 16
