@@ -10,7 +10,9 @@ class Settings(BaseSettings):
 
     # Security
     SECRET_KEY: str = "temporary_development_secret_key_change_in_production"
+    ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    INSTITUTIONAL_DOMAIN: str = "unsa.edu.pe"
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [

@@ -234,9 +234,50 @@ erDiagram
 
 ## 6. Security & Authentication Architecture
 
+### 6.1 Institutional Google OAuth 2.0 Sequence Flow
+
+The following sequence diagram defines the institutional authentication lifecycle, cryptographic validation gates, and automated profile provisioning:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Student as UNSA Student
+    participant Frontend as Next.js 14 PWA
+    participant Google as Google OAuth Server
+    participant Backend as FastAPI Backend Core
+    participant DB as PostgreSQL 16 Database
+
+    Student->>Frontend: Clicks "Sign in with Google"
+    Frontend->>Google: Requests institutional authentication (@unsa.edu.pe)
+    Google-->>Frontend: Returns Google ID Token (JWT with claims)
+    Frontend->>Backend: POST /api/v1/auth/google {token: id_token}
+
+    critical Domain & Token Cryptographic Validation
+        Backend->>Backend: Verify token signature against Google public keys
+        Backend->>Backend: Inspect 'hd' claim and email domain suffix
+        alt Domain != "unsa.edu.pe" (e.g., personal @gmail.com)
+            Backend-->>Frontend: HTTP 403 Forbidden (Error: DOMAIN_NOT_ALLOWED)
+            Frontend-->>Student: Displays error: "Institutional UNSA account required"
+        else Domain == "unsa.edu.pe"
+            Backend->>DB: Query User by institutional email
+            alt User record does not exist
+                Backend->>DB: INSERT into users & user_profiles (Provisioning)
+                DB-->>Backend: Created User ID
+            else User record exists
+                DB-->>Backend: Existing User ID
+            end
+            Backend->>Backend: Generate signed CampusUNSA session JWT (sub, role: "student")
+            Backend-->>Frontend: HTTP 200 OK + Signed JWT Session (Bearer / HTTP-only Cookie)
+            Frontend-->>Student: Redirects to Student Dashboard (/dashboard)
+        end
+    end
+```
+
+### 6.2 Security Policies & Token Lifecycles
+
 1. **Institutional Domain Enforcement:**
-   * Google OAuth2 verification verifies the `hd` (hosted domain) claim.
-   * Hard rejection if `hd != "unsa.edu.pe"`.
+   * Google OAuth2 verification validates the `hd` (hosted domain) claim and email suffix.
+   * Hard rejection with HTTP 403 `DOMAIN_NOT_ALLOWED` if `hd != "unsa.edu.pe"`.
 2. **Cryptographic Token Lifecycle:**
    * Access tokens: Signed RS256/HS256 JWT with 60-minute expiration.
    * Refresh tokens: Secure HTTP-only cookies with SameSite strict protection.
