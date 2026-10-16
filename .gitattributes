@@ -1,0 +1,4 @@
+# Keep executable Bash scripts usable from Windows checkouts and WSL.
+*.sh text eol=lf
+.githooks/pre-commit text eol=lf
+.githooks/pre-push text eol=lf
