@@ -87,6 +87,9 @@ unconstrained Vite peer dependency selected a different major version from
 Vitest. Compose now uses the v2 cache variable names. Frontend tooling uses the
 same Vite 5.4.21 version as Vitest, with a committed npm lockfile for reproducible
 installs. No application UI changes are included.
+The lockfile is generated from an empty dependency directory so npm records
+Rollup optional binaries for both glibc and musl platforms. Docker and CI use
+`npm ci` to install the recorded versions without rewriting the lockfile.
 
 Bash scripts and Git hooks use LF through `.gitattributes` so Windows checkouts
 remain executable in WSL. The verification scripts also fail if Git cannot
