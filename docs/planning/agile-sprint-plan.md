@@ -15,12 +15,12 @@ The engineering workload is balanced across all four developers utilizing a prim
 | :--- | :--- | :--- | :---: | :---: |
 | **Marco Antonio Marquez Herrera** | `@MarcoXMarquez` | Architecture, Google OAuth, Classroom API, Secretarial Handoff, Release | 8 Stories | 25% |
 | **Ricardo Mauricio Chambilla Perca** | `@rikich3` | Domain Services, NLP LLM Parser, 5-min OTP, RAG Engine, QA Lead | 8 Stories | 25% |
-| **Alejandro Sebastian Alfonso Huacasi** | `@Sebastianzzzin` | Frontend Web, Task Board UI, PWA Offline, Docker Compose, Load Tests | 8 Stories | 25% |
+| **Alejandro Sebastian Alfonso Huacasi** | `@Sebastianzzzin` | Frontend Web, Task Board UI, PWA Offline, Docker Compose, Load Tests | 9 Stories | 25% |
 | **Italo Frankdux Ccoscco Alvis** | `@iccoscco` | UI/UX, Procedure Flowcharts, Ticketing Console, Auth Integration | 7 Stories | 25% |
 
 ---
 
-## 2. Product Backlog & Sprint Distribution (Issues #1 to #21)
+## 2. Product Backlog & Sprint Distribution (Issues #1 to #22)
 
 ```mermaid
 flowchart LR
@@ -69,6 +69,7 @@ flowchart LR
 | **#2** | `US-02` | Institutional Google OAuth Login & Profile Provisioning | Sprint 2 | Wed Oct 21 | `@MarcoXMarquez` | `@iccoscco` | Must Have |
 | **#3** | `US-03` | Role-Based Access Control (RBAC) Security Middleware | Sprint 2 | Wed Oct 21 | `@rikich3` | `@Sebastianzzzin` | Must Have |
 | **#4** | `US-04` | Google Classroom Course & Assignment Sync Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@Sebastianzzzin` | Must Have |
+| **#22** | `TECH-02` | Continuous Load Testing Harness & Concurrency Gate (1,000 Users) [CR-01] | Sprint 3 | Wed Oct 28 | `@Sebastianzzzin` | `@rikich3` | Must Have |
 | **#5** | `US-05` | Visual Academic Task Board with Urgency Traffic Lights | Sprint 4 | Wed Nov 04 | `@Sebastianzzzin` | `@iccoscco` | Must Have |
 | **#6** | `US-06` | Dynamic Weekly Class Schedule & Next Class Widget | Sprint 4 | Wed Nov 04 | `@rikich3` | `@MarcoXMarquez` | Must Have |
 | **#7** | `US-07` | PWA Service Worker Caching & 100% Offline Mode | Sprint 4 | Wed Nov 04 | `@Sebastianzzzin` | `@iccoscco` | Must Have |
@@ -105,6 +106,7 @@ A User Story is completed only when:
 3. Code complies with style guidelines with zero linter errors (`ruff`, `eslint`).
 4. Pull Request has been reviewed and approved by the peer reviewer.
 5. All acceptance criteria scenarios have been demonstrated in the staging environment.
+6. Continuous Performance & Concurrency Gate: Endpoints pass automated 1,000-user load verification asserting p95 < 300 ms and 0.00% 5xx error rate (introduced via CR-01).
 
 ---
 
