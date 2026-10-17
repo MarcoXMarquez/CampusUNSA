@@ -17,7 +17,10 @@ echo ""
 echo "[1/5] Checking Zero-Emoji Policy..."
 EMOJI_REGEX='[\x{1F600}-\x{1F64F}\x{1F300}-\x{1F5FF}\x{1F680}-\x{1F6FF}\x{1F700}-\x{1F77F}\x{1F780}-\x{1F7FF}\x{1F800}-\x{1F8FF}\x{1F900}-\x{1F9FF}\x{1FA00}-\x{1FA6F}\x{1FA70}-\x{1FAFF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}]'
 
-CHANGED_FILES=$(git status --porcelain | awk '{print $2}')
+if ! CHANGED_FILES=$(git status --porcelain | awk '{print $2}'); then
+    echo "  FAILED: Cannot inspect Git changes for the zero-emoji policy."
+    exit 1
+fi
 EMOJI_FOUND=0
 
 for FILE in $CHANGED_FILES; do
@@ -65,10 +68,20 @@ fi
 # 4. Backend Pytest Suite with Coverage
 echo ""
 echo "[4/5] Running Backend Pytest Suite with Coverage..."
-if docker compose exec -T backend python -m pytest tests/ -v --cov=app --cov-report=term-missing; then
+if docker compose exec -T backend python -m pytest tests/ -v --cov=app --cov-branch --cov-report=term-missing --cov-fail-under=80; then
     echo "  PASSED: Pytest suite passed."
 else
     echo "  FAILED: Pytest suite failed or coverage threshold not met."
+    ALL_PASSED=1
+fi
+
+# US-03 Authorization Coverage Gate
+echo ""
+echo "Checking US-03 authorization coverage (minimum 90%)..."
+if docker compose exec -T backend python -m pytest tests/test_rbac.py -v --cov=app.api.dependencies --cov=app.core.permissions --cov-branch --cov-report=term-missing --cov-fail-under=90; then
+    echo "  PASSED: RBAC tests and authorization coverage threshold."
+else
+    echo "  FAILED: RBAC tests or authorization coverage threshold."
     ALL_PASSED=1
 fi
 

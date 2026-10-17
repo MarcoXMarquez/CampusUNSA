@@ -16,10 +16,14 @@ Write-Host "`n[1/5] Checking Zero-Emoji Policy..." -ForegroundColor Yellow
 $emojiPattern = "[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27BF]"
 
 $changedFiles = git status --porcelain | ForEach-Object {
-    $line = $_.Trim()
+    $line = $_
     if ($line.Length -gt 3) {
         $line.Substring(3).Trim()
     }
+}
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  FAILED: Cannot inspect Git changes for the zero-emoji policy." -ForegroundColor Red
+    exit 1
 }
 
 $emojiFound = $false
@@ -74,13 +78,22 @@ if ($LASTEXITCODE -ne 0) {
 
 # 4. Backend Unit Tests with Coverage (Pytest)
 Write-Host "`n[4/5] Running Backend Pytest Suite with Coverage..." -ForegroundColor Yellow
-$pytestOutput = docker compose exec -T backend python -m pytest tests/ -v --cov=app --cov-report=term-missing 2>&1
+$pytestOutput = docker compose exec -T backend python -m pytest tests/ -v --cov=app --cov-branch --cov-report=term-missing --cov-fail-under=80 2>&1
 Write-Host $pytestOutput
 if ($LASTEXITCODE -ne 0) {
     Write-Host "  FAILED: Pytest suite failed or coverage threshold not met." -ForegroundColor Red
     $allPassed = $false
 } else {
     Write-Host "  PASSED: Pytest suite passed." -ForegroundColor Green
+}
+
+# US-03 Authorization Coverage Gate
+Write-Host "`nChecking US-03 authorization coverage (minimum 90%)..." -ForegroundColor Yellow
+$rbacOutput = docker compose exec -T backend python -m pytest tests/test_rbac.py -v --cov=app.api.dependencies --cov=app.core.permissions --cov-branch --cov-report=term-missing --cov-fail-under=90 2>&1
+Write-Host $rbacOutput
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  FAILED: RBAC tests or authorization coverage threshold." -ForegroundColor Red
+    $allPassed = $false
 }
 
 # 5. Frontend Component Tests (Vitest)

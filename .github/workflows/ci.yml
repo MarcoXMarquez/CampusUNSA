@@ -18,6 +18,21 @@ jobs:
     name: Backend CI (Pytest & Linters)
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_ci_password
+          POSTGRES_DB: campusunsa_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d campusunsa_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -44,13 +59,26 @@ jobs:
         env:
           PYTHONPATH: .
         run: |
-          python -m pytest tests/ -v --cov=app --cov-report=term-missing
+          python -m pytest tests/ -v --cov=app --cov-branch --cov-report=term-missing --cov-fail-under=80
+
+      - name: Verify PostgreSQL Migrations and RBAC Coverage
+        working-directory: ./backend
+        env:
+          POSTGRES_SERVER: localhost
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_ci_password
+          POSTGRES_DB: campusunsa_ci
+          RBAC_TEST_DATABASE_URL: postgresql://postgres:postgres_ci_password@localhost:5432/campusunsa_ci
+        run: |
+          alembic upgrade head
+          alembic check
+          python -m pytest tests/test_rbac.py -v --cov=app.api.dependencies --cov=app.core.permissions --cov-branch --cov-report=term-missing --cov-fail-under=90
 
   # ==============================================================================
   # Frontend Testing & Code Quality
   # ==============================================================================
   frontend-ci:
-    name: Frontend CI (Vitest & Lint)
+    name: Frontend CI (Vitest & TypeScript)
     runs-on: ubuntu-latest
 
     steps:
@@ -62,14 +90,19 @@ jobs:
         with:
           node-version: "18"
           cache: "npm"
-          cache-dependency-path: ./frontend/package.json
+          cache-dependency-path: ./frontend/package-lock.json
 
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: |
-          npm install
+          npm ci
 
       - name: Run Vitest Component Test Suite
         working-directory: ./frontend
         run: |
           npm run test
+
+      - name: Check TypeScript
+        working-directory: ./frontend
+        run: |
+          npx tsc --noEmit
