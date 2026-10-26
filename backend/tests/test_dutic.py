@@ -468,3 +468,40 @@ def test_dutic_sync_rate_limited_handling(
 
     app.dependency_overrides.clear()
 
+
+def test_dutic_sync_demo_mode(
+    test_db_session: Session,
+    auth_student_headers: Dict[str, str],
+) -> None:
+    """Test demo/mock session mode populates realistic UNSA courses without external HTTP calls."""
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    with TestClient(app) as test_client:
+        res = test_client.post(
+            "/api/v1/dutic/sync",
+            headers=auth_student_headers,
+            json={"moodle_session": "demo", "sesskey": "demo"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["status"] == "SYNCED"
+        assert data["synced_courses_count"] == 3
+        assert data["synced_assignments_count"] == 3
+
+        # Verify courses retrieval
+        courses_res = test_client.get("/api/v1/dutic/courses", headers=auth_student_headers)
+        assert courses_res.status_code == 200
+        courses = courses_res.json()
+        assert len(courses) == 3
+        course_names = [c["name"] for c in courses]
+        assert "Ingenieria de Software 3 - Grupo A" in course_names
+
+        # Verify assignments retrieval
+        assign_res = test_client.get("/api/v1/dutic/assignments", headers=auth_student_headers)
+        assert assign_res.status_code == 200
+        assigns = assign_res.json()
+        assert len(assigns) == 3
+        assert any(a["origin"] == "moodle" for a in assigns)
+
+    app.dependency_overrides.clear()
+

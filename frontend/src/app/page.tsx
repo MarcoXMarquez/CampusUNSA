@@ -1,3 +1,6 @@
+import { GoogleAuthCard } from "@/components/GoogleAuthCard";
+import { AcademicHubCard } from "@/components/AcademicHubCard";
+
 export default function HomePage() {
   return (
     <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8">
@@ -19,10 +22,16 @@ export default function HomePage() {
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
               Ambiente Local Activo
             </span>
-            <p className="text-xs text-slate-500 mt-1">Sprint 1 - v1.0.0-dev</p>
+            <p className="text-xs text-slate-500 mt-1">Sprint 3 - v1.0.0-dev</p>
           </div>
         </div>
       </header>
+
+      {/* Google Institutional Authentication Card */}
+      <GoogleAuthCard />
+
+      {/* Academic Hub & LMS Inspector Card */}
+      <AcademicHubCard />
 
       {/* Grid of Campus Areas */}
       <section className="mb-10">
