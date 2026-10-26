@@ -148,6 +148,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dutic/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync Dutic
+         * @description Synchronizes active courses and coursework from UNSA DUTIC Moodle.
+         *     Requires Bearer authentication and valid MoodleSession cookies.
+         */
+        post: operations["sync_dutic_api_v1_dutic_sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dutic/courses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Dutic Courses
+         * @description Retrieves all synced Moodle courses for the authenticated student.
+         */
+        get: operations["get_dutic_courses_api_v1_dutic_courses_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dutic/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Dutic Assignments
+         * @description Retrieves all synced Moodle coursework assignments for the authenticated student.
+         */
+        get: operations["get_dutic_assignments_api_v1_dutic_assignments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -241,6 +302,77 @@ export interface components {
             updated_at: string;
         };
         /**
+         * DuticAssignmentResponse
+         * @description Serialized Moodle coursework assignment entity.
+         */
+        DuticAssignmentResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Classroom Assignment Id */
+            classroom_assignment_id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Max Points */
+            max_points?: number | null;
+            /** State */
+            state: string;
+            /** Alternate Link */
+            alternate_link?: string | null;
+            /** Origin */
+            origin: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * DuticCourseResponse
+         * @description Serialized Moodle course entity.
+         */
+        DuticCourseResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Classroom Course Id */
+            classroom_course_id: string;
+            /** Name */
+            name: string;
+            /** Section */
+            section?: string | null;
+            /** Alternate Link */
+            alternate_link?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
          * GoogleAuthRequest
          * @description Payload sent from client containing the Google OAuth ID token.
          */
@@ -266,6 +398,30 @@ export interface components {
          * @description Summary response after completing Classroom synchronization.
          */
         SyncClassroomResponse: {
+            /** Status */
+            status: string;
+            /** Synced Courses Count */
+            synced_courses_count: number;
+            /** Synced Assignments Count */
+            synced_assignments_count: number;
+            /** Synced At */
+            synced_at?: string | null;
+        };
+        /**
+         * SyncDuticRequest
+         * @description Credentials payload for authenticating with Moodle's internal AJAX endpoint.
+         */
+        SyncDuticRequest: {
+            /** Moodle Session */
+            moodle_session: string;
+            /** Sesskey */
+            sesskey: string;
+        };
+        /**
+         * SyncDuticResponse
+         * @description Summary response after completing Moodle DUTIC synchronization.
+         */
+        SyncDuticResponse: {
             /** Status */
             status: string;
             /** Synced Courses Count */
@@ -528,6 +684,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AssignmentResponse"][];
+                };
+            };
+        };
+    };
+    sync_dutic_api_v1_dutic_sync_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncDuticRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncDuticResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_dutic_courses_api_v1_dutic_courses_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DuticCourseResponse"][];
+                };
+            };
+        };
+    };
+    get_dutic_assignments_api_v1_dutic_assignments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DuticAssignmentResponse"][];
                 };
             };
         };

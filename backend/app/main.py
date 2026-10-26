@@ -6,6 +6,7 @@ from app.api.v1.health import router as health_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.tickets import router as tickets_router
 from app.api.v1.classroom import router as classroom_router
+from app.api.v1.dutic import router as dutic_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -29,6 +30,7 @@ app.include_router(health_router, prefix=settings.API_V1_STR, tags=["Health"])
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["Authentication"])
 app.include_router(tickets_router, prefix=f"{settings.API_V1_STR}/tickets", tags=["Tickets"])
 app.include_router(classroom_router, prefix=f"{settings.API_V1_STR}/classroom", tags=["Classroom"])
+app.include_router(dutic_router, prefix=f"{settings.API_V1_STR}/dutic", tags=["DUTIC Moodle"])
 
 
 @app.get("/", tags=["Root"])
