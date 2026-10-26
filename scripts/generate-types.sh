@@ -6,7 +6,7 @@
 
 set -eo pipefail
 
-OPENAPI_URL="http://localhost:9000/openapi.json"
+OPENAPI_URL="http://localhost:9000/api/v1/openapi.json"
 OUTPUT_DIR="frontend/src/types"
 OUTPUT_FILE="$OUTPUT_DIR/api.ts"
 

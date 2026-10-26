@@ -1,11 +1,14 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import String, DateTime, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.classroom import ClassroomAssignment, ClassroomCourse
 
 
 class User(Base):
@@ -46,6 +49,15 @@ class User(Base):
         default=True,
         nullable=False,
     )
+    classroom_sync_status: Mapped[str] = mapped_column(
+        String(50),
+        default="NOT_SYNCED",
+        nullable=False,
+    )
+    last_classroom_sync_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -63,6 +75,18 @@ class User(Base):
         "UserProfile",
         back_populates="user",
         uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+    # 1-to-many relationships for academic synchronization
+    courses: Mapped[List["ClassroomCourse"]] = relationship(
+        "ClassroomCourse",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    assignments: Mapped[List["ClassroomAssignment"]] = relationship(
+        "ClassroomAssignment",
+        back_populates="user",
         cascade="all, delete-orphan",
     )
 
