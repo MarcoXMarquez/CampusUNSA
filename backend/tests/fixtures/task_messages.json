@@ -1,0 +1,22 @@
+[
+  {"id":"iso_english","message":"submit lab for Compilers 2026-10-16T18:00:00Z","title":"submit lab","course":"Compilers","due_date":"2026-10-16T18:00:00Z"},
+  {"id":"iso_spanish","message":"entregar informe de Compiladores 2026-10-16T18:00:00-05:00","title":"entregar informe","course":"Compiladores","due_date":"2026-10-16T23:00:00Z"},
+  {"id":"tomorrow_english","message":"remind me to submit lab for Compilers tomorrow at 18:00","title":"submit lab","course":"Compilers","due_date":"2026-10-10T18:00:00Z"},
+  {"id":"tomorrow_spanish","message":"recuérdame entregar informe de Compiladores mañana a las 18:00","title":"entregar informe","course":"Compiladores","due_date":"2026-10-10T18:00:00Z"},
+  {"id":"next_friday","message":"remind me to turn in compilers lab next Friday at 18:00","title":"compilers lab","course":null,"due_date":"2026-10-16T18:00:00Z"},
+  {"id":"weekday_spanish","message":"entregar práctica de BD el próximo viernes a las 09:30","title":"entregar práctica","course":"BD","due_date":"2026-10-16T09:30:00Z"},
+  {"id":"abbreviation","message":"subir lab de SO prox vie a las 14:00","title":"subir lab","course":"SO","due_date":"2026-10-16T14:00:00Z"},
+  {"id":"slang","message":"pls subir tarea de BD mañana 17:00","title":"pls subir tarea","course":"BD","due_date":"2026-10-10T17:00:00Z"},
+  {"id":"pm_clock","message":"submit essay for Compilers tomorrow at 6pm","title":"submit essay","course":"Compilers","due_date":"2026-10-10T18:00:00Z"},
+  {"id":"midnight","message":"upload report for SO tomorrow at 12am","title":"upload report","course":"SO","due_date":"2026-10-10T00:00:00Z"},
+  {"id":"noon","message":"upload report for SO tomorrow at 12pm","title":"upload report","course":"SO","due_date":"2026-10-10T12:00:00Z"},
+  {"id":"local_iso","message":"entregar informe de SO 2026-10-16 18:00","timezone":"America/Lima","title":"entregar informe","course":"SO","due_date":"2026-10-16T23:00:00Z"},
+  {"id":"positive_offset","message":"submit lab for Compilers 2026-10-16T18:00:00+05:30","title":"submit lab","course":"Compilers","due_date":"2026-10-16T12:30:00Z"},
+  {"id":"weekend","message":"submit lab for Compilers tomorrow at 18:00","reference_time":"2026-10-10T10:00:00Z","title":"submit lab","course":"Compilers","due_date":"2026-10-11T18:00:00Z"},
+  {"id":"year_rollover","message":"submit lab for SO tomorrow at 01:00","reference_time":"2026-12-31T23:00:00Z","title":"submit lab","course":"SO","due_date":"2027-01-01T01:00:00Z"},
+  {"id":"missing_deadline","message":"buy notebook","clarification":"Would you like to set a deadline for this task?"},
+  {"id":"missing_date","message":"entregar tarea de BD a las 18:00","clarification":"Would you like to set a deadline for this task?"},
+  {"id":"missing_time","message":"entregar tarea de SO mañana","clarification":"What time is this task due?"},
+  {"id":"invalid_date","message":"submit lab for SO 2026-02-30T18:00:00Z","clarification":"Please clarify the date, time, and time zone for this task."},
+  {"id":"multiple_deadlines","message":"submit lab for SO 2026-10-16T18:00:00Z or 2026-10-17T18:00:00Z","clarification":"Please clarify the date, time, and time zone for this task."}
+]
