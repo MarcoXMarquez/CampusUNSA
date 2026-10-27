@@ -9,7 +9,8 @@ from zoneinfo import ZoneInfo
 from app.schemas.task_parser import ParseTaskRequest
 
 ISO = re.compile(
-    r"\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:\d{2})?\b", re.I
+    r"\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,6})?)?(?:Z|[+-]\d{2}:\d{2})?\b",
+    re.I,
 )
 DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
 CLOCK = re.compile(r"\b(\d{1,2}):(\d{2})\s*(am|pm)?\b", re.I)
@@ -78,7 +79,7 @@ def resolve_deadline(request: ParseTaskRequest) -> DeadlineEvidence:
         remainder = normalize(
             request.message[: match.start()] + " " + request.message[match.end() :]
         )
-        if re.match(r"[+:\-]\d", request.message[match.end() :]):
+        if re.match(r"[.+:\-]\d", request.message[match.end() :]):
             raise ValueError("Incomplete time or UTC offset")
         if (
             DATE.search(remainder)

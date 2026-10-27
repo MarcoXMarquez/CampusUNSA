@@ -16,6 +16,14 @@ CASES = json.loads(
 )
 
 
+@pytest.fixture(autouse=True)
+def isolate_live_provider_configuration(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Unit endpoint tests must never infer against a developer's enabled provider."""
+    from app.api.v1 import nlp
+
+    monkeypatch.setattr(nlp.settings, "TASK_PARSER_PROVIDER", "disabled")
+
+
 def test_parse_endpoint_requires_authentication(client: TestClient) -> None:
     response = client.post("/api/v1/nlp/parse-task", json={"message": "buy notebook"})
     assert response.status_code == 401
@@ -302,6 +310,21 @@ async def test_deadlines_respect_local_calendar(
         ParseTaskRequest(message=message, reference_time=reference, timezone=zone)
     )
     assert result.task.due_date == datetime.fromisoformat(expected)
+
+
+@pytest.mark.asyncio
+async def test_fractional_iso_timestamp_preserves_explicit_offset() -> None:
+    from app.schemas.task_parser import ParseTaskRequest
+    from app.services.task_parser import NLPTaskParserService
+
+    result = await NLPTaskParserService().parse(
+        ParseTaskRequest(
+            message="Lab 2026-10-16T18:00:00.123456Z", timezone="America/Lima"
+        )
+    )
+    assert result.task.due_date == datetime.fromisoformat(
+        "2026-10-16T18:00:00.123456+00:00"
+    )
 
 
 @pytest.mark.parametrize("role", ["secretary", "admin", "unknown"])

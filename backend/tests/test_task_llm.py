@@ -9,7 +9,10 @@ from pydantic import SecretStr
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("provider", ["ollama", "gemini"])
-async def test_provider_sends_schema_and_validates_json(provider: str) -> None:
+@pytest.mark.parametrize("courses", [[], ["Compilers"]])
+async def test_provider_sends_schema_and_validates_json(
+    provider: str, courses: list[str]
+) -> None:
     from app.core.config import Settings
     from app.schemas.task_parser import ParseTaskRequest
     from app.services.task_llm import StructuredLLMClient
@@ -32,7 +35,9 @@ async def test_provider_sends_schema_and_validates_json(provider: str) -> None:
         GEMINI_API_KEY=SecretStr("test-key"),
     )
     client = StructuredLLMClient(settings, transport=httpx.MockTransport(respond))
-    request = ParseTaskRequest(message="Lab for Compilers tomorrow 18:00")
+    request = ParseTaskRequest(
+        message="Lab for Compilers tomorrow 18:00", courses=courses
+    )
     result = await client.extract(request)
     assert result.title == "Lab"
     payload = json.loads(requests[0].content)
@@ -41,11 +46,17 @@ async def test_provider_sends_schema_and_validates_json(provider: str) -> None:
         assert payload["stream"] is False
         assert payload["options"]["temperature"] == 0
         assert request.message in payload["messages"][-1]["content"]
+        context = json.loads(payload["messages"][-1]["content"])
     else:
         assert requests[0].headers["x-goog-api-key"] == "test-key"
         assert "test-key" not in str(requests[0].url)
         assert payload["generationConfig"]["responseMimeType"] == "application/json"
         assert "responseJsonSchema" in payload["generationConfig"]
+        context = json.loads(payload["contents"][0]["parts"][0]["text"])
+    if courses:
+        assert context["courses"] == courses
+    else:
+        assert "courses" not in context
 
 
 @pytest.mark.asyncio

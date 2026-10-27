@@ -65,14 +65,14 @@ From the repository root, start the optional Compose service and pull a model:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.llm.yml --profile llm up -d ollama
-docker compose -f docker-compose.yml -f docker-compose.llm.yml --profile llm exec ollama ollama pull qwen2.5:1.5b
+docker compose -f docker-compose.yml -f docker-compose.llm.yml --profile llm exec ollama ollama pull qwen2.5:3b
 ```
 
 Set these values in the untracked `.env`, then recreate the backend:
 
 ```dotenv
 TASK_PARSER_PROVIDER=ollama
-TASK_PARSER_MODEL=qwen2.5:1.5b
+TASK_PARSER_MODEL=qwen2.5:3b
 TASK_PARSER_TIMEOUT_SECONDS=60
 OLLAMA_BASE_URL=http://ollama:11434
 ```
@@ -102,6 +102,10 @@ The fixture file contains 20 representative, authored messages covering English/
 All 20 fixture cases exercise the actual fallback. Separate tests verify the exact issue acceptance contract with a stubbed extraction provider. HTTP transport tests verify schema requests and rejected responses for both providers. These automated tests establish deterministic behavior and integration contracts; they do not measure live LLM accuracy on 20 messages.
 
 Additional tests cover institutional session authorization, no persistence, hallucinated deadlines/courses, daylight-saving transitions, and safe provider configuration failures.
+
+Live local smoke verification used Ollama 0.40.11 with `qwen2.5:3b`: the exact issue example produced `Compilers Lab`, `Compilers`, and `2026-10-16T18:00:00Z`; a Spanish `SO` example in `America/Lima` returned `2026-10-10T23:00:00Z`; and `buy notebook` returned the required clarification. All three responses came from Ollama, without fallback. This is a three-case integration smoke, not a 20-message model accuracy benchmark.
+
+The initial 1.5B smoke omitted the course. A 3B model also omitted it when an empty course catalog was sent. The adapter now omits an empty catalog from model context and explicitly permits inference when no catalog exists; nonempty catalogs remain intact and restrictive. The successful smoke used this corrected context. Unit endpoint tests disable live providers explicitly even when a developer enables one locally.
 
 ```bash
 docker compose exec backend python -m pytest tests/test_task_parser.py tests/test_task_llm.py -v
