@@ -1,0 +1,110 @@
+name: "Pull Request Hygiene Gate"
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  hygiene-check:
+    name: Conventional Commits, Branch & Zero-Emoji Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify PR Metadata, Branch Name, and Zero-Emoji Invariants
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          python3 - << 'EOF'
+          import os
+          import re
+          import subprocess
+          import sys
+
+          pr_title = os.environ.get("PR_TITLE", "").strip()
+          pr_body = os.environ.get("PR_BODY", "").strip()
+          branch_name = os.environ.get("HEAD_BRANCH", "").strip()
+
+          errors = []
+
+          # 1. Validate Conventional Commits Title
+          title_regex = r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9_\-\/]+\))?: [a-z0-9].+$"
+          if not re.match(title_regex, pr_title):
+              errors.append(
+                  f"PR Title '{pr_title}' does not match Conventional Commits format: "
+                  "<type>(<scope>): <concise description in lowercase>"
+              )
+
+          # 2. Validate Branch Naming Convention
+          branch_regex = r"^(feature|fix|hotfix|chore|docs)/([0-9]{2}-)?[a-z0-9\-]+$"
+          if not re.match(branch_regex, branch_name):
+              errors.append(
+                  f"Branch name '{branch_name}' does not follow required pattern: "
+                  "feature/XX-short-name-in-kebab-case or fix/..."
+              )
+
+          # 3. Validate PR Body References Closes #X
+          if not re.search(r"(?i)closes\s+#\d+", pr_body):
+              errors.append("PR description must reference its corresponding issue: 'Closes #X'")
+
+          # 4. Zero Emojis Validation
+          emoji_pattern = re.compile(
+              "["
+              "\U0001F600-\U0001F64F"  # emoticons
+              "\U0001F300-\U0001F5FF"  # symbols & pictographs
+              "\U0001F680-\U0001F6FF"  # transport & map
+              "\U0001F1E0-\U0001F1FF"  # flags
+              "\U00002702-\U000027B0"
+              "\U000024C2-\U0001F251"
+              "\U0001F900-\U0001F9FF"  # supplemental symbols
+              "\U0001FA70-\U0001FAFF"
+              "]+",
+              flags=re.UNICODE,
+          )
+
+          if emoji_pattern.search(pr_title):
+              errors.append(f"PR Title contains forbidden emojis: '{pr_title}'")
+
+          if emoji_pattern.search(pr_body):
+              errors.append("PR description contains forbidden emojis. Zero-Emoji policy violated.")
+
+          # Validate commit messages in PR
+          try:
+              base_ref = os.environ.get("BASE_REF", "main")
+              commits_output = subprocess.check_output(
+                  ["git", "log", f"origin/{base_ref}..HEAD", "--pretty=format:%s"],
+                  text=True,
+              )
+              for msg in commits_output.splitlines():
+                  if emoji_pattern.search(msg):
+                      errors.append(f"Commit message contains forbidden emojis: '{msg}'")
+          except Exception as e:
+              print(f"Warning: Unable to verify commit history delta: {e}")
+
+          if errors:
+              print("HYGIENE GATE FAILED:")
+              for err in errors:
+                  print(f"  - {err}")
+              sys.exit(1)
+
+          print("SUCCESS: PR hygiene, Conventional Commits, and Zero-Emoji invariants satisfied.")
+          EOF

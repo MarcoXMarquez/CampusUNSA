@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use CampusUNSA in your academic research, thesis, or engineering benchmark, please cite it using the following metadata."
+title: "CampusUNSA: An Offline-Resilient Academic Hub and Omnichannel WhatsApp Assistant"
+version: 0.3.0
+date-released: 2026-10-27
+license: MIT
+repository-code: "https://github.com/MarcoXMarquez/CampusUNSA"
+url: "https://github.com/MarcoXMarquez/CampusUNSA"
+authors:
+  - family-names: "Marquez Herrera"
+    given-names: "Marco Antonio"
+    affiliation: "Universidad Nacional de San Agustin de Arequipa"
+  - family-names: "Chambilla Perca"
+    given-names: "Ricardo Mauricio"
+    affiliation: "Universidad Nacional de San Agustin de Arequipa"
+  - family-names: "Alfonso Huacasi"
+    given-names: "Alejandro Sebastian"
+    affiliation: "Universidad Nacional de San Agustin de Arequipa"
+  - family-names: "Ccoscco Alvis"
+    given-names: "Italo Frankdux"
+    affiliation: "Universidad Nacional de San Agustin de Arequipa"
+keywords:
+  - "campus-unsa"
+  - "progressive-web-application"
+  - "fastapi"
+  - "nextjs-14"
+  - "whatsapp-assistant"
+  - "concurrency-gate"
+  - "academic-hub"
+  - "nlp-task-extraction"

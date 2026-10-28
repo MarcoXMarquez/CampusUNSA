@@ -1,0 +1,60 @@
+name: "Oppia-Caliber Wiki Synchronization"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "scripts/wiki_engine.py"
+      - "scripts/wiki_validator.py"
+      - ".agents/skills/campusunsa-wiki-orchestrator/**"
+
+permissions:
+  contents: write
+
+jobs:
+  sync-wiki:
+    name: Validate and Synchronize GitHub Wiki
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Initialize and Validate Wiki Workspace
+        run: |
+          python3 scripts/wiki_engine.py --init --wiki-dir .wiki_workspace
+          python3 scripts/wiki_validator.py .wiki_workspace
+
+      - name: Publish Documentation to GitHub Wiki
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          WIKI_REPO="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          TMP_WIKI_DIR=$(mktemp -d)
+          if git clone "$WIKI_REPO" "$TMP_WIKI_DIR"; then
+            cp -r .wiki_workspace/* "$TMP_WIKI_DIR/"
+            cd "$TMP_WIKI_DIR"
+            git add .
+            if git diff-index --quiet HEAD; then
+              echo "No wiki documentation updates detected. Working tree clean."
+            else
+              git commit -m "docs(wiki): synchronize Oppia-caliber documentation pages"
+              git push origin master || git push origin main
+              echo "Wiki successfully synchronized."
+            fi
+          else
+            echo "Notice: Repository wiki is not yet initialized or enabled on GitHub."
+          fi

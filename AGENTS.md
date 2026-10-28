@@ -145,6 +145,12 @@ docker compose exec frontend npx tsc --noEmit
    * All GitHub Actions CI checks must pass green before merge.
    * Merging into `main` must strictly be performed via **Squash Merge** to maintain a clean, atomic git log.
 
+4. **Continuous Documentation Directive (Oppia-Caliber Wiki Gate):**
+   * Whenever an issue or user story is resolved and closed (`Closes #X`), the AI agent or developer MUST execute the `campusunsa-wiki-orchestrator` skill (`python scripts/wiki_engine.py --issue X`).
+   * The skill analyzes the code delta, updates or creates the assigned Oppia-caliber wiki page with Mermaid sequence diagrams, refreshes `_Sidebar.md`, and validates quality gates (`python scripts/wiki_validator.py`).
+   * For newly introduced agile user stories, the skill's dynamic inference engine automatically maps the feature into the appropriate architectural category.
+   * Pull Requests must include evidence that the wiki documentation was synchronized and validated.
+
 ---
 
 ## 6. Repository Documentation Map

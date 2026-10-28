@@ -1,0 +1,274 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "description": "Taxonomy mapping connecting CampusUNSA issues, user stories, and code diffs to Oppia-caliber GitHub Wiki pages.",
+  "categories": [
+    {
+      "id": "onboarding_and_meta",
+      "title": "Onboarding & Community",
+      "oppia_reference_page": "Contributing-code-to-Oppia.md",
+      "default_pages": [
+        "Home.md",
+        "Contributing-to-CampusUNSA.md",
+        "Code-of-Conduct.md",
+        "Good-First-Issues.md"
+      ]
+    },
+    {
+      "id": "architecture_and_core",
+      "title": "Codebase Architecture",
+      "oppia_reference_page": "Overview-of-the-Oppia-codebase.md",
+      "default_pages": [
+        "Overview-of-CampusUNSA-Architecture.md",
+        "Layered-Architecture-and-Web-Server-Anatomy.md",
+        "Database-Structure-and-Entity-Models.md"
+      ]
+    },
+    {
+      "id": "security_and_auth",
+      "title": "Security & Identity",
+      "oppia_reference_page": "Security-policies.md",
+      "default_pages": [
+        "Auth-and-Institutional-SSO.md",
+        "Role-Based-Access-Control-RBAC.md"
+      ]
+    },
+    {
+      "id": "academic_hub",
+      "title": "Academic Hub & Synchronization",
+      "oppia_reference_page": "Apache-Beam-Jobs.md",
+      "default_pages": [
+        "Google-Classroom-Sync-Service.md",
+        "DUTIC-Moodle-Extraction-Service.md",
+        "Class-Schedules-and-Campus-Logistics.md",
+        "Academic-Task-Board-Architecture.md"
+      ]
+    },
+    {
+      "id": "messaging_and_nlp",
+      "title": "Conversational Gateway & NLP",
+      "oppia_reference_page": "Machine-Learning-Pipelines.md",
+      "default_pages": [
+        "WhatsApp-Gateway-and-Evolution-API.md",
+        "NLP-Task-Parser-and-LLM-Pipelines.md",
+        "Redis-Cache-and-OTP-State-Machines.md"
+      ]
+    },
+    {
+      "id": "student_guidance",
+      "title": "Student Guidance & Support",
+      "oppia_reference_page": "Contributor-dashboard.md",
+      "default_pages": [
+        "Secretarial-Helpdesk-and-Ticketing.md",
+        "Administrative-Procedures-Guide.md"
+      ]
+    },
+    {
+      "id": "testing_and_qa",
+      "title": "Testing & Quality Gates",
+      "oppia_reference_page": "Backend-tests.md",
+      "default_pages": [
+        "Backend-Tests-Guide.md",
+        "Frontend-Component-Testing.md",
+        "Verification-Oracle-and-Quality-Gates.md",
+        "Continuous-Load-Testing-Procedures.md"
+      ]
+    },
+    {
+      "id": "operations_and_devops",
+      "title": "DevOps & Production Operations",
+      "oppia_reference_page": "Installing-Oppia.md",
+      "default_pages": [
+        "Docker-Environment-and-Tooling.md",
+        "Database-Migrations-Guide.md",
+        "Production-Deployment-and-Hardening.md"
+      ]
+    }
+  ],
+  "issue_mappings": {
+    "1": {
+      "target_page": "Auth-and-Institutional-SSO.md",
+      "category": "security_and_auth",
+      "title": "Institutional Google OAuth SSO"
+    },
+    "2": {
+      "target_page": "User-Profiles-and-Campus-Access.md",
+      "category": "security_and_auth",
+      "title": "Unified Student Profiles"
+    },
+    "3": {
+      "target_page": "Role-Based-Access-Control-RBAC.md",
+      "category": "security_and_auth",
+      "title": "Role-Based Access Control"
+    },
+    "4": {
+      "target_page": "Google-Classroom-Sync-Service.md",
+      "category": "academic_hub",
+      "title": "Google Classroom Synchronization Engine"
+    },
+    "5": {
+      "target_page": "Academic-Task-Board-Architecture.md",
+      "category": "academic_hub",
+      "title": "Urgency-Coded Task Board"
+    },
+    "6": {
+      "target_page": "Class-Schedules-and-Campus-Logistics.md",
+      "category": "academic_hub",
+      "title": "Dynamic Weekly Class Schedule"
+    },
+    "7": {
+      "target_page": "Class-Schedules-and-Campus-Logistics.md",
+      "category": "academic_hub",
+      "title": "Next Class Countdown Calculator"
+    },
+    "8": {
+      "target_page": "Offline-Resilience-and-IndexedDB.md",
+      "category": "architecture_and_core",
+      "title": "Offline-First PWA Resilience"
+    },
+    "9": {
+      "target_page": "WhatsApp-Gateway-and-Evolution-API.md",
+      "category": "messaging_and_nlp",
+      "title": "Evolution API Inbound Webhooks"
+    },
+    "10": {
+      "target_page": "NLP-Task-Parser-and-LLM-Pipelines.md",
+      "category": "messaging_and_nlp",
+      "title": "Natural Language Task Parsing"
+    },
+    "11": {
+      "target_page": "WhatsApp-Gateway-and-Evolution-API.md",
+      "category": "messaging_and_nlp",
+      "title": "Automated Board Scheduling via WhatsApp"
+    },
+    "12": {
+      "target_page": "Redis-Cache-and-OTP-State-Machines.md",
+      "category": "messaging_and_nlp",
+      "title": "5-Minute OTP Phone Binding"
+    },
+    "13": {
+      "target_page": "Secretarial-Helpdesk-and-Ticketing.md",
+      "category": "student_guidance",
+      "title": "Secretarial Handoff & Ticketing"
+    },
+    "14": {
+      "target_page": "Administrative-Procedures-Guide.md",
+      "category": "student_guidance",
+      "title": "Interactive Bureaucracy Guide"
+    },
+    "23": {
+      "target_page": "DUTIC-Moodle-Extraction-Service.md",
+      "category": "academic_hub",
+      "title": "DUTIC Moodle Course Scraper"
+    },
+    "37": {
+      "target_page": "Frontend-Architecture-and-PWA.md",
+      "category": "architecture_and_core",
+      "title": "Universal Responsive PWA Layout"
+    },
+    "38": {
+      "target_page": "Docker-Environment-and-Tooling.md",
+      "category": "operations_and_devops",
+      "title": "Reproducible Docker Environment"
+    },
+    "49": {
+      "category": "testing_and_qa",
+      "target_page": "Backend-Tests-Guide.md",
+      "title": "Module Testing And Qa (Issue #49)"
+    }
+  },
+  "dynamic_heuristics": {
+    "path_rules": [
+      {
+        "pattern": "backend/app/api/v1/auth.*|backend/app/core/security.*",
+        "category": "security_and_auth",
+        "target_page_fallback": "Auth-and-Institutional-SSO.md"
+      },
+      {
+        "pattern": "backend/app/services/classroom.*",
+        "category": "academic_hub",
+        "target_page_fallback": "Google-Classroom-Sync-Service.md"
+      },
+      {
+        "pattern": "backend/app/services/dutic.*",
+        "category": "academic_hub",
+        "target_page_fallback": "DUTIC-Moodle-Extraction-Service.md"
+      },
+      {
+        "pattern": "backend/app/services/task_.*",
+        "category": "messaging_and_nlp",
+        "target_page_fallback": "NLP-Task-Parser-and-LLM-Pipelines.md"
+      },
+      {
+        "pattern": "backend/app/models/ticket.*|backend/app/api/v1/tickets.*",
+        "category": "student_guidance",
+        "target_page_fallback": "Secretarial-Helpdesk-and-Ticketing.md"
+      },
+      {
+        "pattern": "frontend/.*",
+        "category": "architecture_and_core",
+        "target_page_fallback": "Frontend-Architecture-and-PWA.md"
+      },
+      {
+        "pattern": "backend/tests/.*|frontend/src/__tests__/.*|scripts/verify.*",
+        "category": "testing_and_qa",
+        "target_page_fallback": "Backend-Tests-Guide.md"
+      },
+      {
+        "pattern": "docker-compose.*|Dockerfile.*|backend/alembic/.*",
+        "category": "operations_and_devops",
+        "target_page_fallback": "Docker-Environment-and-Tooling.md"
+      }
+    ],
+    "commit_scope_rules": {
+      "auth": {
+        "category": "security_and_auth",
+        "target_page": "Auth-and-Institutional-SSO.md"
+      },
+      "classroom": {
+        "category": "academic_hub",
+        "target_page": "Google-Classroom-Sync-Service.md"
+      },
+      "dutic": {
+        "category": "academic_hub",
+        "target_page": "DUTIC-Moodle-Extraction-Service.md"
+      },
+      "schedule": {
+        "category": "academic_hub",
+        "target_page": "Class-Schedules-and-Campus-Logistics.md"
+      },
+      "task": {
+        "category": "academic_hub",
+        "target_page": "Academic-Task-Board-Architecture.md"
+      },
+      "nlp": {
+        "category": "messaging_and_nlp",
+        "target_page": "NLP-Task-Parser-and-LLM-Pipelines.md"
+      },
+      "whatsapp": {
+        "category": "messaging_and_nlp",
+        "target_page": "WhatsApp-Gateway-and-Evolution-API.md"
+      },
+      "ticket": {
+        "category": "student_guidance",
+        "target_page": "Secretarial-Helpdesk-and-Ticketing.md"
+      },
+      "pwa": {
+        "category": "architecture_and_core",
+        "target_page": "Offline-Resilience-and-IndexedDB.md"
+      },
+      "test": {
+        "category": "testing_and_qa",
+        "target_page": "Backend-Tests-Guide.md"
+      },
+      "ci": {
+        "category": "operations_and_devops",
+        "target_page": "Verification-Oracle-and-Quality-Gates.md"
+      },
+      "devops": {
+        "category": "operations_and_devops",
+        "target_page": "Docker-Environment-and-Tooling.md"
+      }
+    }
+  }
+}

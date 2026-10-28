@@ -3,6 +3,11 @@ plan.md
 informe_final.pdf
 planes/
 
+# Research and external reference wikis
+research/
+wikis/
+.wiki_workspace/
+
 # Entornos y dependencias generales
 node_modules/
 .env
