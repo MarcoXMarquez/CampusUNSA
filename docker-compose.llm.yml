@@ -1,0 +1,15 @@
+# Optional local inference. Core verification never needs a model download.
+services:
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["llm"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - campusunsa-net
+
+volumes:
+  ollama_models:

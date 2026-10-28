@@ -8,6 +8,7 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.tickets import router as tickets_router
 from app.api.v1.classroom import router as classroom_router
 from app.api.v1.dutic import router as dutic_router
+from app.api.v1.nlp import router as nlp_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -32,6 +33,7 @@ app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["Aut
 app.include_router(tickets_router, prefix=f"{settings.API_V1_STR}/tickets", tags=["Tickets"])
 app.include_router(classroom_router, prefix=f"{settings.API_V1_STR}/classroom", tags=["Classroom"])
 app.include_router(dutic_router, prefix=f"{settings.API_V1_STR}/dutic", tags=["DUTIC Moodle"])
+app.include_router(nlp_router, prefix=f"{settings.API_V1_STR}/nlp", tags=["Task Extraction"])
 
 
 @app.get("/docs", include_in_schema=False)

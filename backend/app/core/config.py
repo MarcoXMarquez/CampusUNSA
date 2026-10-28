@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Literal
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings
 
 
@@ -18,6 +19,13 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "http://localhost:9000/api/v1/auth/google/callback"
+
+    # US-10: optional structured extraction; disabled mode uses the local fallback.
+    TASK_PARSER_PROVIDER: Literal["disabled", "ollama", "gemini"] = "disabled"
+    TASK_PARSER_MODEL: str = ""
+    TASK_PARSER_TIMEOUT_SECONDS: float = Field(default=30, gt=0, le=60)
+    OLLAMA_BASE_URL: str = "http://ollama:11434"
+    GEMINI_API_KEY: SecretStr = SecretStr("")
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
