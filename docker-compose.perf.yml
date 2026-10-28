@@ -85,7 +85,10 @@ services:
     environment: *perf-environment
     command: ["python", "-m", "tests.load.monitor"]
     healthcheck:
-      disable: true
+      test: ["CMD", "python", "-c", "import pathlib,time,sys; p=pathlib.Path('/tmp/observer-ready'); sys.exit(0 if p.exists() and time.time()-p.stat().st_mtime < 5 else 1)"]
+      interval: 2s
+      timeout: 3s
+      retries: 5
     networks: [perf]
 
   locust:

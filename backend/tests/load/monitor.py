@@ -2,6 +2,7 @@
 
 import json
 import time
+from pathlib import Path
 
 import psycopg2
 
@@ -28,6 +29,7 @@ def monitor() -> None:
                 ),
                 flush=True,
             )
+            Path("/tmp/observer-ready").touch()
             time.sleep(1)
 
 

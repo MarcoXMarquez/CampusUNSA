@@ -46,6 +46,8 @@ With four replicas, request admission bounds simultaneous database work to 20 re
 
 The host reads each API replica's actual cgroup peak after the test and sums the peaks conservatively. It also checks that no replica was OOM-killed or restarted. The observer samples total PostgreSQL connections once per second. The API memory budget excludes the load generator, observer, gateway, PostgreSQL and Redis; those components are separate infrastructure, not hidden API processes.
 
+The observer updates a heartbeat only after a successful database sample. Its explicit healthcheck requires that heartbeat to be less than five seconds old. This supports Compose versions that require a configured healthcheck for every service used with `up --wait`, and prevents starting the load before resource collection is operational.
+
 ## Running locally
 
 Requirements: Docker Engine with Compose v2, Python 3.10 or newer for the standard-library host runner, and enough host CPU/memory to run the benchmark. Docker downloads Locust, NGINX and database/cache images on first use; the application uses Python 3.11 inside its image. All commands start at the repository root.
