@@ -29,9 +29,12 @@ def fallback_draft(request: ParseTaskRequest, evidence: DeadlineEvidence) -> Tas
             course = known
             text = re.sub(pattern, " ", text, flags=re.I)
     text = re.sub(r"\s+", " ", text).strip(" ,;.-")
-    text = re.sub(
-        r"(?:\s+(?:at|on|a|las|el|para|due|vence))+$", "", text, flags=re.I
-    ).strip()
+    # Deterministic linear trailing preposition stripping to prevent ReDoS (CWE-1333)
+    stop_prepositions = {"at", "on", "a", "las", "el", "para", "due", "vence"}
+    tokens = text.split()
+    while tokens and tokens[-1].lower() in stop_prepositions:
+        tokens.pop()
+    text = " ".join(tokens).strip(" ,;.-")
     return TaskDraft(
         title=text if 0 < len(text) <= 200 else None,
         course=course,

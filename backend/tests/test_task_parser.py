@@ -55,6 +55,38 @@ async def test_twenty_student_messages_without_llm(case: dict[str, str]) -> None
         )
 
 
+def test_task_parser_redos_adversarial_payload_completes_in_linear_time() -> None:
+    """Security regression test ensuring O(N) linear time and no ReDoS catastrophic backtracking."""
+    import time
+    from datetime import timezone
+    from app.schemas.task_parser import ParseTaskRequest
+    from app.services.task_dates import DeadlineEvidence
+    from app.services.task_parser import fallback_draft
+
+    # Adversarial payload within character limits that would trigger polynomial backtracking
+    malicious_text = "Estudiar para el examen final " + ("para a las " * 150)
+    request = ParseTaskRequest(
+        message=malicious_text,
+        reference_time="2026-10-09T10:00:00Z",
+        timezone="UTC",
+        courses=[],
+    )
+    evidence = DeadlineEvidence(
+        due_date=datetime(2026, 10, 16, 18, 0, tzinfo=timezone.utc),
+        spans=[],
+        has_date=True,
+        has_time=True,
+    )
+
+    start = time.perf_counter()
+    draft = fallback_draft(request, evidence)
+    elapsed = time.perf_counter() - start
+
+    assert draft.title == "Estudiar para el examen final"
+    # Must complete instantaneously in under 50ms
+    assert elapsed < 0.05
+
+
 @pytest.mark.asyncio
 async def test_issue_acceptance_example_with_structured_llm() -> None:
     from app.schemas.task_parser import ParseTaskRequest, TaskDraft
