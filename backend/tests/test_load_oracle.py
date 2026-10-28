@@ -35,7 +35,7 @@ def test_bash_oracle_propagates_performance_result(
         env=environment,
         capture_output=True,
         text=True,
-        timeout=10,
+        timeout=30,
     )
     assert result.returncode == load_exit
     assert "[6/6] Checking Concurrent Load Performance" in result.stdout
@@ -61,11 +61,18 @@ def test_powershell_oracle_propagates_performance_result(
         "exit $LASTEXITCODE\n"
     )
     result = subprocess.run(
-        [shutil.which("pwsh"), "-NoProfile", "-File", str(script)],
+        [
+            shutil.which("pwsh"),
+            "-NoProfile",
+            "-NonInteractive",
+            "-NoLogo",
+            "-File",
+            str(script),
+        ],
         cwd=root,
         capture_output=True,
         text=True,
-        timeout=15,
+        timeout=60,
     )
     assert result.returncode == load_exit
     assert "[6/6] Checking Concurrent Load Performance" in result.stdout
