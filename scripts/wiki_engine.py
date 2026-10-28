@@ -102,17 +102,36 @@ def dynamic_infer_category_and_page(
     commit = diff_info.get("commit_msg", "")
     files = diff_info.get("files", [])
 
-    # 1. Match from commit scope, e.g. feat(auth): ...
-    scope_match = re.search(r"^[a-zA-Z]+\(([a-zA-Z0-9_-]+)\):", commit)
-    if scope_match:
-        scope = scope_match.group(1).lower()
+    # 1. Match from Conventional Commit type and scope, e.g. feat(auth):, docs(wiki):, fix(dutic):
+    commit_match = re.search(r"^([a-zA-Z]+)(?:\(([a-zA-Z0-9_-]+)\))?:", commit)
+    if commit_match:
+        ctype = commit_match.group(1).lower()
+        scope = commit_match.group(2).lower() if commit_match.group(2) else ""
+        type_prefix = {
+            "feat": "Feature",
+            "fix": "Bugfix",
+            "docs": "Documentation",
+            "test": "Testing",
+            "refactor": "Refactoring",
+            "perf": "Performance",
+            "ci": "CI/CD",
+            "chore": "Maintenance",
+        }.get(ctype, ctype.capitalize())
+
         scope_rules = heuristics.get("commit_scope_rules", {})
-        if scope in scope_rules:
+        if scope and scope in scope_rules:
             rule = scope_rules[scope]
             return {
                 "category": rule["category"],
                 "target_page": rule["target_page"],
-                "title": f"Feature {scope.capitalize()} (Issue #{issue_id})",
+                "title": f"{type_prefix} {scope.capitalize()} (Issue #{issue_id})",
+            }
+        
+        if ctype == "docs":
+            return {
+                "category": "onboarding_and_meta",
+                "target_page": "Contributing-to-CampusUNSA.md",
+                "title": f"Documentation Update (Issue #{issue_id})",
             }
 
     # 2. Match from file path rules
@@ -126,13 +145,15 @@ def dynamic_infer_category_and_page(
                     "title": f"Module {pr['category'].replace('_', ' ').title()} (Issue #{issue_id})",
                 }
 
-    # 3. Match from branch name, e.g. feature/42-biomedicas-lab
-    branch_match = re.search(r"feature/\d+-(.+)", branch)
+    # 3. Match from branch name, e.g. feature/42-biomedicas-lab, fix/15-dutic-login, docs/50-wiki
+    branch_match = re.search(r"^(?:feature|fix|hotfix|chore|docs)/\d+-(.+)", branch)
     if branch_match:
         slug = branch_match.group(1).replace("-", " ").title()
         page_name = f"{slug.replace(' ', '-')}.md"
+        branch_type = branch.split("/")[0]
+        cat = "onboarding_and_meta" if branch_type == "docs" else "academic_hub"
         return {
-            "category": "academic_hub",
+            "category": cat,
             "target_page": page_name,
             "title": f"{slug} (Issue #{issue_id})",
         }
@@ -172,7 +193,7 @@ def update_sidebar(wiki_dir: str, taxonomy: Dict[str, Any]) -> None:
 
     for cat in categories:
         cat_title = cat["title"]
-        pages = cat.get("default_pages", [])
+        pages = list(cat.get("default_pages", []))
         for iss_data in taxonomy.get("issue_mappings", {}).values():
             if iss_data.get("category") == cat["id"]:
                 tp = iss_data.get("target_page")
@@ -189,12 +210,6 @@ def update_sidebar(wiki_dir: str, taxonomy: Dict[str, Any]) -> None:
                 cat_lines.append(f"  * [[{display_name}|{base_name}]]")
             sidebar_lines.extend(cat_lines)
             sidebar_lines.append("")
-
-    sidebar_lines.extend([
-        "---",
-        "* **[[Quality Gates & CI|Verification-Oracle-and-Quality-Gates]]**",
-        "* **[[Production Deployment|Production-Deployment-and-Hardening]]**",
-    ])
 
     with open(sidebar_path, "w", encoding="utf-8") as f:
         f.write("\n".join(sidebar_lines) + "\n")

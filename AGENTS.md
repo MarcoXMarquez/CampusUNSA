@@ -134,11 +134,20 @@ docker compose exec frontend npx tsc --noEmit
 
 2. **Commit Convention (Conventional Commits):**
    * Structure: `<type>(<scope>): <concise description in lowercase>`
-   * Valid types: `feat`, `fix`, `test`, `docs`, `refactor`, `ci`, `chore`.
+   * Valid types: `feat`, `fix`, `test`, `docs`, `refactor`, `perf`, `ci`, `chore`.
+   * Semantic Rule: Always choose `<type>` according to the nature of the change (never default to `feat` for documentation, fixes, or chores):
+     * `feat`: New user stories, services, or business logic.
+     * `docs`: Documentation, markdown artifacts, or wiki updates without code logic changes.
+     * `fix`: Bug or defect corrections.
+     * `test`: Unit, integration, or load test suites.
+     * `refactor`: Code restructuring without functional behavior modification.
+     * `perf`: Performance, throughput, or latency enhancements.
+     * `ci`: GitHub Actions workflows or pipeline automation.
+     * `chore`: Dependencies, tool configuration, or housekeeping.
    * Examples:
      * `feat(auth): validate institutional unsa email domain`
+     * `docs(wiki): establish initial oppia-caliber knowledge base`
      * `test(auth): add unit test for unauthorized external domain rejection`
-     * `docs(api): update authentication swagger schemas`
 
 3. **Pull Requests and Merges:**
    * Every Pull Request must reference its corresponding issue in the description: `Closes #X`.

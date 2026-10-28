@@ -20,7 +20,8 @@ The `agentic-quality-gate` skill serves as the ultimate automated gatekeeper for
    - Executing `git push --force`, `git push -f`, `--force-with-lease`, `git commit --amend` on published commits is strictly forbidden.
 4. **CONVENTIONAL COMMITS:**
    - Format: `<type>(<scope>): <concise description in lowercase>`
-   - Allowed types: `feat`, `fix`, `test`, `docs`, `refactor`, `ci`, `chore`.
+   - Allowed semantic types: `feat`, `fix`, `test`, `docs`, `refactor`, `perf`, `ci`, `chore`.
+   - Never default to `feat` for non-functional or documentation changes; enforce semantic fidelity validated locally by `.githooks/commit-msg`.
 
 ## 3. Verification Oracle Execution
 
