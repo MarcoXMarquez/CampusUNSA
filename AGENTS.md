@@ -157,7 +157,7 @@ docker compose exec frontend npx tsc --noEmit
    * **Issue Linking:** Human and agent PRs must reference their corresponding issue in the description: `Closes #X` or `Resolves #X`. Automated bot PRs (e.g., Dependabot) are exempt.
    * **PR Title Format:** All PR titles must follow Conventional Commits matching the primary scope of the PR.
    * **Mandatory Squash Merge:** Merging into `main` must strictly be performed via **Squash Merge** to maintain a clean, atomic git log. Never create merge bubble commits.
-   * **Automated Dependency PRs (Dependabot):** Dependencies are grouped automatically (backend, frontend, actions). Verify all CI tests and security reviews pass green, then approve and squash merge.
+   * **Automated Dependency PRs (Dependabot):** Dependencies are grouped automatically (backend, frontend, actions) and restricted to non-breaking minor and patch updates (`ignore semver-major`). If a dependency PR is green, approve and squash merge. Major framework upgrades (e.g. Next.js 14 to 15/16) must never be executed via blind bot PRs; they require dedicated agile spike issues.
    * **Continuous CI Verification:** All GitHub Actions checks (`ci.yml`, `pr-hygiene.yml`, `codeql.yml`, `dependency-review.yml`) must pass green before merge.
 
 4. **Continuous Documentation Directive (Oppia-Caliber Wiki Gate):**

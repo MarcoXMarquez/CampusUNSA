@@ -11,6 +11,9 @@ updates:
       - "dependencies"
       - "backend"
     open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       backend-dependencies:
         patterns:
@@ -27,6 +30,9 @@ updates:
       - "dependencies"
       - "frontend"
     open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       frontend-dependencies:
         patterns:
