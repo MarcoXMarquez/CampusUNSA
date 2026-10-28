@@ -1,0 +1,110 @@
+# Standalone disposable stack. Never combine with the developer Compose file.
+x-perf-ulimits: &perf-ulimits
+  nofile:
+    soft: 8192
+    hard: 8192
+
+services:
+  perf-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: campusunsa_perf
+      POSTGRES_USER: perf
+      POSTGRES_PASSWORD: isolated_perf_password
+    command: ["postgres", "-c", "max_connections=100"]
+    tmpfs: ["/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U perf -d campusunsa_perf"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks: [perf]
+
+  perf-redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks: [perf]
+
+  backend:
+    build: ./backend
+    image: campusunsa-perf-backend
+    environment: &perf-environment
+      PERF_ISOLATED: "1"
+      ENVIRONMENT: performance
+      DEBUG: "False"
+      POSTGRES_SERVER: perf-postgres
+      POSTGRES_DB: campusunsa_perf
+      POSTGRES_USER: perf
+      POSTGRES_PASSWORD: isolated_perf_password
+      REDIS_HOST: perf-redis
+      SECRET_KEY: isolated_performance_only_not_a_production_secret
+      TASK_PARSER_PROVIDER: disabled
+      PERF_DELAY_MS: ${PERF_DELAY_MS:-0}
+    command: ["uvicorn", "tests.load.perf_app:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "15", "--no-access-log"]
+    deploy:
+      replicas: 4
+    mem_limit: 128m
+    ulimits: *perf-ulimits
+    volumes:
+      - load-identities:/load-data
+    depends_on:
+      perf-postgres:
+        condition: service_healthy
+      perf-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    networks: [perf]
+
+  gateway:
+    image: nginx:1.28-alpine
+    ulimits: *perf-ulimits
+    volumes:
+      - ./backend/tests/load/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/v1/health >/dev/null || exit 1"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks: [perf]
+
+  observer:
+    image: campusunsa-perf-backend
+    environment: *perf-environment
+    command: ["python", "-m", "tests.load.monitor"]
+    healthcheck:
+      disable: true
+    networks: [perf]
+
+  locust:
+    image: locustio/locust:2.47.0
+    user: "0:0"
+    ulimits: *perf-ulimits
+    working_dir: /app
+    environment:
+      PYTHONPATH: /app
+    volumes:
+      - ./backend:/app:ro
+      - load-identities:/load-data:ro
+      - ${PERF_OUTPUT_DIR:-./perf-results}:/results
+    command: ["-f", "tests/load/locustfile.py", "--headless", "--host", "http://gateway:8080", "--users", "1000", "--spawn-rate", "50", "--run-time", "120s", "--reset-stats", "--stop-timeout", "10", "--csv", "/results/load", "--csv-full-history", "--html", "/results/report.html"]
+    networks: [perf]
+
+volumes:
+  load-identities:
+
+networks:
+  perf:
+    internal: true

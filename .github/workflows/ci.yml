@@ -14,8 +14,8 @@ jobs:
   # ==============================================================================
   # Backend Testing & Code Quality
   # ==============================================================================
-  backend-ci:
-    name: Backend CI (Pytest & Linters)
+  backend-tests:
+    name: Backend Tests (Pytest & Linters)
     runs-on: ubuntu-latest
 
     services:
@@ -106,3 +106,36 @@ jobs:
         working-directory: ./frontend
         run: |
           npx tsc --noEmit
+
+  performance-ci:
+    name: Performance CI (1,000 Users)
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-ci]
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Run Isolated Continuous Load Gate
+        run: python3 scripts/run_load_tests.py --output perf-results/ci
+      - name: Preserve Performance Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-${{ github.run_id }}-${{ github.run_attempt }}
+          path: perf-results/ci/
+          retention-days: 14
+
+  backend-ci:
+    # Preserve the existing required-check name and make performance mandatory.
+    name: Backend CI (Pytest & Linters)
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [backend-tests, performance-ci]
+    steps:
+      - name: Require Unit and Performance Success
+        env:
+          UNIT_RESULT: ${{ needs.backend-tests.result }}
+          PERFORMANCE_RESULT: ${{ needs.performance-ci.result }}
+        run: |
+          test "$UNIT_RESULT" = "success"
+          test "$PERFORMANCE_RESULT" = "success"
