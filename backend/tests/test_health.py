@@ -23,22 +23,28 @@ def test_health_check_healthy(client):
 
 
 def test_health_check_database_failure(client, mock_db_session):
-    """Asserts that /health returns HTTP 503 when the database fails to execute query."""
-    mock_db_session.execute.side_effect = Exception("Connection refused to PostgreSQL socket")
+    """Asserts that /health returns HTTP 503 and generic message without exposing internal exceptions."""
+    mock_db_session.execute.side_effect = Exception("Connection refused to PostgreSQL socket at 172.18.0.2:5432")
 
     response = client.get("/api/v1/health")
     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
     data = response.json()
     assert data["status"] == "degraded"
-    assert "unhealthy" in data["services"]["database"]
+    assert data["services"]["database"] == "unhealthy: connection failed"
+    # Ensure sensitive connection details are never leaked
+    assert "172.18.0.2" not in str(data)
+    assert "socket" not in str(data)
 
 
 def test_health_check_redis_failure(client, mock_redis_client):
-    """Asserts that /health returns HTTP 503 when Redis fails to respond to ping."""
-    mock_redis_client.ping.side_effect = Exception("Redis connection timeout")
+    """Asserts that /health returns HTTP 503 and generic message without exposing Redis internal stack."""
+    mock_redis_client.ping.side_effect = Exception("Redis connection timeout to redis://default:secret@10.0.0.1:6379")
 
     response = client.get("/api/v1/health")
     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
     data = response.json()
     assert data["status"] == "degraded"
-    assert "unhealthy" in data["services"]["redis"]
+    assert data["services"]["redis"] == "unhealthy: connection failed"
+    # Ensure credentials and IPs are never leaked
+    assert "secret" not in str(data)
+    assert "10.0.0.1" not in str(data)
