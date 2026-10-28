@@ -175,6 +175,11 @@
       "category": "testing_and_qa",
       "target_page": "Backend-Tests-Guide.md",
       "title": "Module Testing And Qa (Issue #49)"
+    },
+    "82": {
+      "category": "testing_and_qa",
+      "target_page": "Backend-Tests-Guide.md",
+      "title": "Bugfix Test (Issue #82)"
     }
   },
   "dynamic_heuristics": {
