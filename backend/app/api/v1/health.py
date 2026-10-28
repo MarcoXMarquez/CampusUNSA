@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -6,6 +7,8 @@ import redis
 
 from app.core.database import get_db
 from app.core.redis import get_redis
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -18,6 +21,7 @@ def check_health(
     """
     Healthcheck endpoint verifying backend connectivity to PostgreSQL and Redis.
     Returns HTTP 200 if all dependencies are healthy, or HTTP 503 if any dependency fails.
+    Sanitizes technical exception details to prevent information exposure (CWE-209).
     """
     health_status = {
         "status": "healthy",
@@ -34,7 +38,8 @@ def check_health(
         db.execute(text("SELECT 1"))
         health_status["services"]["database"] = "healthy"
     except Exception as e:
-        health_status["services"]["database"] = f"unhealthy: {str(e)}"
+        logger.error(f"Healthcheck database failure: {e}")
+        health_status["services"]["database"] = "unhealthy: connection failed"
         is_healthy = False
 
     # 2. Verify Redis connection
@@ -45,7 +50,8 @@ def check_health(
             health_status["services"]["redis"] = "unhealthy: ping returned False"
             is_healthy = False
     except Exception as e:
-        health_status["services"]["redis"] = f"unhealthy: {str(e)}"
+        logger.error(f"Healthcheck redis failure: {e}")
+        health_status["services"]["redis"] = "unhealthy: connection failed"
         is_healthy = False
 
     if not is_healthy:
