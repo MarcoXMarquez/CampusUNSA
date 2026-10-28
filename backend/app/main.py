@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from app.core.config import settings
+from app.core.request_capacity import RequestCapacityMiddleware
 from app.api.v1.health import router as health_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.tickets import router as tickets_router
@@ -26,6 +27,9 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+# Bound synchronous request admission below the database connection pool capacity.
+app.add_middleware(RequestCapacityMiddleware)
 
 # Include API Routers
 app.include_router(health_router, prefix=settings.API_V1_STR, tags=["Health"])

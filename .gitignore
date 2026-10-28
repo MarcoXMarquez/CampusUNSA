@@ -23,3 +23,6 @@ build/
 out/
 next-env.d.ts
 *.tsbuildinfo
+
+# Disposable load-test evidence; uploaded as CI artifacts instead of source code.
+perf-results/

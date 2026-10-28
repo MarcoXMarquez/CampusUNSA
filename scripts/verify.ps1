@@ -12,7 +12,7 @@ Write-Host "============================================================" -Foreg
 $allPassed = $true
 
 # 1. Emoji Scanner (Zero Emojis Policy)
-Write-Host "`n[1/5] Checking Zero-Emoji Policy..." -ForegroundColor Yellow
+Write-Host "`n[1/6] Checking Zero-Emoji Policy..." -ForegroundColor Yellow
 $emojiPattern = "[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27BF]"
 
 $changedFiles = git status --porcelain | ForEach-Object {
@@ -48,7 +48,7 @@ if ($emojiFound) {
 }
 
 # 2. Docker Health Verification
-Write-Host "`n[2/5] Checking Docker Compose Environment..." -ForegroundColor Yellow
+Write-Host "`n[2/6] Checking Docker Compose Environment..." -ForegroundColor Yellow
 $dockerPs = docker compose ps --status running --format "{{.Service}}" 2>$null
 if ($LASTEXITCODE -ne 0 -or -not $dockerPs) {
     Write-Host "  FAILED: Docker daemon is not running or containers are stopped." -ForegroundColor Red
@@ -66,7 +66,7 @@ if (-not $allPassed -and ($LASTEXITCODE -ne 0 -or -not $dockerPs)) {
 }
 
 # 3. Backend Linter (Ruff)
-Write-Host "`n[3/5] Running Backend Linter (Ruff)..." -ForegroundColor Yellow
+Write-Host "`n[3/6] Running Backend Linter (Ruff)..." -ForegroundColor Yellow
 $ruffOutput = docker compose exec -T backend ruff check app tests 2>&1
 Write-Host $ruffOutput
 if ($LASTEXITCODE -ne 0) {
@@ -77,7 +77,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # 4. Backend Unit Tests with Coverage (Pytest)
-Write-Host "`n[4/5] Running Backend Pytest Suite with Coverage..." -ForegroundColor Yellow
+Write-Host "`n[4/6] Running Backend Pytest Suite with Coverage..." -ForegroundColor Yellow
 $pytestOutput = docker compose exec -T backend python -m pytest tests/ -v --cov=app --cov-branch --cov-report=term-missing --cov-fail-under=80 2>&1
 Write-Host $pytestOutput
 if ($LASTEXITCODE -ne 0) {
@@ -97,7 +97,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # 5. Frontend Component Tests (Vitest)
-Write-Host "`n[5/5] Running Frontend Component Test Suite (Vitest)..." -ForegroundColor Yellow
+Write-Host "`n[5/6] Running Frontend Component Test Suite (Vitest)..." -ForegroundColor Yellow
 $vitestOutput = docker compose exec -T frontend npm run test 2>&1
 Write-Host $vitestOutput
 if ($LASTEXITCODE -ne 0) {
@@ -105,6 +105,16 @@ if ($LASTEXITCODE -ne 0) {
     $allPassed = $false
 } else {
     Write-Host "  PASSED: Vitest frontend tests passed." -ForegroundColor Green
+}
+
+# 6. Continuous Performance Gate (isolated database and synthetic identities)
+Write-Host "`n[6/6] Checking Concurrent Load Performance (1,000 Users)..." -ForegroundColor Yellow
+python scripts/run_load_tests.py
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  FAILED: Load threshold violation or incomplete performance evidence." -ForegroundColor Red
+    $allPassed = $false
+} else {
+    Write-Host "  PASSED: Continuous load thresholds and resource bounds." -ForegroundColor Green
 }
 
 # Summary
