@@ -129,8 +129,12 @@ docker compose exec frontend npx tsc --noEmit
 
 1. **Branch Strategy:**
    * The `main` branch is protected and represents stable, verified code.
-   * Every user story must be implemented on its own feature branch following the format:
-     `feature/XX-short-name-in-kebab-case` (where `XX` is the issue number, e.g., `feature/02-institutional-google-oauth`).
+   * Every user story or task must be implemented on its own branch following these approved patterns:
+     * Feature branches: `feature/XX-short-name-in-kebab-case` (where `XX` is the issue number, e.g., `feature/02-institutional-google-oauth`).
+     * Bugfix branches: `fix/XX-short-name-in-kebab-case` (e.g., `fix/15-dutic-session-timeout`).
+     * Documentation branches: `docs/short-name-in-kebab-case` (e.g., `docs/wiki-onboarding-guides`).
+     * Maintenance branches: `chore/short-name-in-kebab-case` (e.g., `chore/dependency-updates`).
+     * Automated bot branches: `dependabot/**` (managed autonomously by Dependabot).
 
 2. **Commit Convention (Conventional Commits):**
    * Structure: `<type>(<scope>): <concise description in lowercase>`
@@ -149,10 +153,12 @@ docker compose exec frontend npx tsc --noEmit
      * `docs(wiki): establish initial oppia-caliber knowledge base`
      * `test(auth): add unit test for unauthorized external domain rejection`
 
-3. **Pull Requests and Merges:**
-   * Every Pull Request must reference its corresponding issue in the description: `Closes #X`.
-   * All GitHub Actions CI checks must pass green before merge.
-   * Merging into `main` must strictly be performed via **Squash Merge** to maintain a clean, atomic git log.
+3. **Pull Requests, Hygiene Gates, and Squash Merges:**
+   * **Issue Linking:** Human and agent PRs must reference their corresponding issue in the description: `Closes #X` or `Resolves #X`. Automated bot PRs (e.g., Dependabot) are exempt.
+   * **PR Title Format:** All PR titles must follow Conventional Commits matching the primary scope of the PR.
+   * **Mandatory Squash Merge:** Merging into `main` must strictly be performed via **Squash Merge** to maintain a clean, atomic git log. Never create merge bubble commits.
+   * **Automated Dependency PRs (Dependabot):** Dependencies are grouped automatically (backend, frontend, actions). Verify all CI tests and security reviews pass green, then approve and squash merge.
+   * **Continuous CI Verification:** All GitHub Actions checks (`ci.yml`, `pr-hygiene.yml`, `codeql.yml`, `dependency-review.yml`) must pass green before merge.
 
 4. **Continuous Documentation Directive (Oppia-Caliber Wiki Gate):**
    * Whenever an issue or user story is resolved and closed (`Closes #X`), the AI agent or developer MUST execute the `campusunsa-wiki-orchestrator` skill (`python scripts/wiki_engine.py --issue X`).

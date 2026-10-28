@@ -33,6 +33,7 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
           HEAD_BRANCH: ${{ github.head_ref }}
           BASE_REF: ${{ github.base_ref }}
+          PR_ACTOR: ${{ github.actor }}
         run: |
           python3 - << 'EOF'
           import os
@@ -43,28 +44,45 @@ jobs:
           pr_title = os.environ.get("PR_TITLE", "").strip()
           pr_body = os.environ.get("PR_BODY", "").strip()
           branch_name = os.environ.get("HEAD_BRANCH", "").strip()
+          pr_actor = os.environ.get("PR_ACTOR", "").strip().lower()
+
+          is_bot = "dependabot" in pr_actor or branch_name.startswith("dependabot/")
 
           errors = []
 
           # 1. Validate Conventional Commits Title
-          title_regex = r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9_\-\/]+\))?: [a-z0-9].+$"
-          if not re.match(title_regex, pr_title):
-              errors.append(
-                  f"PR Title '{pr_title}' does not match Conventional Commits format: "
-                  "<type>(<scope>): <concise description in lowercase>"
-              )
+          if is_bot:
+              bot_title_regex = r"^(chore|build|ci|feat|fix)(\([a-zA-Z0-9_\-\/]+\))+: .+$"
+              if not re.match(bot_title_regex, pr_title):
+                  errors.append(
+                      f"Bot PR Title '{pr_title}' does not match expected pattern: "
+                      "<type>(<scope>): <description>"
+                  )
+          else:
+              title_regex = r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9_\-\/]+\))?: [a-z0-9].+$"
+              if not re.match(title_regex, pr_title):
+                  errors.append(
+                      f"PR Title '{pr_title}' does not match Conventional Commits format: "
+                      "<type>(<scope>): <concise description in lowercase>"
+                  )
 
           # 2. Validate Branch Naming Convention
-          branch_regex = r"^(feature|fix|hotfix|chore|docs)/([0-9]{2}-)?[a-z0-9\-]+$"
-          if not re.match(branch_regex, branch_name):
-              errors.append(
-                  f"Branch name '{branch_name}' does not follow required pattern: "
-                  "feature/XX-short-name-in-kebab-case or fix/..."
-              )
+          if is_bot:
+              bot_branch_regex = r"^dependabot/.+$"
+              if not re.match(bot_branch_regex, branch_name):
+                  errors.append(f"Bot branch '{branch_name}' does not follow dependabot/ prefix.")
+          else:
+              branch_regex = r"^(feature|fix|hotfix|chore|docs)/([0-9]+-)?[a-z0-9\-]+$"
+              if not re.match(branch_regex, branch_name):
+                  errors.append(
+                      f"Branch name '{branch_name}' does not follow required pattern: "
+                      "feature/XX-short-name-in-kebab-case, fix/..., docs/..., or chore/..."
+                  )
 
-          # 3. Validate PR Body References Closes #X
-          if not re.search(r"(?i)closes\s+#\d+", pr_body):
-              errors.append("PR description must reference its corresponding issue: 'Closes #X'")
+          # 3. Validate PR Body References Closes/Resolves/Fixes #X (Humans Only)
+          if not is_bot:
+              if not re.search(r"(?i)(closes|resolves|fixes)\s+#\d+", pr_body):
+                  errors.append("PR description must reference its corresponding issue: 'Closes #X' or 'Resolves #X'")
 
           # 4. Zero Emojis Validation
           emoji_pattern = re.compile(
@@ -84,10 +102,12 @@ jobs:
           if emoji_pattern.search(pr_title):
               errors.append(f"PR Title contains forbidden emojis: '{pr_title}'")
 
-          if emoji_pattern.search(pr_body):
+          # For human contributors, PR description cannot contain emojis.
+          # For bot PRs, ignore third-party release notes in body.
+          if not is_bot and emoji_pattern.search(pr_body):
               errors.append("PR description contains forbidden emojis. Zero-Emoji policy violated.")
 
-          # Validate commit messages in PR
+          # Validate commit messages in PR (strictly no emojis regardless of author)
           try:
               base_ref = os.environ.get("BASE_REF", "main")
               commits_output = subprocess.check_output(

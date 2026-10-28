@@ -82,8 +82,10 @@ npm run test
 
 ## 5. Pull Request & Review Checklist
 
-Every Pull Request must link its corresponding GitHub Issue:
-* Format: `Closes #<issue-number>` or `Resolves #<issue-number>`.
-* Code must be reviewed and approved by the assigned Peer Reviewer before merging.
-* Zero merge conflicts with `main`.
-* GitHub Actions CI pipeline must report green checkmarks on all test suites.
+Every Pull Request must satisfy our automated quality and hygiene gates:
+* **Issue Linking:** Human PRs must reference their corresponding GitHub Issue: `Closes #<issue-number>`, `Resolves #<issue-number>`, or `Fixes #<issue-number>` (automated bot PRs like Dependabot are exempt).
+* **PR Title Format:** Follow Conventional Commits matching the primary scope of work (e.g., `feat(auth): ...`, `chore(deps): ...`).
+* **Mandatory Squash Merge:** All pull requests merged into `main` must strictly use **Squash Merge** to maintain an atomic, clean Git history.
+* **Code Review:** Code must be reviewed and approved by the assigned Peer Reviewer before merging.
+* **Zero Merge Conflicts:** Keep branches rebased cleanly on `main`.
+* **Green CI Gates:** GitHub Actions pipelines (`ci.yml`, `pr-hygiene.yml`, `codeql.yml`, `dependency-review.yml`) must report green checkmarks.
