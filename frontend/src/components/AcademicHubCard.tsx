@@ -25,10 +25,37 @@ interface AcademicAssignment {
   created_at: string;
 }
 
+interface GoogleCodeResponse {
+  code?: string;
+  error?: string;
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        oauth2?: {
+          initCodeClient: (config: {
+            client_id: string;
+            scope: string;
+            ux_mode?: "popup" | "redirect";
+            callback: (response: GoogleCodeResponse) => void;
+          }) => { requestCode: () => void };
+        };
+      };
+    };
+  }
+}
+
 export function AcademicHubCard(): React.JSX.Element {
   const [courses, setCourses] = useState<AcademicCourse[]>([]);
   const [assignments, setAssignments] = useState<AcademicAssignment[]>([]);
   const [activeTab, setActiveTab] = useState<"courses" | "assignments">("courses");
+  const [syncSource, setSyncSource] = useState<"classroom" | "dutic">("classroom");
+  const [classroomToken, setClassroomToken] = useState<string>("demo");
+  const [classroomConnected, setClassroomConnected] = useState<boolean>(false);
+  const [classroomSyncStatus, setClassroomSyncStatus] = useState<string>("NOT_CONNECTED");
+  const [showSandbox, setShowSandbox] = useState<boolean>(false);
   const [moodleSession, setMoodleSession] = useState<string>("demo");
   const [sesskey, setSesskey] = useState<string>("demo");
   const [syncing, setSyncing] = useState<boolean>(false);
@@ -90,6 +117,16 @@ export function AcademicHubCard(): React.JSX.Element {
 
       setCourses(allCourses);
       setAssignments(allAssigns);
+
+      // Check Google Classroom connection status
+      const statusRes = await fetch(`${apiUrl}/auth/google/classroom/status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => null);
+      if (statusRes && statusRes.ok) {
+        const sData = await statusRes.json();
+        setClassroomConnected(Boolean(sData.connected));
+        setClassroomSyncStatus(sData.sync_status || "NOT_CONNECTED");
+      }
     } catch {
       // In development, handle connection gracefully
     }
@@ -100,6 +137,120 @@ export function AcademicHubCard(): React.JSX.Element {
     const interval = setInterval(fetchAcademicData, 5000);
     return () => clearInterval(interval);
   }, [fetchAcademicData]);
+
+  const handleExchangeClassroomCode = async (code: string) => {
+    const token = getStoredToken();
+    if (!token) return;
+
+    setSyncing(true);
+    setSyncStatus("Intercambiando codigo de autorizacion con Google...");
+
+    try {
+      const res = await fetch(`${apiUrl}/auth/google/classroom/callback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code, redirect_uri: "postmessage" }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.detail?.message || `Error HTTP ${res.status}`;
+        setSyncStatus(`Error de autorizacion Classroom: ${msg}`);
+        return;
+      }
+
+      setClassroomConnected(true);
+      setClassroomSyncStatus("CONNECTED");
+      setSyncStatus("Google Classroom vinculado con exito. Sincronizando tareas...");
+      await handleTriggerClassroomSync();
+    } catch (err: unknown) {
+      const errStr = err instanceof Error ? err.message : String(err);
+      setSyncStatus(`Error de red al vincular Classroom: ${errStr}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleConnectClassroom = () => {
+    if (typeof window === "undefined" || !window.google?.accounts?.oauth2) {
+      setSyncStatus("SDK de Google Identity Services no disponible aun. Reintente en un momento.");
+      return;
+    }
+
+    const clientId =
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      "680574461584-5vjt8ge9ah4rr1eapphoenit5imvk6m8.apps.googleusercontent.com";
+
+    const client = window.google.accounts.oauth2.initCodeClient({
+      client_id: clientId,
+      scope:
+        "https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly",
+      ux_mode: "popup",
+      callback: async (response: GoogleCodeResponse) => {
+        if (response.error) {
+          setSyncStatus(`Consentimiento cancelado o error de Google: ${response.error}`);
+          return;
+        }
+        if (response.code) {
+          await handleExchangeClassroomCode(response.code);
+        }
+      },
+    });
+
+    client.requestCode();
+  };
+
+  const handleTriggerClassroomSync = async (customToken?: string) => {
+    const token = getStoredToken();
+    if (!token) {
+      setSyncStatus("Debes iniciar sesion con Google UNSA arriba antes de sincronizar.");
+      return;
+    }
+
+    setSyncing(true);
+    setSyncStatus("Conectando con motor de sincronizacion Google Classroom...");
+
+    try {
+      const payload = customToken ? { refresh_token: customToken } : {};
+      const res = await fetch(`${apiUrl}/classroom/sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.detail?.message || `Error HTTP ${res.status}`;
+        if (err.detail?.code === "NEEDS_REAUTH") {
+          setClassroomConnected(false);
+          setClassroomSyncStatus("NEEDS_REAUTH");
+          setSyncStatus("La autorizacion de Google expiro. Presiona 'Vincular Google Classroom' para renovarla.");
+        } else {
+          setSyncStatus(`Fallo de sincronizacion Classroom: ${msg}`);
+        }
+        return;
+      }
+
+      const data = await res.json();
+      setSyncStatus(
+        `Sincronizacion Classroom completada con exito: ${data.synced_courses_count} cursos y ${data.synced_assignments_count} tareas registradas en PostgreSQL.`
+      );
+      setClassroomConnected(true);
+      setClassroomSyncStatus("SYNCED");
+      await fetchAcademicData();
+    } catch (err: unknown) {
+      const errStr = err instanceof Error ? err.message : String(err);
+      setSyncStatus(`Error de red: ${errStr}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleTriggerSync = async (sessionValue: string, keyValue: string) => {
     const token = getStoredToken();
@@ -181,65 +332,189 @@ export function AcademicHubCard(): React.JSX.Element {
 
       {/* Sincronizador de prueba / credenciales */}
       <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-          Sincronizacion DUTIC Moodle
-        </h3>
-        <p className="text-xs text-slate-600 mb-3">
-          Puedes probar la extraccion directamente con 1 clic en modo demostracion UNSA o ingresar tus credenciales reales:
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-          <div>
-            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-              Cookie MoodleSession:
-            </label>
-            <input
-              type="text"
-              value={moodleSession}
-              onChange={(e) => setMoodleSession(e.target.value)}
-              className="w-full text-xs font-mono p-2 border border-slate-300 rounded bg-white"
-              placeholder="demo o valor de cookie de dutic"
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-              Clave sesskey:
-            </label>
-            <input
-              type="text"
-              value={sesskey}
-              onChange={(e) => setSesskey(e.target.value)}
-              className="w-full text-xs font-mono p-2 border border-slate-300 rounded bg-white"
-              placeholder="demo o M.cfg.sesskey"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
+        <div className="flex items-center space-x-2 mb-4 border-b border-slate-200 pb-2">
           <button
-            onClick={() => handleTriggerSync(moodleSession, sesskey)}
-            disabled={syncing || !tokenPresent}
-            className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded transition"
+            onClick={() => setSyncSource("classroom")}
+            className={`text-xs px-3 py-1.5 rounded font-semibold transition ${
+              syncSource === "classroom"
+                ? "bg-blue-600 text-white"
+                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+            }`}
           >
-            {syncing ? "Sincronizando..." : "Sincronizar DUTIC"}
+            Sincronizacion Google Classroom
           </button>
-
           <button
-            onClick={() => handleTriggerSync("demo", "demo")}
-            disabled={syncing || !tokenPresent}
-            className="text-xs bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded transition"
+            onClick={() => setSyncSource("dutic")}
+            className={`text-xs px-3 py-1.5 rounded font-semibold transition ${
+              syncSource === "dutic"
+                ? "bg-purple-600 text-white"
+                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+            }`}
           >
-            Cargar Cursos de Demostracion UNSA (1 Clic)
-          </button>
-
-          <button
-            onClick={fetchAcademicData}
-            disabled={!tokenPresent}
-            className="text-xs bg-slate-200 hover:bg-slate-300 disabled:opacity-50 text-slate-800 font-semibold px-3 py-2 rounded transition"
-          >
-            Refrescar Lista
+            Sincronizacion DUTIC Moodle
           </button>
         </div>
+
+        {syncSource === "classroom" ? (
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                Extraccion de Tareas Google Classroom
+              </h3>
+              {classroomConnected ? (
+                <span className="inline-flex items-center text-[11px] font-semibold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full">
+                  Classroom Vinculado (Cuenta UNSA)
+                </span>
+              ) : classroomSyncStatus === "NEEDS_REAUTH" ? (
+                <span className="inline-flex items-center text-[11px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
+                  Re-autorizacion Requerida
+                </span>
+              ) : (
+                <span className="inline-flex items-center text-[11px] font-semibold text-slate-600 bg-slate-100 border border-slate-300 px-2.5 py-0.5 rounded-full">
+                  No Vinculado
+                </span>
+              )}
+            </div>
+
+            <p className="text-xs text-slate-600 mb-3">
+              {classroomConnected
+                ? "Tu cuenta institucional esta vinculada. Presiona el boton para actualizar cursos y tareas de forma 100% automatica sin ingresar ningun token."
+                : "Autoriza a CampusUNSA con 1 clic para acceder a tus asignaciones de Google Classroom de forma segura y transparente:"}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              {!classroomConnected ? (
+                <button
+                  onClick={handleConnectClassroom}
+                  disabled={syncing || !tokenPresent}
+                  className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded transition shadow-sm"
+                >
+                  {syncing ? "Conectando..." : "Vincular Google Classroom (1 Clic)"}
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleTriggerClassroomSync()}
+                  disabled={syncing || !tokenPresent}
+                  className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded transition shadow-sm"
+                >
+                  {syncing ? "Sincronizando..." : "Sincronizar Google Classroom"}
+                </button>
+              )}
+
+              <button
+                onClick={fetchAcademicData}
+                disabled={!tokenPresent}
+                className="text-xs bg-slate-200 hover:bg-slate-300 disabled:opacity-50 text-slate-800 font-semibold px-3 py-2 rounded transition"
+              >
+                Refrescar Lista
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowSandbox(!showSandbox)}
+                className="text-xs text-slate-500 hover:text-slate-800 underline ml-auto py-1"
+              >
+                {showSandbox ? "Ocultar Modo Sandbox" : "Modo Sandbox / Opciones Avanzadas"}
+              </button>
+            </div>
+
+            {showSandbox && (
+              <div className="p-3 bg-slate-100 border border-slate-200 rounded text-xs space-y-2 mt-2">
+                <div className="font-semibold text-slate-700">Entorno de Pruebas Offline / Sandbox:</div>
+                <p className="text-[11px] text-slate-600">
+                  Usa esta opcion para probar la extraccion con datasets simulados si no dispones de credenciales OAuth de Google Cloud configuradas:
+                </p>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <button
+                    onClick={() => handleTriggerClassroomSync("demo")}
+                    disabled={syncing || !tokenPresent}
+                    className="text-xs bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold px-3 py-1.5 rounded transition"
+                  >
+                    Cargar Mocks Classroom (1 Clic)
+                  </button>
+
+                  <input
+                    type="text"
+                    value={classroomToken}
+                    onChange={(e) => setClassroomToken(e.target.value)}
+                    className="text-xs font-mono p-1.5 border border-slate-300 rounded bg-white flex-1 min-w-[200px]"
+                    placeholder="Token manual o demo"
+                  />
+
+                  <button
+                    onClick={() => handleTriggerClassroomSync(classroomToken)}
+                    disabled={syncing || !tokenPresent}
+                    className="text-xs bg-slate-700 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold px-3 py-1.5 rounded transition"
+                  >
+                    Sync con Token Manual
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+              Sincronizacion DUTIC Moodle
+            </h3>
+            <p className="text-xs text-slate-600 mb-3">
+              Puedes probar la extraccion directamente con 1 clic en modo demostracion UNSA o ingresar tus credenciales reales:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Cookie MoodleSession:
+                </label>
+                <input
+                  type="text"
+                  value={moodleSession}
+                  onChange={(e) => setMoodleSession(e.target.value)}
+                  className="w-full text-xs font-mono p-2 border border-slate-300 rounded bg-white"
+                  placeholder="demo o valor de cookie de dutic"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Clave sesskey:
+                </label>
+                <input
+                  type="text"
+                  value={sesskey}
+                  onChange={(e) => setSesskey(e.target.value)}
+                  className="w-full text-xs font-mono p-2 border border-slate-300 rounded bg-white"
+                  placeholder="demo o M.cfg.sesskey"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleTriggerSync(moodleSession, sesskey)}
+                disabled={syncing || !tokenPresent}
+                className="text-xs bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded transition"
+              >
+                {syncing ? "Sincronizando..." : "Sincronizar DUTIC"}
+              </button>
+
+              <button
+                onClick={() => handleTriggerSync("demo", "demo")}
+                disabled={syncing || !tokenPresent}
+                className="text-xs bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded transition"
+              >
+                Cargar Cursos de Demostracion UNSA (1 Clic)
+              </button>
+
+              <button
+                onClick={fetchAcademicData}
+                disabled={!tokenPresent}
+                className="text-xs bg-slate-200 hover:bg-slate-300 disabled:opacity-50 text-slate-800 font-semibold px-3 py-2 rounded transition"
+              >
+                Refrescar Lista
+              </button>
+            </div>
+          </div>
+        )}
 
         {!tokenPresent && (
           <p className="text-[11px] text-amber-700 mt-2 font-medium">

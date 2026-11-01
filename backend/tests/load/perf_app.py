@@ -18,6 +18,15 @@ OriginalClient = httpx.Client
 
 def upstream(request: httpx.Request) -> httpx.Response:
     if request.url.host == "oauth2.googleapis.com":
+        if request.url.path == "/token":
+            return httpx.Response(
+                200,
+                json={
+                    "access_token": "perf-access-token",
+                    "refresh_token": "perf-refresh-token",
+                    "expires_in": 3600,
+                },
+            )
         name = request.url.params.get("id_token", "")
         try:
             index = int(name.removeprefix("perf-user-"))

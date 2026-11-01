@@ -184,6 +184,15 @@ export function GoogleAuthCard(): React.JSX.Element {
             Inicia sesion para verificar la integracion en vivo en localhost:
           </p>
           <div id="google-signin-btn-container" className="min-h-[44px]"></div>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <button
+              onClick={() => handleCredentialResponse({ credential: "demo" })}
+              disabled={loading}
+              className="text-xs bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white font-semibold px-3 py-1.5 rounded transition shadow-xs"
+            >
+              Acceder como Estudiante Demo UNSA (1 Clic)
+            </button>
+          </div>
           <p className="text-[11px] text-slate-400">
             Client ID: {clientId.slice(0, 24)}...
           </p>

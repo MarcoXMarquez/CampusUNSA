@@ -105,7 +105,9 @@ class StudentBrowser(FastHttpUser):
             else self.account["token"]
         )
         payload = None
-        if case.path.endswith("/auth/google"):
+        if case.path.endswith("/auth/google/classroom/callback"):
+            payload = {"code": "perf-code-123"}
+        elif case.path.endswith("/auth/google"):
             payload = {"token": self.account["identity"]}
         elif case.path.endswith("/classroom/sync"):
             payload = {"refresh_token": self.account["identity"]}
@@ -154,6 +156,10 @@ class StudentBrowser(FastHttpUser):
                     assert body["status"] == "healthy"
                 elif case.path.endswith("/auth/me"):
                     assert body["email"] == self.account["identity"] + "@unsa.edu.pe"
+                elif case.path.endswith("/auth/google/classroom/status"):
+                    assert "connected" in body
+                elif case.path.endswith("/auth/google/classroom/callback"):
+                    assert body["status"] == "CONNECTED"
                 elif case.path.endswith("/auth/google"):
                     assert (
                         body["access_token"]

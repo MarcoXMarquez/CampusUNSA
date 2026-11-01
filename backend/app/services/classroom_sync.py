@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.models.classroom import ClassroomAssignment, ClassroomCourse
 from app.models.user import User
 from app.schemas.classroom import SyncClassroomResponse
+from app.services.token_encryption import decrypt_token
 
 
 class GoogleClassroomError(Exception):
@@ -136,28 +137,81 @@ class ClassroomSyncService:
         Executes full course and assignment synchronization for a student.
         Persists and updates entities idempotently.
         """
-        effective_token = token or "mock_default_token"
+        if token in ("demo", "mock"):
+            effective_token = token
+        elif token:
+            effective_token = token
+        else:
+            if not user.google_refresh_token:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "code": "CLASSROOM_NOT_CONNECTED",
+                        "message": "Google Classroom account is not connected. Please connect via OAuth consent first.",
+                    },
+                )
+            plain_refresh_token = decrypt_token(user.google_refresh_token)
+            try:
+                from app.services.google_oauth import GoogleOAuthService
+                effective_token = GoogleOAuthService.refresh_access_token(plain_refresh_token)
+            except GoogleClassroomAuthError as exc:
+                user.classroom_sync_status = "NEEDS_REAUTH"
+                user.google_classroom_sync_status = "NEEDS_REAUTH"
+                db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail={
+                        "code": "NEEDS_REAUTH",
+                        "message": "Google Classroom authorization expired or revoked. Reauthentication required.",
+                    },
+                ) from exc
 
-        try:
-            courses_data = ClassroomApiClient.fetch_courses(effective_token)
-        except GoogleClassroomAuthError as exc:
-            user.classroom_sync_status = "NEEDS_REAUTH"
-            db.commit()
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={
-                    "code": "NEEDS_REAUTH",
-                    "message": "Google Classroom authorization expired or revoked. Reauthentication required.",
+        if effective_token in ("demo", "mock"):
+            courses_data = [
+                {
+                    "id": "gc-is3-101",
+                    "name": "Ingenieria de Software 3 (Classroom)",
+                    "section": "Grupo A",
+                    "alternateLink": "https://classroom.google.com/c/gc-is3-101",
+                    "courseState": "ACTIVE",
                 },
-            ) from exc
-        except GoogleClassroomRateLimitError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail={
-                    "code": "RATE_LIMIT_EXCEEDED",
-                    "message": "Google Classroom API quota exceeded. Please retry in a few minutes.",
+                {
+                    "id": "gc-arq-102",
+                    "name": "Arquitectura de Software (Classroom)",
+                    "section": "Grupo B",
+                    "alternateLink": "https://classroom.google.com/c/gc-arq-102",
+                    "courseState": "ACTIVE",
                 },
-            ) from exc
+                {
+                    "id": "gc-sd-103",
+                    "name": "Sistemas Distribuidos (Classroom)",
+                    "section": "Grupo A",
+                    "alternateLink": "https://classroom.google.com/c/gc-sd-103",
+                    "courseState": "ACTIVE",
+                },
+            ]
+        else:
+            try:
+                courses_data = ClassroomApiClient.fetch_courses(effective_token)
+            except GoogleClassroomAuthError as exc:
+                user.classroom_sync_status = "NEEDS_REAUTH"
+                user.google_classroom_sync_status = "NEEDS_REAUTH"
+                db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail={
+                        "code": "NEEDS_REAUTH",
+                        "message": "Google Classroom authorization expired or revoked. Reauthentication required.",
+                    },
+                ) from exc
+            except GoogleClassroomRateLimitError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail={
+                        "code": "RATE_LIMIT_EXCEEDED",
+                        "message": "Google Classroom API quota exceeded. Please retry in a few minutes.",
+                    },
+                ) from exc
 
         synced_courses_count = 0
         synced_assignments_count = 0
@@ -196,29 +250,85 @@ class ClassroomSyncService:
             synced_courses_count += 1
 
             # Fetch and upsert assignments for this course
-            try:
-                coursework_data = ClassroomApiClient.fetch_coursework(
-                    effective_token,
-                    course_id_str,
-                )
-            except GoogleClassroomAuthError as exc:
-                user.classroom_sync_status = "NEEDS_REAUTH"
-                db.commit()
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail={
-                        "code": "NEEDS_REAUTH",
-                        "message": "Google Classroom authorization expired during coursework sync.",
-                    },
-                ) from exc
-            except GoogleClassroomRateLimitError as exc:
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail={
-                        "code": "RATE_LIMIT_EXCEEDED",
-                        "message": "Google Classroom rate limit exceeded during coursework sync.",
-                    },
-                ) from exc
+            if effective_token in ("demo", "mock"):
+                if course_id_str == "gc-is3-101":
+                    coursework_data = [
+                        {
+                            "id": "gc-assign-01",
+                            "courseId": "gc-is3-101",
+                            "title": "Entrega Sprint 3: Extraccion de Tareas Classroom",
+                            "description": "Subir informe y enlace de verificacion de tareas de Google Classroom.",
+                            "dueDate": {"year": 2026, "month": 11, "day": 5},
+                            "dueTime": {"hours": 23, "minutes": 59},
+                            "maxPoints": 20.0,
+                            "state": "PUBLISHED",
+                            "alternateLink": "https://classroom.google.com/c/gc-is3-101/a/gc-assign-01/details",
+                        },
+                        {
+                            "id": "gc-assign-02",
+                            "courseId": "gc-is3-101",
+                            "title": "Laboratorio 05: Integracion de APIs Educativas",
+                            "description": "Implementacion de adaptadores REST y sincronizacion idempotente.",
+                            "dueDate": {"year": 2026, "month": 11, "day": 8},
+                            "dueTime": {"hours": 18, "minutes": 0},
+                            "maxPoints": 20.0,
+                            "state": "PUBLISHED",
+                            "alternateLink": "https://classroom.google.com/c/gc-is3-101/a/gc-assign-02/details",
+                        },
+                    ]
+                elif course_id_str == "gc-arq-102":
+                    coursework_data = [
+                        {
+                            "id": "gc-assign-03",
+                            "courseId": "gc-arq-102",
+                            "title": "Fase 2: Arquitectura C4 y Diagramas de Secuencia",
+                            "description": "Documento SAD con modelado de microservicios y sincronizacion offline.",
+                            "dueDate": {"year": 2026, "month": 11, "day": 10},
+                            "dueTime": {"hours": 23, "minutes": 59},
+                            "maxPoints": 20.0,
+                            "state": "PUBLISHED",
+                            "alternateLink": "https://classroom.google.com/c/gc-arq-102/a/gc-assign-03/details",
+                        },
+                    ]
+                else:
+                    coursework_data = [
+                        {
+                            "id": "gc-assign-04",
+                            "courseId": "gc-sd-103",
+                            "title": "Practica: Algoritmo de Consenso Raft y Replicacion",
+                            "description": "Implementar protocolo de consenso distribuido con tolerancia a fallos.",
+                            "dueDate": {"year": 2026, "month": 11, "day": 12},
+                            "dueTime": {"hours": 20, "minutes": 0},
+                            "maxPoints": 20.0,
+                            "state": "PUBLISHED",
+                            "alternateLink": "https://classroom.google.com/c/gc-sd-103/a/gc-assign-04/details",
+                        },
+                    ]
+            else:
+                try:
+                    coursework_data = ClassroomApiClient.fetch_coursework(
+                        effective_token,
+                        course_id_str,
+                    )
+                except GoogleClassroomAuthError as exc:
+                    user.classroom_sync_status = "NEEDS_REAUTH"
+                    user.google_classroom_sync_status = "NEEDS_REAUTH"
+                    db.commit()
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail={
+                            "code": "NEEDS_REAUTH",
+                            "message": "Google Classroom authorization expired during coursework sync.",
+                        },
+                    ) from exc
+                except GoogleClassroomRateLimitError as exc:
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail={
+                            "code": "RATE_LIMIT_EXCEEDED",
+                            "message": "Google Classroom rate limit exceeded during coursework sync.",
+                        },
+                    ) from exc
 
             for assignment_item in coursework_data:
                 item_course_id = assignment_item.get("courseId")
@@ -275,6 +385,7 @@ class ClassroomSyncService:
         # Mark user synchronization state as successful
         sync_timestamp = datetime.now(timezone.utc)
         user.classroom_sync_status = "SYNCED"
+        user.google_classroom_sync_status = "SYNCED"
         user.last_classroom_sync_at = sync_timestamp
         db.commit()
 

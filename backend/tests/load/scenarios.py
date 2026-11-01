@@ -27,6 +27,8 @@ BASE_SCENARIOS = (
     Scenario("GET", "/api/v1/classroom/courses"),
     Scenario("GET", "/api/v1/classroom/assignments"),
     Scenario("POST", "/api/v1/classroom/sync"),
+    Scenario("GET", "/api/v1/auth/google/classroom/status"),
+    Scenario("POST", "/api/v1/auth/google/classroom/callback"),
     Scenario("GET", "/api/v1/dutic/courses"),
     Scenario("GET", "/api/v1/dutic/assignments"),
     Scenario("POST", "/api/v1/dutic/sync"),

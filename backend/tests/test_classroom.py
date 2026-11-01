@@ -463,3 +463,36 @@ def test_sync_coursework_errors_handling(
 
     app.dependency_overrides.clear()
 
+
+def test_sync_classroom_demo_mode(
+    test_db_session: Session,
+    auth_student_headers: Dict[str, str],
+) -> None:
+    """Tests synchronization using demo mode without calling Google API."""
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    with TestClient(app) as test_client:
+        res = test_client.post(
+            "/api/v1/classroom/sync",
+            headers=auth_student_headers,
+            json={"refresh_token": "demo"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["status"] == "SYNCED"
+        assert data["synced_courses_count"] == 3
+        assert data["synced_assignments_count"] == 4
+
+        # Verify assignments retrieval
+        assign_res = test_client.get(
+            "/api/v1/classroom/assignments",
+            headers=auth_student_headers,
+        )
+        assert assign_res.status_code == 200
+        assignments = assign_res.json()
+        assert len(assignments) == 4
+        assert any(a["origin"] == "classroom" for a in assignments)
+
+    app.dependency_overrides.clear()
+
+
