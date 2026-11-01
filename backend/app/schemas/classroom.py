@@ -58,3 +58,29 @@ class AssignmentResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ClassroomConsentRequest(BaseModel):
+    """
+    Payload containing Google OAuth authorization code from client consent popup.
+    """
+    code: str
+    redirect_uri: Optional[str] = "postmessage"
+
+
+class ClassroomConsentResponse(BaseModel):
+    """
+    Response returned after successful authorization code exchange and token persistence.
+    """
+    status: str
+    connected_at: Optional[datetime] = None
+    message: str
+
+
+class ClassroomStatusResponse(BaseModel):
+    """
+    Status of the student's Google Classroom integration linkage.
+    """
+    connected: bool
+    connected_at: Optional[datetime] = None
+    sync_status: str

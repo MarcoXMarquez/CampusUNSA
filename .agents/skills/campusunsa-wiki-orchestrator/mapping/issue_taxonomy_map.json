@@ -180,6 +180,11 @@
       "category": "testing_and_qa",
       "target_page": "Backend-Tests-Guide.md",
       "title": "Bugfix Test (Issue #82)"
+    },
+    "84": {
+      "target_page": "Google-Classroom-Sync-Service.md",
+      "category": "academic_hub",
+      "title": "Automated Google Classroom OAuth Consent & Refresh Token Lifecycle"
     }
   },
   "dynamic_heuristics": {
