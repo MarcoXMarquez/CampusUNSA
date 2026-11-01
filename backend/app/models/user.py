@@ -74,6 +74,22 @@ class User(Base):
         server_default="NOT_CONNECTED",
         nullable=False,
     )
+    moodle_calendar_url: Mapped[Optional[str]] = mapped_column(
+        String(1024),
+        nullable=True,
+        default=None,
+    )
+    moodle_calendar_connected_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        default=None,
+    )
+    moodle_calendar_sync_status: Mapped[str] = mapped_column(
+        String(50),
+        default="NOT_CONNECTED",
+        server_default="NOT_CONNECTED",
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

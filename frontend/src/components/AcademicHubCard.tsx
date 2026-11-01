@@ -56,6 +56,13 @@ export function AcademicHubCard(): React.JSX.Element {
   const [classroomConnected, setClassroomConnected] = useState<boolean>(false);
   const [classroomSyncStatus, setClassroomSyncStatus] = useState<string>("NOT_CONNECTED");
   const [showSandbox, setShowSandbox] = useState<boolean>(false);
+  const [moodleCalendarUrl, setMoodleCalendarUrl] = useState<string>("");
+  const [moodleIcalConnected, setMoodleIcalConnected] = useState<boolean>(false);
+  const [moodleIcalSyncStatus, setMoodleIcalSyncStatus] = useState<string>("NOT_CONNECTED");
+  const [showLegacyDutic, setShowLegacyDutic] = useState<boolean>(false);
+  const [courseFilter, setCourseFilter] = useState<"all" | "dutic" | "classroom">("all");
+  const [assignmentFilter, setAssignmentFilter] = useState<"all" | "dutic" | "classroom">("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [moodleSession, setMoodleSession] = useState<string>("demo");
   const [sesskey, setSesskey] = useState<string>("demo");
   const [syncing, setSyncing] = useState<boolean>(false);
@@ -126,6 +133,16 @@ export function AcademicHubCard(): React.JSX.Element {
         const sData = await statusRes.json();
         setClassroomConnected(Boolean(sData.connected));
         setClassroomSyncStatus(sData.sync_status || "NOT_CONNECTED");
+      }
+
+      // Check Moodle iCal connection status
+      const icalStatusRes = await fetch(`${apiUrl}/dutic/ical/status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => null);
+      if (icalStatusRes && icalStatusRes.ok) {
+        const icalData = await icalStatusRes.json();
+        setMoodleIcalConnected(Boolean(icalData.connected));
+        setMoodleIcalSyncStatus(icalData.sync_status || "NOT_CONNECTED");
       }
     } catch {
       // In development, handle connection gracefully
@@ -295,6 +312,204 @@ export function AcademicHubCard(): React.JSX.Element {
     }
   };
 
+  const handleClearAssignments = async (origin?: string) => {
+    const token = getStoredToken();
+    if (!token) {
+      setSyncStatus("Debes iniciar sesion con Google UNSA arriba antes de limpiar tareas.");
+      return;
+    }
+
+    setSyncing(true);
+    setSyncStatus("Eliminando tareas de la base de datos...");
+
+    try {
+      const url = origin
+        ? `${apiUrl}/classroom/assignments?origin=${origin}`
+        : `${apiUrl}/classroom/assignments`;
+      const res = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.detail?.message || `Error HTTP ${res.status}`;
+        setSyncStatus(`Error al eliminar tareas: ${msg}`);
+        return;
+      }
+
+      const data = await res.json();
+      setSyncStatus(`Tareas eliminadas: ${data.deleted_count} registros borrados de la base de datos.`);
+      await fetchAcademicData();
+    } catch (err: unknown) {
+      const errStr = err instanceof Error ? err.message : String(err);
+      setSyncStatus(`Error de red al limpiar tareas: ${errStr}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleClearCourses = async (origin?: string) => {
+    const token = getStoredToken();
+    if (!token) {
+      setSyncStatus("Debes iniciar sesion con Google UNSA arriba antes de limpiar cursos.");
+      return;
+    }
+
+    setSyncing(true);
+    setSyncStatus("Eliminando cursos (y tareas asociadas) de la base de datos...");
+
+    try {
+      const url = origin
+        ? `${apiUrl}/classroom/courses?origin=${origin}`
+        : `${apiUrl}/classroom/courses`;
+      const res = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.detail?.message || `Error HTTP ${res.status}`;
+        setSyncStatus(`Error al eliminar cursos: ${msg}`);
+        return;
+      }
+
+      const data = await res.json();
+      setSyncStatus(`Cursos eliminados: ${data.deleted_count} registros borrados de la base de datos.`);
+      await fetchAcademicData();
+    } catch (err: unknown) {
+      const errStr = err instanceof Error ? err.message : String(err);
+      setSyncStatus(`Error de red al limpiar cursos: ${errStr}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleSubscribeMoodleIcal = async (calendarUrl: string) => {
+    const token = getStoredToken();
+    if (!token) {
+      setSyncStatus("Debes iniciar sesion con Google UNSA arriba antes de vincular tu calendario.");
+      return;
+    }
+
+    if (!calendarUrl || !calendarUrl.trim()) {
+      setSyncStatus("Ingresa una URL de exportacion de calendario iCal de Moodle.");
+      return;
+    }
+
+    setSyncing(true);
+    setSyncStatus("Validando y suscribiendo URL de calendario iCal Moodle...");
+
+    try {
+      const res = await fetch(`${apiUrl}/dutic/ical/subscribe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ calendar_url: calendarUrl.trim() }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.detail?.message || `Error HTTP ${res.status}`;
+        setSyncStatus(`Error al suscribir calendario: ${msg}`);
+        return;
+      }
+
+      const data = await res.json();
+      setMoodleIcalConnected(true);
+      setMoodleIcalSyncStatus(data.sync_status || "SUBSCRIBED");
+      setSyncStatus("Calendario suscrito exitosamente. Sincronizando eventos y tareas...");
+      await handleSyncMoodleIcal();
+    } catch (err: unknown) {
+      const errStr = err instanceof Error ? err.message : String(err);
+      setSyncStatus(`Error de red al suscribir calendario: ${errStr}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleSyncMoodleIcal = async (adHocUrl?: string) => {
+    const token = getStoredToken();
+    if (!token) {
+      setSyncStatus("Debes iniciar sesion con Google UNSA arriba antes de sincronizar.");
+      return;
+    }
+
+    setSyncing(true);
+    setSyncStatus("Descargando eventos de calendario iCal de Moodle...");
+
+    try {
+      const payload = adHocUrl ? { calendar_url: adHocUrl } : {};
+      const res = await fetch(`${apiUrl}/dutic/ical/sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.detail?.message || `Error HTTP ${res.status}`;
+        if (err.detail?.code === "REVOKED_TOKEN") {
+          setMoodleIcalConnected(false);
+          setMoodleIcalSyncStatus("REVOKED");
+          setSyncStatus("El token del calendario ha sido revocado en Moodle. Por favor genera un enlace nuevo.");
+        } else {
+          setSyncStatus(`Fallo de sincronizacion iCal: ${msg}`);
+        }
+        return;
+      }
+
+      const data = await res.json();
+      setSyncStatus(
+        `Sincronizacion iCal completada: ${data.events_parsed_count} eventos encontrados, ${data.synced_assignments_count} tareas registradas en PostgreSQL.`
+      );
+      setMoodleIcalConnected(true);
+      setMoodleIcalSyncStatus("SYNCED");
+      await fetchAcademicData();
+    } catch (err: unknown) {
+      const errStr = err instanceof Error ? err.message : String(err);
+      setSyncStatus(`Error de red: ${errStr}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const filteredCourses = courses.filter((course) => {
+    const isMoodle = course.classroom_course_id.startsWith("moodle-");
+    if (courseFilter === "dutic" && !isMoodle) return false;
+    if (courseFilter === "classroom" && isMoodle) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = course.name.toLowerCase().includes(q);
+      const matchSection = course.section ? course.section.toLowerCase().includes(q) : false;
+      const matchId = course.classroom_course_id.toLowerCase().includes(q);
+      return matchName || matchSection || matchId;
+    }
+    return true;
+  });
+
+  const filteredAssignments = assignments.filter((assignment) => {
+    if (assignmentFilter === "dutic" && assignment.origin !== "moodle") return false;
+    if (assignmentFilter === "classroom" && assignment.origin === "moodle") return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = assignment.title.toLowerCase().includes(q);
+      const matchDesc = assignment.description ? assignment.description.toLowerCase().includes(q) : false;
+      return matchTitle || matchDesc;
+    }
+    return true;
+  });
+
   return (
     <section className="border border-slate-200 bg-white rounded-lg p-6 mb-8 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 mb-6 gap-3">
@@ -306,9 +521,30 @@ export function AcademicHubCard(): React.JSX.Element {
             Inspeccion directa de cursos y tareas persistidas en PostgreSQL (DUTIC Moodle / Classroom)
           </p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap items-center space-x-2 gap-y-2">
+          <div className="flex items-center space-x-1.5 mr-1">
+            <button
+              onClick={() => handleClearAssignments()}
+              disabled={syncing || !tokenPresent || assignments.length === 0}
+              className="text-xs px-2.5 py-1.5 rounded font-medium transition border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-40"
+              title="Borra todas las tareas registradas de la base de datos"
+            >
+              Borrar Tareas
+            </button>
+            <button
+              onClick={() => handleClearCourses()}
+              disabled={syncing || !tokenPresent || courses.length === 0}
+              className="text-xs px-2.5 py-1.5 rounded font-medium transition border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-40"
+              title="Borra todos los cursos y sus tareas asociadas"
+            >
+              Borrar Cursos
+            </button>
+          </div>
           <button
-            onClick={() => setActiveTab("courses")}
+            onClick={() => {
+              setActiveTab("courses");
+              setSearchQuery("");
+            }}
             className={`text-xs px-3 py-1.5 rounded font-semibold transition ${
               activeTab === "courses"
                 ? "bg-blue-600 text-white"
@@ -318,7 +554,10 @@ export function AcademicHubCard(): React.JSX.Element {
             Cursos ({courses.length})
           </button>
           <button
-            onClick={() => setActiveTab("assignments")}
+            onClick={() => {
+              setActiveTab("assignments");
+              setSearchQuery("");
+            }}
             className={`text-xs px-3 py-1.5 rounded font-semibold transition ${
               activeTab === "assignments"
                 ? "bg-blue-600 text-white"
@@ -454,55 +693,66 @@ export function AcademicHubCard(): React.JSX.Element {
           </div>
         ) : (
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-              Sincronizacion DUTIC Moodle
-            </h3>
-            <p className="text-xs text-slate-600 mb-3">
-              Puedes probar la extraccion directamente con 1 clic en modo demostracion UNSA o ingresar tus credenciales reales:
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                  Cookie MoodleSession:
-                </label>
-                <input
-                  type="text"
-                  value={moodleSession}
-                  onChange={(e) => setMoodleSession(e.target.value)}
-                  className="w-full text-xs font-mono p-2 border border-slate-300 rounded bg-white"
-                  placeholder="demo o valor de cookie de dutic"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                  Clave sesskey:
-                </label>
-                <input
-                  type="text"
-                  value={sesskey}
-                  onChange={(e) => setSesskey(e.target.value)}
-                  className="w-full text-xs font-mono p-2 border border-slate-300 rounded bg-white"
-                  placeholder="demo o M.cfg.sesskey"
-                />
-              </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                Suscripcion de Calendario iCal Moodle (DUTIC)
+              </h3>
+              {moodleIcalConnected ? (
+                <span className="inline-flex items-center text-[11px] font-semibold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full">
+                  Calendario iCal Vinculado
+                </span>
+              ) : (
+                <span className="inline-flex items-center text-[11px] font-semibold text-slate-600 bg-slate-100 border border-slate-300 px-2.5 py-0.5 rounded-full">
+                  No Vinculado
+                </span>
+              )}
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <p className="text-xs text-slate-600 mb-3">
+              Conecta tu calendario de Moodle para extraer entregas y examenes automaticamente sin requerir credenciales ni cookies activas:
+            </p>
+
+            <div className="mb-3">
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                URL de Exportacion de Calendario iCal:
+              </label>
+              <input
+                type="text"
+                value={moodleCalendarUrl}
+                onChange={(e) => setMoodleCalendarUrl(e.target.value)}
+                className="w-full text-xs font-mono p-2 border border-slate-300 rounded bg-white"
+                placeholder="https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?userid=...&authtoken=..."
+              />
+              <p className="text-[10px] text-slate-400 mt-1">
+                En Moodle: Navega a Calendario &rarr; Exportar calendario &rarr; Selecciona &quot;Todos los eventos&quot; y &quot;Eventos recientes y proximos&quot; &rarr; Copiar enlace.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-3">
               <button
-                onClick={() => handleTriggerSync(moodleSession, sesskey)}
-                disabled={syncing || !tokenPresent}
-                className="text-xs bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded transition"
+                onClick={() => handleSubscribeMoodleIcal(moodleCalendarUrl)}
+                disabled={syncing || !tokenPresent || !moodleCalendarUrl}
+                className="text-xs bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded transition shadow-sm"
               >
-                {syncing ? "Sincronizando..." : "Sincronizar DUTIC"}
+                {syncing ? "Procesando..." : "Vincular y Sincronizar Calendario iCal"}
               </button>
 
+              {moodleIcalConnected && (
+                <button
+                  onClick={() => handleSyncMoodleIcal()}
+                  disabled={syncing || !tokenPresent}
+                  className="text-xs bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white font-semibold px-3 py-2 rounded transition"
+                >
+                  Sincronizar DUTIC iCal
+                </button>
+              )}
+
               <button
-                onClick={() => handleTriggerSync("demo", "demo")}
+                onClick={() => handleSyncMoodleIcal("demo")}
                 disabled={syncing || !tokenPresent}
-                className="text-xs bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded transition"
+                className="text-xs bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold px-3 py-2 rounded transition"
               >
-                Cargar Cursos de Demostracion UNSA (1 Clic)
+                Cargar Feed Demo UNSA (1 Clic)
               </button>
 
               <button
@@ -512,7 +762,67 @@ export function AcademicHubCard(): React.JSX.Element {
               >
                 Refrescar Lista
               </button>
+
+              <button
+                type="button"
+                onClick={() => setShowLegacyDutic(!showLegacyDutic)}
+                className="text-xs text-slate-500 hover:text-slate-800 underline ml-auto py-1"
+              >
+                {showLegacyDutic ? "Ocultar Metodo Cookie" : "Metodo Legacy / Cookie MoodleSession"}
+              </button>
             </div>
+
+            {showLegacyDutic && (
+              <div className="p-3 bg-slate-100 border border-slate-200 rounded text-xs space-y-2 mt-3">
+                <div className="font-semibold text-slate-700">Metodo Legacy con Cookie MoodleSession:</div>
+                <p className="text-[11px] text-slate-600">
+                  Requiere extraer la cookie MoodleSession de las herramientas de desarrollador del navegador.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Cookie MoodleSession:
+                    </label>
+                    <input
+                      type="text"
+                      value={moodleSession}
+                      onChange={(e) => setMoodleSession(e.target.value)}
+                      className="w-full text-xs font-mono p-1.5 border border-slate-300 rounded bg-white"
+                      placeholder="demo o valor de cookie de dutic"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Clave sesskey:
+                    </label>
+                    <input
+                      type="text"
+                      value={sesskey}
+                      onChange={(e) => setSesskey(e.target.value)}
+                      className="w-full text-xs font-mono p-1.5 border border-slate-300 rounded bg-white"
+                      placeholder="demo o M.cfg.sesskey"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    onClick={() => handleTriggerSync(moodleSession, sesskey)}
+                    disabled={syncing || !tokenPresent}
+                    className="text-xs bg-purple-700 hover:bg-purple-800 disabled:opacity-50 text-white font-semibold px-3 py-1.5 rounded transition"
+                  >
+                    {syncing ? "Sincronizando..." : "Sincronizar via Cookie"}
+                  </button>
+                  <button
+                    onClick={() => handleTriggerSync("demo", "demo")}
+                    disabled={syncing || !tokenPresent}
+                    className="text-xs bg-slate-600 hover:bg-slate-700 disabled:opacity-50 text-white font-semibold px-3 py-1.5 rounded transition"
+                  >
+                    Mock Cookie Demo
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -532,13 +842,73 @@ export function AcademicHubCard(): React.JSX.Element {
       {/* Visualizacion de Cursos */}
       {activeTab === "courses" && (
         <div>
+          {/* Barra de Filtros de Cursos */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mb-4 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">Filtrar:</span>
+              <button
+                onClick={() => setCourseFilter("all")}
+                className={`text-xs px-2.5 py-1 rounded font-medium transition ${
+                  courseFilter === "all"
+                    ? "bg-slate-800 text-white shadow-xs"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                Todos ({courses.length})
+              </button>
+              <button
+                onClick={() => setCourseFilter("dutic")}
+                className={`text-xs px-2.5 py-1 rounded font-medium transition ${
+                  courseFilter === "dutic"
+                    ? "bg-purple-600 text-white shadow-xs"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                DUTIC Moodle ({courses.filter((c) => c.classroom_course_id.startsWith("moodle-")).length})
+              </button>
+              <button
+                onClick={() => setCourseFilter("classroom")}
+                className={`text-xs px-2.5 py-1 rounded font-medium transition ${
+                  courseFilter === "classroom"
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                Classroom ({courses.filter((c) => !c.classroom_course_id.startsWith("moodle-")).length})
+              </button>
+            </div>
+
+            <div className="flex items-center space-x-1.5">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar curso o seccion..."
+                className="text-xs p-1.5 px-2.5 border border-slate-300 rounded bg-white w-full sm:w-48"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="text-xs text-slate-400 hover:text-slate-700 px-1 font-mono font-bold"
+                  title="Limpiar busqueda"
+                >
+                  X
+                </button>
+              )}
+            </div>
+          </div>
+
           {courses.length === 0 ? (
             <div className="text-center py-8 text-slate-400 text-xs border border-dashed border-slate-200 rounded">
-              No hay cursos sincronizados en la base de datos aun. Haz clic en &#34;Cargar Cursos de Demostracion UNSA&#34; o sincroniza arriba.
+              No hay cursos sincronizados en la base de datos aun. Sincroniza desde DUTIC Moodle o Google Classroom arriba.
+            </div>
+          ) : filteredCourses.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 text-xs border border-dashed border-slate-200 rounded">
+              Ningun curso coincide con los filtros aplicados.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {courses.map((course) => (
+              {filteredCourses.map((course) => (
                 <div
                   key={course.id}
                   className="p-3 border border-slate-200 rounded-lg hover:border-blue-300 transition bg-white shadow-xs"
@@ -573,13 +943,73 @@ export function AcademicHubCard(): React.JSX.Element {
       {/* Visualizacion de Tareas */}
       {activeTab === "assignments" && (
         <div>
+          {/* Barra de Filtros de Tareas */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mb-4 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">Filtrar:</span>
+              <button
+                onClick={() => setAssignmentFilter("all")}
+                className={`text-xs px-2.5 py-1 rounded font-medium transition ${
+                  assignmentFilter === "all"
+                    ? "bg-slate-800 text-white shadow-xs"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                Todas ({assignments.length})
+              </button>
+              <button
+                onClick={() => setAssignmentFilter("dutic")}
+                className={`text-xs px-2.5 py-1 rounded font-medium transition ${
+                  assignmentFilter === "dutic"
+                    ? "bg-purple-600 text-white shadow-xs"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                DUTIC Moodle ({assignments.filter((a) => a.origin === "moodle").length})
+              </button>
+              <button
+                onClick={() => setAssignmentFilter("classroom")}
+                className={`text-xs px-2.5 py-1 rounded font-medium transition ${
+                  assignmentFilter === "classroom"
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                Classroom ({assignments.filter((a) => a.origin !== "moodle").length})
+              </button>
+            </div>
+
+            <div className="flex items-center space-x-1.5">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar tarea..."
+                className="text-xs p-1.5 px-2.5 border border-slate-300 rounded bg-white w-full sm:w-48"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="text-xs text-slate-400 hover:text-slate-700 px-1 font-mono font-bold"
+                  title="Limpiar busqueda"
+                >
+                  X
+                </button>
+              )}
+            </div>
+          </div>
+
           {assignments.length === 0 ? (
             <div className="text-center py-8 text-slate-400 text-xs border border-dashed border-slate-200 rounded">
-              No hay tareas registradas aun. Sincroniza cursos para extraer las entregas pendientes.
+              No hay tareas registradas aun. Sincroniza desde DUTIC Moodle o Google Classroom para extraer entregas pendientes.
+            </div>
+          ) : filteredAssignments.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 text-xs border border-dashed border-slate-200 rounded">
+              Ninguna tarea coincide con los filtros aplicados.
             </div>
           ) : (
             <div className="space-y-3">
-              {assignments.map((assignment) => (
+              {filteredAssignments.map((assignment) => (
                 <div
                   key={assignment.id}
                   className="p-3 border border-slate-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:border-blue-300 transition bg-white"

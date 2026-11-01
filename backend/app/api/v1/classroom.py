@@ -5,7 +5,7 @@ Classroom API endpoints:
 - GET /api/v1/classroom/assignments: List synced coursework for the authenticated student
 """
 
-from typing import List
+from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -73,3 +73,54 @@ def get_student_assignments(
         .all()
     )
     return assignments
+
+
+@router.delete("/assignments")
+def clear_student_assignments(
+    origin: Optional[str] = None,
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """
+    Clears academic assignments for the authenticated student.
+    Can filter by origin ('moodle', 'classroom') or clear all if unspecified.
+    """
+    query = db.query(ClassroomAssignment).filter(ClassroomAssignment.user_id == current_user.id)
+    if origin:
+        query = query.filter(ClassroomAssignment.origin == origin)
+    count = query.delete(synchronize_session=False)
+    db.commit()
+    return {
+        "deleted_count": count,
+        "origin": origin or "all",
+        "message": "Assignments cleared successfully",
+    }
+
+
+@router.delete("/courses")
+def clear_student_courses(
+    origin: Optional[str] = None,
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """
+    Clears academic courses for the authenticated student.
+    Can filter by origin ('moodle', 'classroom') or clear all if unspecified.
+    Cascades deletion to associated assignments.
+    """
+    query = db.query(ClassroomCourse).filter(ClassroomCourse.user_id == current_user.id)
+    if origin == "moodle":
+        query = query.filter(ClassroomCourse.classroom_course_id.like("moodle-%"))
+    elif origin == "classroom":
+        query = query.filter(~ClassroomCourse.classroom_course_id.like("moodle-%"))
+
+    courses = query.all()
+    count = len(courses)
+    for course in courses:
+        db.delete(course)
+    db.commit()
+    return {
+        "deleted_count": count,
+        "origin": origin or "all",
+        "message": "Courses cleared successfully",
+    }

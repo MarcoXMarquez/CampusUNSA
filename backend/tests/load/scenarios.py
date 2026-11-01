@@ -32,6 +32,11 @@ BASE_SCENARIOS = (
     Scenario("GET", "/api/v1/dutic/courses"),
     Scenario("GET", "/api/v1/dutic/assignments"),
     Scenario("POST", "/api/v1/dutic/sync"),
+    Scenario("DELETE", "/api/v1/classroom/assignments"),
+    Scenario("DELETE", "/api/v1/classroom/courses"),
+    Scenario("GET", "/api/v1/dutic/ical/status"),
+    Scenario("POST", "/api/v1/dutic/ical/subscribe"),
+    Scenario("POST", "/api/v1/dutic/ical/sync"),
 )
 
 

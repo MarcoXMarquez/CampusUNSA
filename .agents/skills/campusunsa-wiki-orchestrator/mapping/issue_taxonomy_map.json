@@ -185,6 +185,11 @@
       "target_page": "Google-Classroom-Sync-Service.md",
       "category": "academic_hub",
       "title": "Automated Google Classroom OAuth Consent & Refresh Token Lifecycle"
+    },
+    "86": {
+      "category": "academic_hub",
+      "target_page": "DUTIC-Moodle-Extraction-Service.md",
+      "title": "UNSA Moodle iCal Calendar URL Subscription and Ingestion Engine"
     }
   },
   "dynamic_heuristics": {

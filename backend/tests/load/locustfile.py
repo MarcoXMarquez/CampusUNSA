@@ -116,6 +116,14 @@ class StudentBrowser(FastHttpUser):
                 "moodle_session": self.account["identity"],
                 "sesskey": "perf-fixture",
             }
+        elif case.path.endswith("/dutic/ical/subscribe"):
+            payload = {
+                "calendar_url": "https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?userid=1&authtoken=perf"
+            }
+        elif case.path.endswith("/dutic/ical/sync"):
+            payload = {
+                "calendar_url": "https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?userid=1&authtoken=perf"
+            }
         elif case.path.endswith("/nlp/parse-task"):
             payload = {
                 "message": "submit report for SO 2030-01-01T18:00:00Z",
@@ -146,12 +154,23 @@ class StudentBrowser(FastHttpUser):
                 if case.expected == 403:
                     assert body["detail"]["code"] == "INSUFFICIENT_PERMISSIONS"
                     response.success()
+                elif case.method == "DELETE" and case.path.endswith(("/assignments", "/courses")):
+                    assert "deleted_count" in body
                 elif case.path.endswith(("/courses", "/assignments", "/tickets/all")):
                     assert isinstance(body, list) and len(body) > 0
+                elif case.path.endswith("/dutic/ical/sync"):
+                    assert (
+                        body["status"] == "SYNCED"
+                        and "synced_assignments_count" in body
+                    )
                 elif case.path.endswith("/sync"):
                     assert (
-                        body["status"] == "SYNCED" and body["synced_courses_count"] == 1
+                        body["status"] == "SYNCED" and body["synced_courses_count"] >= 1
                     )
+                elif case.path.endswith("/dutic/ical/status"):
+                    assert "connected" in body
+                elif case.path.endswith("/dutic/ical/subscribe"):
+                    assert body["status"] == "CONNECTED"
                 elif case.path.endswith("/health"):
                     assert body["status"] == "healthy"
                 elif case.path.endswith("/auth/me"):

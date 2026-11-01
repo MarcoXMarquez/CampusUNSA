@@ -29,4 +29,27 @@ describe("AcademicHubCard Component", () => {
     render(<AcademicHubCard />);
     expect(screen.getByText("Modo Sandbox / Opciones Avanzadas")).toBeDefined();
   });
+
+  it("renders clean tasks and courses buttons for clean slate testing", () => {
+    render(<AcademicHubCard />);
+    expect(screen.getByText("Borrar Tareas")).toBeDefined();
+    expect(screen.getByText("Borrar Cursos")).toBeDefined();
+  });
+
+  it("renders filter buttons and search input", () => {
+    render(<AcademicHubCard />);
+    expect(screen.getByText("Filtrar:")).toBeDefined();
+    expect(screen.getByPlaceholderText("Buscar curso o seccion...")).toBeDefined();
+  });
+
+  it("renders Moodle iCal controls when switching to DUTIC tab", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    render(<AcademicHubCard />);
+    const duticTab = screen.getByText("Sincronizacion DUTIC Moodle");
+    fireEvent.click(duticTab);
+
+    expect(screen.getByText("Suscripcion de Calendario iCal Moodle (DUTIC)")).toBeDefined();
+    expect(screen.getByText("Vincular y Sincronizar Calendario iCal")).toBeDefined();
+    expect(screen.getByText("Cargar Feed Demo UNSA (1 Clic)")).toBeDefined();
+  });
 });
