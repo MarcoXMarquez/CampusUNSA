@@ -9,8 +9,11 @@ Handles:
 """
 
 from datetime import datetime, timezone
+import ipaddress
+import posixpath
+import socket
 from typing import Any, Dict, List, Optional
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -24,12 +27,44 @@ from app.services.token_encryption import decrypt_token
 class DuticIcalService:
     """Service client for fetching, parsing, and ingesting Moodle iCal feeds."""
 
-    ALLOWED_HOSTS = ("aulavirtual.unsa.edu.pe", "localhost", "127.0.0.1", "testserver")
+    ALLOWED_SCHEME = "https"
+    ALLOWED_HOST = "aulavirtual.unsa.edu.pe"
+
+    @staticmethod
+    def _verify_host_ip_safety(hostname: str) -> None:
+        """
+        Resolves hostname and verifies that target IPs do not point to loopback,
+        private (RFC 1918), link-local, or cloud metadata addresses.
+        """
+        try:
+            addr_info = socket.getaddrinfo(hostname, 443, proto=socket.IPPROTO_TCP)
+            for item in addr_info:
+                ip_str = item[4][0]
+                ip = ipaddress.ip_address(ip_str)
+                if (
+                    ip.is_private
+                    or ip.is_loopback
+                    or ip.is_reserved
+                    or ip.is_link_local
+                    or ip.is_multicast
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail={
+                            "code": "SSRF_DETECTED",
+                            "message": "Resolved host IP address is non-public or prohibited",
+                        },
+                    )
+        except socket.gaierror:
+            # Tolerates environments where external DNS lookup is unavailable (e.g., isolated testing)
+            pass
 
     @classmethod
-    def validate_calendar_url(cls, url: str) -> None:
+    def validate_calendar_url(cls, url: str) -> str:
         """
-        Validates that the provided URL belongs to the official UNSA Moodle domain.
+        Validates that the provided URL belongs strictly to the official UNSA Moodle domain,
+        uses HTTPS, contains legitimate calendar export endpoints, and prevents SSRF attacks.
+        Returns the sanitized canonical URL.
         """
         if not url or not url.strip():
             raise HTTPException(
@@ -45,15 +80,89 @@ class DuticIcalService:
             if not parsed.scheme or not parsed.netloc:
                 raise ValueError("Malformed URL")
 
-            hostname = parsed.hostname or ""
-            if not any(hostname == allowed or hostname.endswith(f".{allowed}") for allowed in cls.ALLOWED_HOSTS):
+            # 1. Strict scheme enforcement (HTTPS only)
+            if parsed.scheme.lower() != cls.ALLOWED_SCHEME:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "code": "INVALID_CALENDAR_SCHEME",
+                        "message": "Calendar URL must use secure HTTPS protocol",
+                    },
+                )
+
+            # 2. Reject embedded userinfo/credentials
+            if parsed.username or parsed.password:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "code": "INVALID_CALENDAR_CREDENTIALS",
+                        "message": "User credentials in URL are strictly prohibited",
+                    },
+                )
+
+            # 3. Reject non-standard ports to prevent internal port scanning
+            if parsed.port is not None and parsed.port != 443:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "code": "INVALID_CALENDAR_PORT",
+                        "message": "Custom network ports are strictly prohibited",
+                    },
+                )
+
+            # 4. Strict hostname whitelist
+            hostname = (parsed.hostname or "").lower().strip()
+            if hostname != cls.ALLOWED_HOST:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail={
                         "code": "INVALID_CALENDAR_DOMAIN",
-                        "message": "Calendar URL must belong to aulavirtual.unsa.edu.pe",
+                        "message": f"Calendar URL must belong strictly to {cls.ALLOWED_HOST}",
                     },
                 )
+
+            # 5. Path traversal prevention and endpoint verification
+            raw_path = parsed.path or ""
+            if ".." in raw_path or "\\" in raw_path:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "code": "INVALID_CALENDAR_PATH",
+                        "message": "Path traversal sequences are strictly prohibited",
+                    },
+                )
+
+            norm_path = posixpath.normpath(raw_path)
+            if not (norm_path.endswith("/calendar/export_execute.php") or norm_path.endswith("/calendar/export.php")):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "code": "INVALID_CALENDAR_PATH",
+                        "message": "URL must point to a legitimate Moodle calendar export endpoint",
+                    },
+                )
+
+            # 6. Moodle calendar token presence validation
+            query_params = parse_qs(parsed.query, keep_blank_values=False)
+            token_keys = {"authtoken", "token"}
+            if not any(k.lower() in token_keys for k in query_params):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "code": "MISSING_CALENDAR_TOKEN",
+                        "message": "Calendar URL must contain a valid authtoken or token parameter",
+                    },
+                )
+
+            # 7. Private IP / SSRF resolution check
+            cls._verify_host_ip_safety(hostname)
+
+            # 8. Construct canonical URL (scheme and host are fixed constants)
+            canonical_url = f"https://{cls.ALLOWED_HOST}{norm_path}"
+            if parsed.query:
+                canonical_url = f"{canonical_url}?{parsed.query}"
+            return canonical_url
+
         except HTTPException:
             raise
         except Exception as exc:
@@ -147,7 +256,6 @@ class DuticIcalService:
         effective_url: str = ""
         if calendar_url and calendar_url.strip():
             effective_url = calendar_url.strip()
-            cls.validate_calendar_url(effective_url)
         else:
             if not user.moodle_calendar_url:
                 raise HTTPException(
@@ -159,6 +267,8 @@ class DuticIcalService:
                 )
             effective_url = decrypt_token(user.moodle_calendar_url)
 
+        canonical_url = cls.validate_calendar_url(effective_url)
+
         headers = {
             "User-Agent": (
                 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -168,8 +278,8 @@ class DuticIcalService:
         }
 
         try:
-            with httpx.Client(timeout=15.0) as client:
-                response = client.get(effective_url, headers=headers)
+            with httpx.Client(timeout=15.0, follow_redirects=False) as client:
+                response = client.get(canonical_url, headers=headers)
 
                 # Check for session/token rejection or login redirects
                 content_type = response.headers.get("content-type", "").lower()

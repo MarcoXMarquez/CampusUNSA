@@ -190,6 +190,11 @@
       "category": "academic_hub",
       "target_page": "DUTIC-Moodle-Extraction-Service.md",
       "title": "UNSA Moodle iCal Calendar URL Subscription and Ingestion Engine"
+    },
+    "91": {
+      "category": "academic_hub",
+      "target_page": "DUTIC-Moodle-Extraction-Service.md",
+      "title": "Moodle iCal URL Validation and SSRF Hardening (CWE-918)"
     }
   },
   "dynamic_heuristics": {

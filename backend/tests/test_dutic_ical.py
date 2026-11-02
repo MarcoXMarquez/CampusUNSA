@@ -376,3 +376,209 @@ def test_clear_courses_endpoint(
         assert len(remaining_all) == 0
 
     app.dependency_overrides.clear()
+
+
+def test_dutic_ical_rejects_insecure_http_scheme(
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+) -> None:
+    """Tests that subscribing with insecure http:// scheme is rejected."""
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    with TestClient(app) as client:
+        res = client.post(
+            "/api/v1/dutic/ical/subscribe",
+            headers=auth_headers,
+            json={"calendar_url": "http://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?authtoken=abc"},
+        )
+        assert res.status_code == 400
+        data = res.json()
+        assert data["detail"]["code"] == "INVALID_CALENDAR_SCHEME"
+
+    app.dependency_overrides.clear()
+
+
+def test_dutic_ical_rejects_loopback_and_internal_hosts(
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+) -> None:
+    """Tests that loopback, private IP, and unauthorized host targets are rejected."""
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    malicious_urls = [
+        "https://localhost/calendar/export_execute.php?authtoken=abc",
+        "https://127.0.0.1/calendar/export_execute.php?authtoken=abc",
+        "https://169.254.169.254/latest/meta-data/",
+        "https://10.0.0.1/calendar/export_execute.php?authtoken=abc",
+        "https://attacker-aulavirtual.unsa.edu.pe/calendar/export_execute.php?authtoken=abc",
+        "https://aulavirtual.unsa.edu.pe.attacker.com/calendar/export_execute.php?authtoken=abc",
+    ]
+
+    with TestClient(app) as client:
+        for bad_url in malicious_urls:
+            res = client.post(
+                "/api/v1/dutic/ical/subscribe",
+                headers=auth_headers,
+                json={"calendar_url": bad_url},
+            )
+            assert res.status_code == 400
+            assert res.json()["detail"]["code"] in ("INVALID_CALENDAR_DOMAIN", "INVALID_CALENDAR_SCHEME")
+
+    app.dependency_overrides.clear()
+
+
+def test_dutic_ical_rejects_custom_ports(
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+) -> None:
+    """Tests that non-standard ports are rejected to prevent port-scanning SSRF."""
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    with TestClient(app) as client:
+        res = client.post(
+            "/api/v1/dutic/ical/subscribe",
+            headers=auth_headers,
+            json={"calendar_url": "https://aulavirtual.unsa.edu.pe:8443/2026B/calendar/export_execute.php?authtoken=abc"},
+        )
+        assert res.status_code == 400
+        assert res.json()["detail"]["code"] == "INVALID_CALENDAR_PORT"
+
+    app.dependency_overrides.clear()
+
+
+def test_dutic_ical_rejects_userinfo_credentials(
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+) -> None:
+    """Tests that embedded credentials in the URL are rejected."""
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    with TestClient(app) as client:
+        res = client.post(
+            "/api/v1/dutic/ical/subscribe",
+            headers=auth_headers,
+            json={"calendar_url": "https://attacker:pass@aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?authtoken=abc"},
+        )
+        assert res.status_code == 400
+        assert res.json()["detail"]["code"] == "INVALID_CALENDAR_CREDENTIALS"
+
+    app.dependency_overrides.clear()
+
+
+def test_dutic_ical_rejects_path_traversal_and_non_calendar_endpoints(
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+) -> None:
+    """Tests that path traversal and non-export Moodle endpoints are rejected."""
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    bad_endpoints = [
+        "https://aulavirtual.unsa.edu.pe/2026B/calendar/../../admin/settings.php?authtoken=abc",
+        "https://aulavirtual.unsa.edu.pe/2026B/course/view.php?id=1&authtoken=abc",
+        "https://aulavirtual.unsa.edu.pe/login/index.php?authtoken=abc",
+    ]
+
+    with TestClient(app) as client:
+        for bad_url in bad_endpoints:
+            res = client.post(
+                "/api/v1/dutic/ical/subscribe",
+                headers=auth_headers,
+                json={"calendar_url": bad_url},
+            )
+            assert res.status_code == 400
+            assert res.json()["detail"]["code"] == "INVALID_CALENDAR_PATH"
+
+    app.dependency_overrides.clear()
+
+
+def test_dutic_ical_rejects_missing_authtoken(
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+) -> None:
+    """Tests that calendar URLs lacking a token parameter are rejected."""
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    with TestClient(app) as client:
+        res = client.post(
+            "/api/v1/dutic/ical/subscribe",
+            headers=auth_headers,
+            json={"calendar_url": "https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?userid=123"},
+        )
+        assert res.status_code == 400
+        assert res.json()["detail"]["code"] == "MISSING_CALENDAR_TOKEN"
+
+    app.dependency_overrides.clear()
+
+
+def test_dutic_ical_sync_enforces_canonical_url_and_no_redirects(
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+    auth_student: User,
+) -> None:
+    """Tests that sync reconstructs canonical https://aulavirtual.unsa.edu.pe base URL and sets follow_redirects=False."""
+    from app.services.token_encryption import encrypt_token
+
+    valid_url = "https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?userid=18277&authtoken=validtoken"
+    auth_student.moodle_calendar_url = encrypt_token(valid_url)
+    auth_student.moodle_calendar_sync_status = "CONNECTED"
+    test_db_session.commit()
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.text = SAMPLE_ICS_FEED
+    mock_resp.headers = {"content-type": "text/calendar"}
+
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    with patch("httpx.Client") as mock_client_cls:
+        mock_client_instance = MagicMock()
+        mock_client_instance.__enter__.return_value = mock_client_instance
+        mock_client_instance.get.return_value = mock_resp
+        mock_client_cls.return_value = mock_client_instance
+
+        with TestClient(app) as client:
+            res = client.post(
+                "/api/v1/dutic/ical/sync",
+                headers=auth_headers,
+                json={},
+            )
+            assert res.status_code == 200
+
+            # Verify httpx.Client was initialized with follow_redirects=False
+            mock_client_cls.assert_called_once()
+            call_kwargs = mock_client_cls.call_args[1]
+            assert call_kwargs.get("follow_redirects") is False
+
+            # Verify client.get was called with canonical https://aulavirtual.unsa.edu.pe URL
+            mock_client_instance.get.assert_called_once()
+            called_url = mock_client_instance.get.call_args[0][0]
+            assert called_url.startswith("https://aulavirtual.unsa.edu.pe/")
+
+    app.dependency_overrides.clear()
+
+
+@patch("socket.getaddrinfo")
+def test_dutic_ical_rejects_ssrf_when_dns_resolves_to_private_ip(
+    mock_getaddrinfo: MagicMock,
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+) -> None:
+    """Tests that if DNS resolution returns a private/loopback/cloud metadata IP, SSRF is rejected."""
+    mock_getaddrinfo.return_value = [
+        (2, 1, 6, "", ("169.254.169.254", 443)),
+    ]
+
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    with TestClient(app) as client:
+        res = client.post(
+            "/api/v1/dutic/ical/subscribe",
+            headers=auth_headers,
+            json={"calendar_url": "https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?authtoken=abc123token"},
+        )
+        assert res.status_code == 400
+        assert res.json()["detail"]["code"] == "SSRF_DETECTED"
+
+    app.dependency_overrides.clear()
+
+
