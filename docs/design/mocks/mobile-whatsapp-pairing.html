@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Vincular Asistente WhatsApp - CampusUNSA</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary-container": "#b6d0ff",
+            "primary-container": "#8b0000",
+            "tertiary": "#735c00",
+            "inverse-primary": "#ffb4a8",
+            "surface-container-low": "#f2f4f6",
+            "on-error": "#ffffff",
+            "secondary-hover": "#132742",
+            "on-secondary": "#ffffff",
+            "on-surface": "#191c1e",
+            "error-container": "#ffdad6",
+            "on-tertiary-container": "#4f3e00",
+            "on-tertiary": "#ffffff",
+            "surface-container-highest": "#e0e3e5",
+            "primary-fixed-dim": "#ffb4a8",
+            "classroom": "#0F9D58",
+            "outline": "#8e706b",
+            "border": "#E2E8F0",
+            "error": "#ba1a1a",
+            "secondary": "#465f88",
+            "on-surface-variant": "#5a403c",
+            "on-secondary-container": "#3f5881",
+            "tertiary-container": "#cca730",
+            "normal": "#10B981",
+            "outline-variant": "#e3beb8",
+            "on-tertiary-fixed-variant": "#574500",
+            "tertiary-fixed-dim": "#e9c349",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-high": "#e6e8ea",
+            "dutic": "#EA4335",
+            "background": "#f7f9fb",
+            "on-secondary-fixed-variant": "#2e476f",
+            "secondary-fixed-dim": "#aec7f7",
+            "text-main": "#0F172A",
+            "on-primary-fixed-variant": "#920703",
+            "primary": "#610000",
+            "on-tertiary-fixed": "#241a00",
+            "on-primary-fixed": "#410000",
+            "surface-dim": "#d8dadc",
+            "primary-hover": "#6B0000",
+            "inverse-surface": "#2d3133",
+            "text-muted": "#64748B",
+            "surface": "#FFFFFF",
+            "on-background": "#191c1e",
+            "surface-container": "#eceef0",
+            "on-secondary-fixed": "#001b3d",
+            "surface-variant": "#e0e3e5",
+            "tertiary-fixed": "#ffe088",
+            "urgent": "#DC2626",
+            "inverse-on-surface": "#eff1f3",
+            "warning": "#F59E0B",
+            "surface-tint": "#b52619",
+            "on-error-container": "#93000a",
+            "secondary-fixed": "#d6e3ff",
+            "surface-bright": "#f7f9fb",
+            "on-primary-container": "#ff907f",
+            "on-primary": "#ffffff",
+            "primary-fixed": "#ffdad4"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "8px",
+            "space-xl": "32px",
+            "space-md": "16px",
+            "space-xs": "4px",
+            "space-lg": "24px",
+            "gutter": "16px",
+            "margin": "16px"
+          },
+          "fontFamily": {
+            "body-lg": ["Inter"],
+            "label-sm": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-sm": ["Inter"],
+            "label-md": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-xl": ["Inter"],
+            "headline-md": ["Inter"]
+          },
+          "fontSize": {
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+            "headline-lg": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-sm": ["16px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-xl": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+            "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .material-symbols-outlined.fill-icon {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.92); }
+    }
+    .timer-dot {
+      animation: pulse-subtle 1.4s ease-in-out infinite;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex justify-center selection:bg-primary-container selection:text-white">
+<!-- Mobile Viewport Container (390px canvas) -->
+<div class="relative w-full max-w-[390px] h-[844px] max-h-screen bg-background shadow-2xl overflow-hidden flex flex-col justify-between">
+<!-- UNDERLAY: Background Academic Dashboard (Simulated App Context) -->
+<div aria-hidden="true" class="absolute inset-0 z-0 flex flex-col bg-background select-none pointer-events-none">
+<!-- Simulated Top Bar -->
+<header class="flex justify-between items-center w-full px-gutter pt-4 pb-space-sm bg-surface shadow-sm">
+<div class="flex items-center space-x-2">
+<div class="w-8 h-8 rounded-full bg-primary-container text-white flex items-center justify-center font-headline-sm text-sm">
+            MM
+          </div>
+<span class="text-headline-md font-headline-md font-bold text-primary">CampusUNSA</span>
+</div>
+<span class="material-symbols-outlined text-text-muted">notifications</span>
+</header>
+<!-- Simulated Dashboard Content -->
+<main class="p-gutter space-y-4 opacity-40">
+<!-- Semester Overview Card -->
+<div class="bg-surface rounded-xl p-4 border border-border">
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-sm font-label-sm text-text-muted">Semestre 2024-B</span>
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded-full bg-normal/10 text-normal">Activo</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm text-text-main">Ingeniería de Sistemas</h2>
+<p class="text-body-sm font-body-sm text-text-muted">6 asignaturas matriculadas</p>
+</div>
+<!-- Academic Task Cards -->
+<div class="space-y-2.5">
+<div class="flex items-center justify-between">
+<span class="text-headline-sm font-headline-sm text-text-main">Tareas Próximas</span>
+<span class="text-label-sm font-label-sm text-primary font-semibold">Ver todas</span>
+</div>
+<div class="bg-surface rounded-xl p-3.5 border-l-4 border-urgent border-t border-r border-b border-border shadow-sm flex justify-between items-center">
+<div>
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded-full bg-dutic/10 text-dutic font-semibold">DUTIC</span>
+<p class="text-headline-sm font-headline-sm text-text-main mt-1">Laboratorio de Redes #4</p>
+<p class="text-body-sm font-body-sm text-urgent">Vence hoy a las 23:59</p>
+</div>
+</div>
+<div class="bg-surface rounded-xl p-3.5 border-l-4 border-classroom border-t border-r border-b border-border shadow-sm flex justify-between items-center">
+<div>
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded-full bg-classroom/10 text-classroom font-semibold">Classroom</span>
+<p class="text-headline-sm font-headline-sm text-text-main mt-1">Avance Proyecto Final</p>
+<p class="text-body-sm font-body-sm text-text-muted">Vence en 2 días</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- BACKDROP OVERLAY: Dimmed Translucent Dark Backdrop (#0F172A at 60% with blur) -->
+<div class="absolute inset-0 z-40 bg-[#0F172A]/60 backdrop-blur-sm transition-opacity duration-300"></div>
+<!-- BOTTOM SHEET: Floating docked modal -->
+<section aria-labelledby="sheet-title" aria-modal="true" class="relative z-50 mt-auto w-full bg-surface rounded-t-3xl shadow-2xl border-t border-border flex flex-col max-h-[92%] animate-in slide-in-from-bottom duration-300" role="dialog">
+<!-- Top Center Drag Handle Pill -->
+<div aria-hidden="true" class="w-full flex justify-center pt-3 pb-1 cursor-grab">
+<div class="w-12 h-1.5 bg-[#CBD5E1] rounded-full"></div>
+</div>
+<!-- Sheet Header -->
+<div class="px-gutter pt-2 pb-3 flex flex-col items-center relative">
+<!-- Close Button (Top Right) -->
+<button aria-label="Cerrar modal" class="absolute top-2 right-4 w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-text-muted hover:text-text-main hover:bg-surface-variant transition active:scale-95" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+<!-- Brand Icon Badge Duo (WhatsApp + UNSA Crimson) -->
+<div class="flex items-center -space-x-1.5 mb-2 mt-1">
+<div class="w-11 h-11 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-sm z-10 border-2 border-surface">
+<span class="material-symbols-outlined fill-icon text-[24px]" data-icon="chat" style="font-variation-settings: 'FILL' 1;">chat</span>
+</div>
+<div class="w-11 h-11 rounded-full bg-primary-container text-white flex items-center justify-center shadow-sm z-0 border-2 border-surface">
+<span class="material-symbols-outlined text-[22px]" data-icon="school">school</span>
+</div>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-text-main text-center" id="sheet-title">
+          Vincular Asistente WhatsApp
+        </h1>
+<p class="text-body-sm font-body-sm text-text-muted text-center max-w-[310px] mt-1 leading-snug">
+          Recibe recordatorios de tareas de DUTIC y Classroom directamente en tu chat de WhatsApp
+        </p>
+</div>
+<!-- Scrollable Sheet Content -->
+<div class="px-gutter overflow-y-auto space-y-4 pb-space-lg">
+<!-- VISUAL CENTERPIECE: Circular Countdown Timer -->
+<div class="flex flex-col items-center justify-center pt-1 pb-1">
+<div class="relative w-36 h-36 flex items-center justify-center">
+<!-- Progress Gauge Ring -->
+<svg aria-hidden="true" class="w-full h-full transform -rotate-90" viewbox="0 0 120 120">
+<!-- Background Track -->
+<circle cx="60" cy="60" fill="none" r="52" stroke="#F1F5F9" stroke-width="5"></circle>
+<!-- Active Stroke (~85% = 326.7 * 0.85 = 277.7 dasharray, 49 offset) -->
+<circle class="transition-all duration-1000 ease-linear" cx="60" cy="60" fill="none" r="52" stroke="#8B0000" stroke-dasharray="326.7" stroke-dashoffset="49" stroke-linecap="round" stroke-width="5"></circle>
+</svg>
+<!-- Inside Gauge Center Content -->
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+<div class="flex items-center space-x-1">
+<span class="w-2 h-2 rounded-full bg-primary-container timer-dot"></span>
+<span class="font-mono text-2xl font-bold tracking-tight text-text-main">
+                  04:59
+                </span>
+</div>
+<span class="text-label-sm font-label-sm font-mono text-text-muted mt-0.5">
+                300s restates
+              </span>
+</div>
+</div>
+<!-- Timer Badge / Label Under Circle -->
+<div class="mt-2.5 inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-surface-container border border-border">
+<span class="material-symbols-outlined text-[15px] text-primary" data-icon="alarm">alarm</span>
+<span class="text-label-sm font-label-sm text-text-main font-semibold">
+              Código expira en 04:59 min
+            </span>
+</div>
+</div>
+<!-- OTP INPUT SECTION -->
+<div class="flex flex-col items-center space-y-2">
+<label class="text-label-sm font-label-sm text-text-muted">
+            Ingresa el código de 6 dígitos:
+          </label>
+<!-- 6 Square Digit Input Boxes (Mobile 48px touch targets) -->
+<div class="flex items-center justify-center space-x-2 w-full">
+<!-- Box 1 (Filled) -->
+<div class="w-11 h-12 rounded-xl border border-border bg-[#F8FAFC] flex items-center justify-center font-mono text-lg font-bold text-text-main shadow-xs">
+              8
+            </div>
+<!-- Box 2 (Filled) -->
+<div class="w-11 h-12 rounded-xl border border-border bg-[#F8FAFC] flex items-center justify-center font-mono text-lg font-bold text-text-main shadow-xs">
+              4
+            </div>
+<!-- Box 3 (Filled) -->
+<div class="w-11 h-12 rounded-xl border border-border bg-[#F8FAFC] flex items-center justify-center font-mono text-lg font-bold text-text-main shadow-xs">
+              1
+            </div>
+<!-- Box 4 (Active Focused) -->
+<div class="w-11 h-12 rounded-xl border-2 border-primary-container ring-2 ring-primary-container/20 bg-surface flex items-center justify-center font-mono text-lg font-bold text-text-main shadow-sm relative">
+<span class="w-0.5 h-5 bg-primary-container animate-pulse"></span>
+</div>
+<!-- Box 5 (Empty) -->
+<div class="w-11 h-12 rounded-xl border border-border bg-[#F8FAFC] flex items-center justify-center font-mono text-lg text-text-muted/40 shadow-xs">
+              ·
+            </div>
+<!-- Box 6 (Empty) -->
+<div class="w-11 h-12 rounded-xl border border-border bg-[#F8FAFC] flex items-center justify-center font-mono text-lg text-text-muted/40 shadow-xs">
+              ·
+            </div>
+</div>
+</div>
+<!-- INSTRUCTIONS & BOT LINK BADGE -->
+<div class="bg-surface-container-low border border-border rounded-xl p-3.5 space-y-2.5">
+<div class="flex items-start space-x-2.5">
+<span class="material-symbols-outlined text-dutic mt-0.5 text-[20px]" data-icon="info">info</span>
+<div class="flex-1">
+<p class="text-body-sm font-body-sm text-text-main font-medium leading-tight">
+                Envía este código al bot de WhatsApp o ingrésalo aquí
+              </p>
+<div class="flex items-center space-x-2 mt-1.5">
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded-full bg-dutic/10 text-dutic font-semibold">DUTIC</span>
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded-full bg-classroom/10 text-classroom font-semibold">Classroom</span>
+</div>
+</div>
+</div>
+<!-- Official Bot Phone Number Link Card -->
+<div class="flex items-center justify-between pt-2 border-t border-border/80">
+<div class="flex items-center space-x-2 truncate pr-2">
+<span class="material-symbols-outlined text-[#25D366] text-[18px] fill-icon" data-icon="chat" style="font-variation-settings: 'FILL' 1;">chat</span>
+<span class="text-label-sm font-label-sm text-text-main font-semibold truncate">
+                +51 954 123 456 <span class="text-text-muted font-normal">(UNSA Bot Oficial)</span>
+</span>
+</div>
+<a class="shrink-0 text-label-sm font-label-sm text-primary font-bold hover:underline flex items-center" href="https://wa.me/51954123456" rel="noopener noreferrer" target="_blank">
+              Abrir WhatsApp
+              <span class="material-symbols-outlined text-[14px] ml-0.5" data-icon="open_in_new">open_in_new</span>
+</a>
+</div>
+</div>
+<!-- ACTION BUTTONS -->
+<div class="space-y-2.5 pt-1">
+<!-- Primary CTA Button (Solid Institutional Crimson #8B0000, 48px height) -->
+<button class="w-full h-12 rounded-xl bg-primary-container text-white font-headline-sm text-sm font-semibold shadow-md hover:bg-primary-hover active:scale-95 transition-transform duration-150 flex items-center justify-center space-x-2" type="button">
+<span>Verificar y Activar Notificaciones</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="check_circle">check_circle</span>
+</button>
+<!-- Secondary Actions -->
+<div class="flex flex-col items-center space-y-1 pt-1">
+<button class="text-label-md font-label-md text-secondary hover:text-secondary-hover font-semibold flex items-center space-x-1.5 py-1 px-3 rounded-lg active:scale-95 transition" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="refresh">refresh</span>
+<span>Reenviar código OTP</span>
+</button>
+<p class="text-label-sm font-label-sm text-text-muted">
+              ¿No recibiste el código? <button class="text-primary font-semibold hover:underline" type="button">Solicitar por SMS</button>
+</p>
+</div>
+</div>
+</div>
+<!-- Safe Area Spacer for notchless/home-indicator mobile devices -->
+<div aria-hidden="true" class="h-6 w-full shrink-0"></div>
+</section>
+</div>
+</body></html>

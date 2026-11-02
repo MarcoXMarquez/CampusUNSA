@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CampusUNSA - Academic Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed-dim": "#ffb4a8",
+            "on-secondary-fixed-variant": "#2e476f",
+            "warning": "#F59E0B",
+            "on-error": "#ffffff",
+            "surface": "#FFFFFF",
+            "on-primary-fixed-variant": "#920703",
+            "classroom": "#0F9D58",
+            "surface-container": "#eceef0",
+            "dutic": "#EA4335",
+            "background": "#f7f9fb",
+            "inverse-primary": "#ffb4a8",
+            "secondary-fixed": "#d6e3ff",
+            "on-background": "#191c1e",
+            "inverse-on-surface": "#eff1f3",
+            "inverse-surface": "#2d3133",
+            "urgent": "#DC2626",
+            "on-error-container": "#93000a",
+            "primary": "#610000",
+            "on-secondary-container": "#3f5881",
+            "tertiary-container": "#cca730",
+            "normal": "#10B981",
+            "primary-container": "#8b0000",
+            "surface-variant": "#e0e3e5",
+            "on-tertiary-container": "#4f3e00",
+            "on-primary": "#ffffff",
+            "outline-variant": "#e3beb8",
+            "border": "#E2E8F0",
+            "secondary-hover": "#132742",
+            "primary-fixed": "#ffdad4",
+            "on-tertiary-fixed-variant": "#574500",
+            "on-primary-container": "#ff907f",
+            "error": "#ba1a1a",
+            "text-main": "#0F172A",
+            "on-tertiary": "#ffffff",
+            "surface-container-high": "#e6e8ea",
+            "tertiary-fixed": "#ffe088",
+            "surface-container-lowest": "#ffffff",
+            "secondary-container": "#b6d0ff",
+            "secondary-fixed-dim": "#aec7f7",
+            "surface-bright": "#f7f9fb",
+            "tertiary": "#735c00",
+            "on-surface-variant": "#5a403c",
+            "tertiary-fixed-dim": "#e9c349",
+            "on-secondary-fixed": "#001b3d",
+            "primary-hover": "#6B0000",
+            "on-primary-fixed": "#410000",
+            "text-muted": "#64748B",
+            "surface-dim": "#d8dadc",
+            "on-secondary": "#ffffff",
+            "secondary": "#465f88",
+            "surface-container-highest": "#e0e3e5",
+            "on-surface": "#191c1e",
+            "surface-tint": "#b52619",
+            "outline": "#8e706b",
+            "surface-container-low": "#f2f4f6",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed": "#241a00"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "16px",
+            "space-sm": "8px",
+            "space-lg": "24px",
+            "margin": "16px",
+            "space-xs": "4px",
+            "space-md": "16px",
+            "space-xl": "32px"
+          },
+          "fontFamily": {
+            "headline-lg": ["Inter"],
+            "label-md": ["Inter"],
+            "headline-xl": ["Inter"],
+            "headline-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-md": ["Inter"],
+            "label-sm": ["Inter"],
+            "body-md": ["Inter"],
+            "body-sm": ["Inter"]
+          },
+          "fontSize": {
+            "headline-lg": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "headline-xl": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+            "headline-sm": ["16px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-text-main font-body-md text-body-md antialiased min-h-screen flex justify-center selection:bg-primary selection:text-on-primary">
+<!-- Mobile Viewport Shell (Strict 390px Max) -->
+<main class="w-full max-w-[390px] min-h-screen bg-background relative flex flex-col pb-[90px] shadow-2xl">
+<!-- Top Institutional Banner & Status Row -->
+<header class="bg-primary-container text-on-primary shadow-sm sticky top-0 z-40">
+<!-- Hardware Status Safe Inset -->
+<div class="px-gutter pt-3 pb-1 flex justify-between items-center text-primary-fixed opacity-80 text-label-sm font-label-sm">
+<span>09:41</span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">signal_cellular_alt</span>
+<span class="material-symbols-outlined text-[14px]">wifi</span>
+<span class="material-symbols-outlined text-[14px]">battery_full</span>
+</div>
+</div>
+<!-- Institutional Identity Bar -->
+<div class="px-gutter py-2 flex items-center justify-between border-b border-primary">
+<div class="flex items-center gap-2">
+<!-- Mini Crest Emblem Symbol -->
+<div class="w-6 h-6 rounded-full bg-on-primary/10 border border-on-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-[15px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-on-primary">CampusUNSA</span>
+</div>
+<span class="bg-on-primary/15 text-on-primary text-label-sm font-label-sm px-2 py-0.5 rounded-full border border-on-primary/20">
+          2025-A
+        </span>
+</div>
+<!-- User Profile Context Strip -->
+<div class="px-gutter py-3 flex items-center justify-between bg-primary/40">
+<div class="flex items-center gap-3">
+<!-- Avatar Monogram -->
+<div class="w-10 h-10 rounded-full bg-surface text-primary-container font-headline-sm text-headline-sm flex items-center justify-center font-bold shadow-sm ring-2 ring-on-primary/20">
+            MM
+          </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<h1 class="text-on-primary font-headline-sm text-headline-sm leading-tight">Marco Marquez</h1>
+</div>
+<p class="text-primary-fixed opacity-90 text-body-sm font-body-sm">C.I. 20203491 • 8° Semestre</p>
+</div>
+</div>
+<!-- Notification Trigger with Badge -->
+<button aria-label="Notificaciones" class="relative w-10 h-10 rounded-full hover:bg-on-primary/10 active:scale-95 transition-transform flex items-center justify-center text-on-primary" type="button">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<span class="absolute top-2 right-2 w-2.5 h-2.5 bg-dutic rounded-full ring-2 ring-primary-container"></span>
+</button>
+</div>
+</header>
+<!-- Scrollable Content Canvas -->
+<div class="px-gutter pt-4 space-y-4 flex-1">
+<!-- Academic Overview & Critical Metrics Banner -->
+<section aria-labelledby="overview-heading" class="bg-surface rounded-xl p-4 border border-border shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<div>
+<span class="text-text-muted text-label-sm font-label-sm block">RESUMEN ACADÉMICO</span>
+<h2 class="text-text-main font-headline-sm text-headline-sm" id="overview-heading">Panel de Entregas</h2>
+</div>
+<span class="bg-error-container text-urgent text-label-sm font-label-sm px-2.5 py-1 rounded-full font-semibold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-urgent animate-pulse"></span>
+            2 pendientes críticas
+          </span>
+</div>
+<!-- Metric Grid -->
+<div class="grid grid-cols-3 gap-2 pt-2 border-t border-border">
+<div class="bg-surface-container-low p-2.5 rounded-lg text-center">
+<span class="block text-text-muted text-label-sm font-label-sm">Promedio</span>
+<span class="text-text-main font-headline-md text-headline-md font-bold">16.4</span>
+</div>
+<div class="bg-surface-container-low p-2.5 rounded-lg text-center">
+<span class="block text-text-muted text-label-sm font-label-sm">Cursos</span>
+<span class="text-text-main font-headline-md text-headline-md font-bold">6</span>
+</div>
+<div class="bg-surface-container-low p-2.5 rounded-lg text-center">
+<span class="block text-text-muted text-label-sm font-label-sm">Completadas</span>
+<span class="text-normal font-headline-md text-headline-md font-bold">88%</span>
+</div>
+</div>
+</section>
+<!-- Sticky Filter Chips Group -->
+<section class="sticky top-[138px] z-30 -mx-gutter px-gutter py-1 bg-background/95 backdrop-blur-sm">
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+<!-- Filter 1: All (Active) -->
+<button class="shrink-0 h-9 px-4 rounded-full bg-primary-container text-on-primary text-label-md font-label-md flex items-center gap-1.5 shadow-sm active:scale-95 transition-transform" type="button">
+<span>Todos</span>
+<span class="bg-on-primary/20 text-on-primary text-label-sm font-label-sm rounded-full px-1.5 py-0.2">3</span>
+</button>
+<!-- Filter 2: DUTIC Moodle -->
+<button class="shrink-0 h-9 px-3.5 rounded-full bg-surface border border-border text-text-main text-label-md font-label-md flex items-center gap-1.5 hover:bg-surface-container active:scale-95 transition-transform" type="button">
+<span class="w-2.5 h-2.5 rounded-full bg-dutic"></span>
+<span>DUTIC Moodle</span>
+</button>
+<!-- Filter 3: Google Classroom -->
+<button class="shrink-0 h-9 px-3.5 rounded-full bg-surface border border-border text-text-main text-label-md font-label-md flex items-center gap-1.5 hover:bg-surface-container active:scale-95 transition-transform" type="button">
+<span class="w-2.5 h-2.5 rounded-full bg-classroom"></span>
+<span>Classroom</span>
+</button>
+</div>
+</section>
+<!-- Vertical Urgency Queue Section -->
+<section aria-labelledby="queue-heading" class="space-y-3">
+<div class="flex items-center justify-between pt-1">
+<h3 class="text-text-main font-headline-sm text-headline-sm" id="queue-heading">Actividades Próximas</h3>
+<span class="text-text-muted text-body-sm font-body-sm">Sincronizado hace 4 min</span>
+</div>
+<!-- Task Card 1: Critical Urgency (<24h) -->
+<article class="bg-surface rounded-xl border border-border shadow-sm border-l-4 border-l-urgent p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between gap-2">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<!-- Source Pill: DUTIC -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-label-sm font-semibold text-dutic bg-dutic/10">
+<span class="material-symbols-outlined text-[13px]">school</span>
+                  DUTIC Moodle
+                </span>
+<span class="text-text-muted text-label-sm font-label-sm">Semana 9</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-text-main leading-snug">
+                Física Cuántica - Entrega de Guía 3
+              </h4>
+<p class="text-text-muted text-body-sm font-body-sm mt-0.5">Grupo B • Docente: Dr. Velásquez</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-border/60">
+<!-- Urgent Countdown -->
+<div class="flex items-center gap-1.5 text-urgent font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[17px] animate-pulse">schedule</span>
+<span>Expira en 4 horas</span>
+</div>
+<!-- Upload CTA Button -->
+<button class="h-10 px-3.5 rounded-lg bg-primary-container text-on-primary hover:bg-primary-hover active:scale-95 transition-transform text-label-md font-label-md font-medium flex items-center gap-1.5 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">upload_file</span>
+<span>Subir Archivo</span>
+</button>
+</div>
+</article>
+<!-- Task Card 2: Moderate Urgency (24-48h) -->
+<article class="bg-surface rounded-xl border border-border shadow-sm border-l-4 border-l-warning p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between gap-2">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<!-- Source Pill: Classroom -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-label-sm font-semibold text-classroom bg-classroom/10">
+<span class="material-symbols-outlined text-[13px]">groups</span>
+                  Google Classroom
+                </span>
+<span class="text-text-muted text-label-sm font-label-sm">Laboratorio 4</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-text-main leading-snug">
+                Sistemas Distribuidos - Informe de Laboratorio
+              </h4>
+<p class="text-text-muted text-body-sm font-body-sm mt-0.5">Teoría y Práctica • En parejas</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-border/60">
+<!-- Moderate Deadline -->
+<div class="flex items-center gap-1.5 text-warning font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[17px]">schedule</span>
+<span>Mañana 23:59</span>
+</div>
+<!-- Action: View Guide CTA -->
+<button class="h-10 px-3.5 rounded-lg bg-surface border border-border text-secondary hover:bg-surface-container active:scale-95 transition-transform text-label-md font-label-md font-medium flex items-center gap-1" type="button">
+<span>Ver Guía</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</article>
+<!-- Task Card 3: Normal / Upcoming (>48h) -->
+<article class="bg-surface rounded-xl border border-border shadow-sm border-l-4 border-l-normal p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between gap-2">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<!-- Source Pill: DUTIC -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-label-sm font-semibold text-dutic bg-dutic/10">
+<span class="material-symbols-outlined text-[13px]">school</span>
+                  DUTIC Moodle
+                </span>
+<span class="text-text-muted text-label-sm font-label-sm">Hito 2</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-text-main leading-snug">
+                Ingeniería de Software - Sprint Review
+              </h4>
+<p class="text-text-muted text-body-sm font-body-sm mt-0.5">Proyecto Semestral • Fase de Evaluación</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-border/60">
+<!-- Standard Deadline -->
+<div class="flex items-center gap-1.5 text-normal font-label-md text-label-md font-medium">
+<span class="material-symbols-outlined text-[17px]">event_available</span>
+<span>En 3 días (Jueves)</span>
+</div>
+<!-- View Details CTA -->
+<button class="h-10 px-3.5 rounded-lg bg-surface border border-border text-text-muted hover:text-text-main hover:bg-surface-container active:scale-95 transition-transform text-label-md font-label-md font-medium flex items-center gap-1" type="button">
+<span>Detalles</span>
+<span class="material-symbols-outlined text-[18px]">open_in_new</span>
+</button>
+</div>
+</article>
+</section>
+<!-- Campus Resources Quick Launch Mini-Bento -->
+<section class="pt-2 pb-3">
+<h3 class="text-text-main font-headline-sm text-headline-sm mb-2.5">Accesos Rápidos UNSA</h3>
+<div class="grid grid-cols-2 gap-2.5">
+<div class="bg-surface p-3 rounded-xl border border-border flex items-center gap-3 active:scale-98 transition-transform">
+<div class="w-9 h-9 rounded-lg bg-secondary/10 text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+</div>
+<div>
+<span class="font-headline-sm text-headline-sm text-text-main block leading-tight">Carnet QR</span>
+<span class="text-text-muted text-label-sm font-label-sm">Biblioteca y Comedor</span>
+</div>
+</div>
+<div class="bg-surface p-3 rounded-xl border border-border flex items-center gap-3 active:scale-98 transition-transform">
+<div class="w-9 h-9 rounded-lg bg-tertiary-container/20 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">menu_book</span>
+</div>
+<div>
+<span class="font-headline-sm text-headline-sm text-text-main block leading-tight">Sílabos</span>
+<span class="text-text-muted text-label-sm font-label-sm">Repositorio 2025</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Persistent Bottom Navigation Bar (Docked Full Width) -->
+<nav aria-label="Navegación principal" class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter pt-2 pb-6 bg-surface border-t border-border shadow-sm">
+<!-- Tab 1: Hub (Active Destination - Wine Red) -->
+<button class="flex flex-col items-center justify-center text-primary-container font-semibold transition-transform active:scale-95 w-16 h-12" type="button">
+<span class="material-symbols-outlined text-[22px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-sm text-label-sm mt-0.5 tracking-tight">Hub</span>
+</button>
+<!-- Tab 2: Calendar (Inactive) -->
+<button class="flex flex-col items-center justify-center text-text-muted transition-transform active:scale-95 hover:text-primary-hover w-16 h-12" type="button">
+<span class="material-symbols-outlined text-[22px]">calendar_today</span>
+<span class="font-label-sm text-label-sm mt-0.5 tracking-tight">Calendar</span>
+</button>
+<!-- Tab 3: WhatsApp (Inactive) -->
+<button class="flex flex-col items-center justify-center text-text-muted transition-transform active:scale-95 hover:text-primary-hover w-16 h-12" type="button">
+<span class="material-symbols-outlined text-[22px]">chat</span>
+<span class="font-label-sm text-label-sm mt-0.5 tracking-tight">WhatsApp</span>
+</button>
+<!-- Tab 4: Settings (Inactive) -->
+<button class="flex flex-col items-center justify-center text-text-muted transition-transform active:scale-95 hover:text-primary-hover w-16 h-12" type="button">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+<span class="font-label-sm text-label-sm mt-0.5 tracking-tight">Settings</span>
+</button>
+</nav>
+</main>
+<script>
+    // Lightweight micro-interaction for filter tabs switching visual state
+    document.querySelectorAll('section button').forEach(button => {
+      button.addEventListener('click', function() {
+        if (this.closest('.overflow-x-auto')) {
+          const pills = this.closest('.overflow-x-auto').querySelectorAll('button');
+          pills.forEach(p => {
+            p.classList.remove('bg-primary-container', 'text-on-primary');
+            p.classList.add('bg-surface', 'border', 'border-border', 'text-text-main');
+          });
+          this.classList.remove('bg-surface', 'border', 'border-border', 'text-text-main');
+          this.classList.add('bg-primary-container', 'text-on-primary');
+        }
+      });
+    });
+  </script>
+</body></html>

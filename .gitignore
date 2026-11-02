@@ -31,3 +31,9 @@ next-env.d.ts
 
 # Disposable load-test evidence; uploaded as CI artifacts instead of source code.
 perf-results/
+
+# Stitch CLI cache and configuration
+.stitch/
+.stitch.json
+docs/design/mocks/*.png
+
