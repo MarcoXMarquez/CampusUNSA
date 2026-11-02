@@ -27,23 +27,25 @@
 
 Following the standard Oppia web server layered architecture, {{MODULE_TITLE}} strictly segregates responsibilities across three isolated tiers:
 
-```
-+-----------------------------------------------------------------------------------+
-| 1. Controller Layer (FastAPI APIRouter)                                           |
-|    - Endpoint registration, JWT claim verification, Pydantic input validation     |
-+-----------------------------------------+-----------------------------------------+
-                                          |
-                                          v
-+-----------------------------------------------------------------------------------+
-| 2. Domain Service Layer (Pure Business Logic)                                     |
-|    - Idempotent transformations, algorithmic calculations, external adapters      |
-+-----------------------------------------+-----------------------------------------+
-                                          |
-                                          v
-+-----------------------------------------------------------------------------------+
-| 3. Storage Layer (SQLAlchemy 2.0 / PostgreSQL / Redis)                            |
-|    - Declarative ORM models, transaction lifecycle, Redis TTL caches              |
-+-----------------------------------------------------------------------------------+
+```mermaid
+flowchart TD
+    subgraph Tier1["1. Controller Layer (FastAPI APIRouter)"]
+        direction TB
+        T1["Endpoint registration, JWT claim verification, Pydantic input validation"]
+    end
+
+    subgraph Tier2["2. Domain Service Layer (Pure Business Logic)"]
+        direction TB
+        T2["Idempotent transformations, algorithmic calculations, external adapters"]
+    end
+
+    subgraph Tier3["3. Storage Layer (SQLAlchemy 2.0 / PostgreSQL / Redis)"]
+        direction TB
+        T3["Declarative ORM models, transaction lifecycle, Redis TTL caches"]
+    end
+
+    Tier1 --> Tier2
+    Tier2 --> Tier3
 ```
 
 ---
