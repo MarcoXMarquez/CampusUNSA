@@ -25,28 +25,6 @@ interface AcademicAssignment {
   created_at: string;
 }
 
-interface GoogleCodeResponse {
-  code?: string;
-  error?: string;
-}
-
-declare global {
-  interface Window {
-    google?: {
-      accounts?: {
-        oauth2?: {
-          initCodeClient: (config: {
-            client_id: string;
-            scope: string;
-            ux_mode?: "popup" | "redirect";
-            callback: (response: GoogleCodeResponse) => void;
-          }) => { requestCode: () => void };
-        };
-      };
-    };
-  }
-}
-
 export function AcademicHubCard(): React.JSX.Element {
   const [courses, setCourses] = useState<AcademicCourse[]>([]);
   const [assignments, setAssignments] = useState<AcademicAssignment[]>([]);
