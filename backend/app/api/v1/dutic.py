@@ -5,6 +5,7 @@ DUTIC Moodle API endpoints:
 - GET /api/v1/dutic/assignments: Lists synced Moodle coursework assignments
 """
 
+from datetime import datetime, timezone
 from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -16,10 +17,16 @@ from app.models.user import User
 from app.schemas.dutic import (
     DuticAssignmentResponse,
     DuticCourseResponse,
+    MoodleIcalStatusResponse,
+    MoodleIcalSubscribeRequest,
+    MoodleIcalSubscribeResponse,
+    MoodleIcalSyncRequest,
     SyncDuticRequest,
     SyncDuticResponse,
 )
+from app.services.dutic_ical import DuticIcalService
 from app.services.dutic_sync import DuticSyncService
+from app.services.token_encryption import encrypt_token
 
 router = APIRouter()
 
@@ -80,3 +87,58 @@ def get_dutic_assignments(
         .all()
     )
     return assignments
+
+
+@router.get("/ical/status", response_model=MoodleIcalStatusResponse)
+def get_moodle_ical_status(
+    current_user: User = Depends(_resolve_authenticated_user),
+) -> MoodleIcalStatusResponse:
+    """
+    Retrieves the status of the student's Moodle iCal calendar subscription.
+    """
+    is_connected = bool(current_user.moodle_calendar_url)
+    return MoodleIcalStatusResponse(
+        connected=is_connected,
+        connected_at=current_user.moodle_calendar_connected_at,
+        sync_status=current_user.moodle_calendar_sync_status,
+    )
+
+
+@router.post("/ical/subscribe", response_model=MoodleIcalSubscribeResponse)
+def subscribe_moodle_ical(
+    payload: MoodleIcalSubscribeRequest,
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+) -> MoodleIcalSubscribeResponse:
+    """
+    Validates, encrypts, and persists the student's Moodle iCalendar export URL.
+    """
+    DuticIcalService.validate_calendar_url(payload.calendar_url)
+    now = datetime.now(timezone.utc)
+    current_user.moodle_calendar_url = encrypt_token(payload.calendar_url.strip())
+    current_user.moodle_calendar_connected_at = now
+    current_user.moodle_calendar_sync_status = "CONNECTED"
+    db.commit()
+    db.refresh(current_user)
+
+    return MoodleIcalSubscribeResponse(
+        status="CONNECTED",
+        connected_at=now,
+        message="Moodle iCalendar feed successfully subscribed",
+    )
+
+
+@router.post("/ical/sync", response_model=SyncDuticResponse)
+def sync_moodle_ical(
+    payload: MoodleIcalSyncRequest,
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+) -> SyncDuticResponse:
+    """
+    Synchronizes assignments from the student's subscribed Moodle iCal feed into PostgreSQL.
+    """
+    return DuticIcalService.sync_student_moodle_ical(
+        db=db,
+        user=current_user,
+        calendar_url=payload.calendar_url,
+    )

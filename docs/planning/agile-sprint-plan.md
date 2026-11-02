@@ -71,6 +71,7 @@ flowchart LR
 | **#4** | `US-04` | Google Classroom Course & Assignment Sync Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@Sebastianzzzin` | Must Have |
 | **#43** | `US-23` | UNSA Moodle (DUTIC) Course & Assignment Sync Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@rikich3` | Should Have |
 | **#84** | `US-24` | Seamless Google Classroom OAuth Consent & Automated Background Sync Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@Sebastianzzzin` | Must Have |
+| **#86** | `US-25` | UNSA Moodle iCal Calendar URL Subscription & Automated Task Ingestion Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@rikich3` | Should Have |
 | **#42** | `TECH-02` | Continuous Load Testing Harness & Concurrency Gate (1,000 Users) [CR-01] | Sprint 3 | Wed Oct 28 | `@Sebastianzzzin` | `@rikich3` | Must Have |
 | **#5** | `US-05` | Visual Academic Task Board with Urgency Traffic Lights | Sprint 4 | Wed Nov 04 | `@Sebastianzzzin` | `@iccoscco` | Must Have |
 | **#6** | `US-06` | Dynamic Weekly Class Schedule & Next Class Widget | Sprint 4 | Wed Nov 04 | `@rikich3` | `@MarcoXMarquez` | Must Have |

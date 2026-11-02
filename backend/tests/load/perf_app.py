@@ -51,6 +51,14 @@ def upstream(request: httpx.Request) -> httpx.Response:
             json={"courses": [{"id": "perf-google", "name": "Performance Classroom"}]},
         )
     if request.url.host == "aulavirtual.unsa.edu.pe":
+        if "export_execute.php" in request.url.path:
+            sample_ics = (
+                "BEGIN:VCALENDAR\nVERSION:2.0\n"
+                "BEGIN:VEVENT\nUID:perf-task-1@unsa\nSUMMARY:Perf Assignment\n"
+                "DTSTART:20261115T180000Z\nDTEND:20261115T180000Z\nCATEGORIES:PERF_COURSE\nEND:VEVENT\n"
+                "END:VCALENDAR\n"
+            )
+            return httpx.Response(200, text=sample_ics, headers={"content-type": "text/calendar"})
         import json
 
         calls = json.loads(request.content)

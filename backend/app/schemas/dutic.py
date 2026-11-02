@@ -59,3 +59,35 @@ class DuticAssignmentResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MoodleIcalSubscribeRequest(BaseModel):
+    """
+    Payload for subscribing a Moodle iCalendar export URL.
+    """
+    calendar_url: str
+
+
+class MoodleIcalSubscribeResponse(BaseModel):
+    """
+    Response after successfully subscribing and encrypting the Moodle calendar URL.
+    """
+    status: str
+    connected_at: Optional[datetime] = None
+    message: str
+
+
+class MoodleIcalStatusResponse(BaseModel):
+    """
+    Status of the student's Moodle iCal calendar subscription.
+    """
+    connected: bool
+    connected_at: Optional[datetime] = None
+    sync_status: str
+
+
+class MoodleIcalSyncRequest(BaseModel):
+    """
+    Optional payload for triggering immediate sync with an ad-hoc calendar URL.
+    """
+    calendar_url: Optional[str] = None
