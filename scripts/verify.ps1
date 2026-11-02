@@ -96,7 +96,7 @@ if ($LASTEXITCODE -ne 0) {
     $allPassed = $false
 }
 
-# 5. Frontend Component Tests (Vitest)
+# 5. Frontend Component Tests (Vitest) & UI Directives Gate
 Write-Host "`n[5/6] Running Frontend Component Test Suite (Vitest)..." -ForegroundColor Yellow
 $vitestOutput = docker compose exec -T frontend npm run test 2>&1
 Write-Host $vitestOutput
@@ -105,6 +105,15 @@ if ($LASTEXITCODE -ne 0) {
     $allPassed = $false
 } else {
     Write-Host "  PASSED: Vitest frontend tests passed." -ForegroundColor Green
+}
+
+Write-Host "`nChecking Section 3.2 UI Directives Gate..." -ForegroundColor Yellow
+node scripts/verify-ui-directives.mjs
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  FAILED: Frontend UI directives violations detected." -ForegroundColor Red
+    $allPassed = $false
+} else {
+    Write-Host "  PASSED: Frontend presentation compliance verified." -ForegroundColor Green
 }
 
 # 6. Continuous Performance Gate (isolated database and synthetic identities)

@@ -85,13 +85,22 @@ else
     ALL_PASSED=1
 fi
 
-# 5. Frontend Component Tests (Vitest)
+# 5. Frontend Component Tests (Vitest) & UI Directives Gate
 echo ""
 echo "[5/6] Running Frontend Component Test Suite (Vitest)..."
 if docker compose exec -T frontend npm run test; then
     echo "  PASSED: Vitest frontend tests passed."
 else
     echo "  FAILED: Vitest frontend test suite failed."
+    ALL_PASSED=1
+fi
+
+echo ""
+echo "Checking Section 3.2 UI Directives Gate..."
+if node scripts/verify-ui-directives.mjs; then
+    echo "  PASSED: Frontend presentation compliance verified."
+else
+    echo "  FAILED: Frontend UI directives violations detected."
     ALL_PASSED=1
 fi
 
