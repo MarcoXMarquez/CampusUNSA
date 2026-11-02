@@ -29,7 +29,6 @@ describe("AcademicHubCard Component", () => {
     render(<AcademicHubCard />);
     expect(screen.getByText("Modo Sandbox / Opciones Avanzadas")).toBeDefined();
   });
-
   it("renders clean tasks and courses buttons for clean slate testing", () => {
     render(<AcademicHubCard />);
     expect(screen.getByText("Borrar Tareas")).toBeDefined();
