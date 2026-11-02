@@ -1,17 +1,29 @@
 import type { Metadata, Viewport } from "next";
+import KonstaProvider from "@/components/KonstaProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CampusUNSA - Academic Hub & PWA",
-  description: "Plataforma Progresiva Universitaria y Hub Académico para la Universidad Nacional de San Agustín",
-  manifest: "/manifest.json",
+  title: "CampusUNSA",
+  description: "Hub Académico de entregas y recordatorios para la Universidad Nacional de San Agustín",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "CampusUNSA",
+    statusBarStyle: "default",
+  },
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
-  themeColor: "#1B365D",
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F2F2F7" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 };
 
 export default function RootLayout({
@@ -21,8 +33,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className="antialiased bg-slate-50 text-slate-900 min-h-screen flex flex-col">
-        {children}
+      <body>
+        <KonstaProvider>{children}</KonstaProvider>
       </body>
     </html>
   );
