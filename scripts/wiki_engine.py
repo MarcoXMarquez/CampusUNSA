@@ -501,12 +501,58 @@ def handle_issue_update(issue_id: str, wiki_dir: str) -> None:
     update_sidebar(wiki_dir, taxonomy)
 
 
+def sync_wiki_to_remote(wiki_dir: str, issue_id: Optional[str] = None) -> bool:
+    """
+    Synchronizes the wiki workspace with the GitHub Wiki remote repository.
+    Stages all pages, commits with conventional commit message (zero emojis),
+    and pushes to origin master.
+    """
+    git_dir = os.path.join(wiki_dir, ".git")
+    if not os.path.exists(git_dir):
+        print(f"Warning: {wiki_dir} is not a git repository. Skipping remote push.")
+        return False
+
+    try:
+        status_res = subprocess.run(
+            ["git", "-C", wiki_dir, "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        if not status_res.stdout.strip():
+            print("Wiki repository is already up to date with remote.")
+            return True
+
+        subprocess.run(["git", "-C", wiki_dir, "add", "-A"], check=True)
+        msg = (
+            f"docs(wiki): synchronize Oppia-caliber documentation for issue #{issue_id}"
+            if issue_id
+            else "docs(wiki): synchronize Oppia-caliber documentation pages"
+        )
+        subprocess.run(["git", "-C", wiki_dir, "commit", "-m", msg], check=True)
+
+        subprocess.run(
+            ["git", "-C", wiki_dir, "push", "origin", "master"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        print("Successfully pushed wiki documentation updates to GitHub Wiki remote.")
+        return True
+    except subprocess.CalledProcessError as exc:
+        print(f"Error synchronizing wiki repository: {exc}")
+        if exc.stderr:
+            print(exc.stderr)
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="CampusUNSA Wiki Engine CLI")
     parser.add_argument("--wiki-dir", default=DEFAULT_WIKI_DIR, help="Target wiki workspace directory")
     parser.add_argument("--init", action="store_true", help="Initialize foundational Oppia-caliber wiki workspace")
     parser.add_argument("--issue", help="Issue / User Story number to process and synchronize")
     parser.add_argument("--validate", action="store_true", help="Run the Wiki Validator oracle")
+    parser.add_argument("--sync", action="store_true", help="Synchronize and push changes to GitHub Wiki remote")
     parser.add_argument("--register", action="store_true", help="Manually register an agile user story")
     parser.add_argument("--page", help="Page name for manual registration")
     parser.add_argument("--category", help="Category ID for manual registration")
@@ -534,6 +580,12 @@ def main():
 
     if args.issue:
         handle_issue_update(args.issue, args.wiki_dir)
+        if args.sync:
+            sync_wiki_to_remote(args.wiki_dir, args.issue)
+        sys.exit(0)
+
+    if args.sync:
+        sync_wiki_to_remote(args.wiki_dir, None)
         sys.exit(0)
 
     if args.validate:
