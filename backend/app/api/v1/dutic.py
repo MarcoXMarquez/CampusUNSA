@@ -113,9 +113,9 @@ def subscribe_moodle_ical(
     """
     Validates, encrypts, and persists the student's Moodle iCalendar export URL.
     """
-    DuticIcalService.validate_calendar_url(payload.calendar_url)
+    canonical_url = DuticIcalService.validate_calendar_url(payload.calendar_url)
     now = datetime.now(timezone.utc)
-    current_user.moodle_calendar_url = encrypt_token(payload.calendar_url.strip())
+    current_user.moodle_calendar_url = encrypt_token(canonical_url)
     current_user.moodle_calendar_connected_at = now
     current_user.moodle_calendar_sync_status = "CONNECTED"
     db.commit()
