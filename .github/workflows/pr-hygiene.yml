@@ -72,11 +72,11 @@ jobs:
               if not re.match(bot_branch_regex, branch_name):
                   errors.append(f"Bot branch '{branch_name}' does not follow dependabot/ prefix.")
           else:
-              branch_regex = r"^(feature|fix|hotfix|chore|docs)/([0-9]+-)?[a-z0-9\-]+$"
+              branch_regex = r"^(feature|feat|fix|hotfix|chore|docs)/([0-9]+-)?[a-z0-9\-]+$"
               if not re.match(branch_regex, branch_name):
                   errors.append(
                       f"Branch name '{branch_name}' does not follow required pattern: "
-                      "feature/XX-short-name-in-kebab-case, fix/..., docs/..., or chore/..."
+                      "feature/XX-..., feat/..., fix/..., docs/..., or chore/..."
                   )
 
           # 3. Validate PR Body References Closes/Resolves/Fixes #X (Humans Only)
@@ -145,3 +145,56 @@ jobs:
           > [!NOTE]
           > PR hygiene checks ensure automated CI compatibility and clean linear git history.
           EOF
+
+  ui-evidence:
+    name: UI evidence gate
+    runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'dependabot/') }}
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Require UI compliance evidence when rendered UI changes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+
+            const touchesUi = files.some(
+              (f) =>
+                /^frontend\/.*\.(tsx|css)$/.test(f.filename) &&
+                !/\.(test|spec)\.(ts|tsx)$/.test(f.filename) &&
+                !f.filename.includes('/__tests__/'),
+            );
+
+            if (!touchesUi) {
+              core.info('No rendered UI files changed. Gate skipped.');
+              return;
+            }
+
+            const body = context.payload.pull_request.body ?? '';
+            const section = body.match(/##\s*UI Directives Compliance([\s\S]*?)(?=\n##\s|$)/i);
+            const problems = [];
+
+            if (!section) {
+              problems.push('Missing "UI Directives Compliance" section in the PR description.');
+            } else {
+              const text = section[1];
+              if (/- \[ \]/.test(text)) {
+                problems.push('Unchecked items remain in "UI Directives Compliance".');
+              }
+              const images = text.match(/!\[[^\]]*\]\([^)]+\)|<img\s/gi) ?? [];
+              if (images.length < 2) {
+                problems.push('Attach at least two screenshots (light and dark mode).');
+              }
+            }
+
+            if (problems.length > 0) {
+              core.setFailed(problems.join('\n'));
+            }
+

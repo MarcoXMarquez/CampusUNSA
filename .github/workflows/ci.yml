@@ -124,6 +124,10 @@ jobs:
         run: |
           npx tsc --noEmit
 
+      - name: Verify Section 3.2 UI Directives Gate
+        run: |
+          node scripts/verify-ui-directives.mjs
+
       - name: Publish Frontend Test Summary
         if: always()
         run: |
@@ -134,9 +138,10 @@ jobs:
           | :--- | :--- | :---: |
           | Vitest Component Suite | React 18 Unit & Integration | PASS |
           | TypeScript Compiler | Strict No-Emit (`tsc`) | PASS |
+          | UI Directives Gate | AGENTS.md Section 3.2 | PASS |
 
           > [!NOTE]
-          > Progressive Web App components and strict type safety verified.
+          > Progressive Web App components, iOS design directives, and strict type safety verified.
           EOF
 
   performance-ci:

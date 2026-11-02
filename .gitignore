@@ -37,3 +37,6 @@ perf-results/
 .stitch.json
 docs/design/mocks/*.png
 
+# Playwright MCP temporary traces
+.playwright-mcp/
+
