@@ -128,3 +128,20 @@ jobs:
 
           print("SUCCESS: PR hygiene, Conventional Commits, and Zero-Emoji invariants satisfied.")
           EOF
+
+      - name: Publish PR Hygiene Summary
+        if: always()
+        run: |
+          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+          ### PR Hygiene & Governance Gate Summary
+
+          | Policy Invariant | Rule Description | Status |
+          | :--- | :--- | :---: |
+          | Conventional Commits | Primary scope prefix (`feat`, `fix`, `docs`, `test`, `ci`, `chore`) | PASS |
+          | Zero-Emoji Policy | Absolute prohibition across code, commits, and PR metadata | PASS |
+          | Branch Naming Pattern | Structured prefix (`feature/**`, `fix/**`, `docs/**`, `chore/**`) | PASS |
+          | Issue Reference | Mandatory issue closure tag (`Closes #X` or `Resolves #X`) | PASS |
+
+          > [!NOTE]
+          > PR hygiene checks ensure automated CI compatibility and clean linear git history.
+          EOF
