@@ -72,11 +72,11 @@ jobs:
               if not re.match(bot_branch_regex, branch_name):
                   errors.append(f"Bot branch '{branch_name}' does not follow dependabot/ prefix.")
           else:
-              branch_regex = r"^(feature|fix|hotfix|chore|docs)/([0-9]+-)?[a-z0-9\-]+$"
+              branch_regex = r"^(feature|feat|fix|hotfix|chore|docs)/([0-9]+-)?[a-z0-9\-]+$"
               if not re.match(branch_regex, branch_name):
                   errors.append(
                       f"Branch name '{branch_name}' does not follow required pattern: "
-                      "feature/XX-short-name-in-kebab-case, fix/..., docs/..., or chore/..."
+                      "feature/XX-..., feat/..., fix/..., docs/..., or chore/..."
                   )
 
           # 3. Validate PR Body References Closes/Resolves/Fixes #X (Humans Only)
