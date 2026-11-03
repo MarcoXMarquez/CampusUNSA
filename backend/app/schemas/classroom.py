@@ -5,7 +5,7 @@ Pydantic v2 schemas for Google Classroom synchronization, courses, and coursewor
 import uuid
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SyncClassroomRequest(BaseModel):
@@ -52,12 +52,20 @@ class AssignmentResponse(BaseModel):
     due_date: Optional[datetime] = None
     max_points: Optional[float] = None
     state: str
+    is_completed: bool = False
     alternate_link: Optional[str] = None
     origin: str
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AssignmentCompletionRequest(BaseModel):
+    """Set a student's local completion flag without changing LMS publication state."""
+
+    model_config = ConfigDict(extra="forbid")
+    is_completed: bool = Field(strict=True)
 
 
 class ClassroomConsentRequest(BaseModel):

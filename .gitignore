@@ -39,4 +39,6 @@ docs/design/mocks/*.png
 
 # Playwright MCP temporary traces
 .playwright-mcp/
+frontend/test-results/
+frontend/playwright-report/
 

@@ -6,7 +6,9 @@ Classroom API endpoints:
 """
 
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.v1.auth import _resolve_authenticated_user
@@ -14,6 +16,7 @@ from app.core.database import get_db
 from app.models.classroom import ClassroomAssignment, ClassroomCourse
 from app.models.user import User
 from app.schemas.classroom import (
+    AssignmentCompletionRequest,
     AssignmentResponse,
     CourseResponse,
     SyncClassroomRequest,
@@ -22,6 +25,33 @@ from app.schemas.classroom import (
 from app.services.classroom_sync import ClassroomSyncService
 
 router = APIRouter()
+
+
+@router.patch("/assignments/{assignment_id}/completion", response_model=AssignmentResponse)
+def set_assignment_completion(
+    assignment_id: UUID,
+    payload: AssignmentCompletionRequest,
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+) -> AssignmentResponse:
+    """Persist an idempotent completion change for an assignment owned by the caller."""
+    assignment = (
+        db.query(ClassroomAssignment)
+        .filter(
+            ClassroomAssignment.id == assignment_id,
+            ClassroomAssignment.user_id == current_user.id,
+        )
+        .first()
+    )
+    if assignment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "ASSIGNMENT_NOT_FOUND", "message": "Assignment not found."},
+        )
+    assignment.is_completed = payload.is_completed
+    db.commit()
+    db.refresh(assignment)
+    return AssignmentResponse.model_validate(assignment)
 
 
 @router.post("/sync", response_model=SyncClassroomResponse)

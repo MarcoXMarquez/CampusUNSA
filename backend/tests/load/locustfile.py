@@ -104,8 +104,13 @@ class StudentBrowser(FastHttpUser):
             if case.role == "secretary"
             else self.account["token"]
         )
+        if case.role == "completion":
+            token = dataset["completion_token"]
+        request_path = case.path.format(assignment_id=dataset["completion_assignment_id"])
         payload = None
-        if case.path.endswith("/auth/google/classroom/callback"):
+        if case.path.endswith("/completion"):
+            payload = {"is_completed": True}
+        elif case.path.endswith("/auth/google/classroom/callback"):
             payload = {"code": "perf-code-123"}
         elif case.path.endswith("/auth/google"):
             payload = {"token": self.account["identity"]}
@@ -131,7 +136,7 @@ class StudentBrowser(FastHttpUser):
             }
         with self.client.request(
             case.method,
-            case.path,
+            request_path,
             name=case.name,
             json=payload,
             headers={"Authorization": f"Bearer {token}"},
@@ -154,6 +159,9 @@ class StudentBrowser(FastHttpUser):
                 if case.expected == 403:
                     assert body["detail"]["code"] == "INSUFFICIENT_PERMISSIONS"
                     response.success()
+                elif case.path.endswith("/completion"):
+                    assert body["is_completed"] is True
+                    assert body["id"] == dataset["completion_assignment_id"]
                 elif case.method == "DELETE" and case.path.endswith(("/assignments", "/courses")):
                     assert "deleted_count" in body
                 elif case.path.endswith(("/courses", "/assignments", "/tickets/all")):
