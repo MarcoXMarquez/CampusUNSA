@@ -87,14 +87,32 @@ def seed() -> None:
         )
         db.add(staff)
         db.add(UserProfile(user_id=staff.id, full_name="Synthetic Secretary"))
+        # Keep the completion fixture independent from the destructive cleanup scenarios.
+        completion_user = User(
+            id=uuid4(), email="perf-completion@unsa.edu.pe", role="student", is_active=True,
+        )
+        db.add(completion_user)
+        db.flush()
+        completion_course = ClassroomCourse(
+            id=uuid4(), user_id=completion_user.id,
+            classroom_course_id="completion-course", name="Completion Performance",
+        )
+        db.add(completion_course)
+        completion_assignment = ClassroomAssignment(
+            id=uuid4(), user_id=completion_user.id, course_id=completion_course.id,
+            classroom_assignment_id="completion-fixture", title="Completion fixture",
+        )
+        db.add(completion_assignment)
         db.commit()
         payload = {
             "students": credentials,
             "staff_token": create_access_token({"sub": str(staff.id)}),
+            "completion_token": create_access_token({"sub": str(completion_user.id)}),
+            "completion_assignment_id": str(completion_assignment.id),
         }
         Path("/load-data/users.json").write_text(json.dumps(payload), encoding="utf-8")
     print(
-        "Seeded 1,000 institutional students, one QA secretary, 2,000 courses and assignments, and 20 tickets."
+        "Seeded 1,000 institutional students, one QA secretary, a completion identity, and 20 tickets."
     )
 
 

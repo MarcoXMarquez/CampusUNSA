@@ -58,6 +58,7 @@ jobs:
         working-directory: ./backend
         env:
           PYTHONPATH: .
+          COMPLETION_TEST_DATABASE_URL: postgresql://postgres:postgres_ci_password@localhost:5432/campusunsa_ci
         run: |
           python -m pytest tests/ -v --cov=app --cov-branch --cov-report=term-missing --cov-fail-under=80
 
@@ -123,6 +124,20 @@ jobs:
         working-directory: ./frontend
         run: |
           npx tsc --noEmit
+
+      - name: Verify Task Board Viewports and Completion Flow
+        working-directory: ./frontend
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+
+      - name: Preserve Task Board Browser Evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: task-board-browser-evidence
+          path: frontend/test-results/
+          retention-days: 14
 
       - name: Verify Section 3.2 UI Directives Gate
         run: |

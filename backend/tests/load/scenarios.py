@@ -26,6 +26,7 @@ BASE_SCENARIOS = (
     Scenario("GET", "/api/v1/tickets/all", expected=403, suffix=" [student denied]"),
     Scenario("GET", "/api/v1/classroom/courses"),
     Scenario("GET", "/api/v1/classroom/assignments"),
+    Scenario("PATCH", "/api/v1/classroom/assignments/{assignment_id}/completion", role="completion"),
     Scenario("POST", "/api/v1/classroom/sync"),
     Scenario("GET", "/api/v1/auth/google/classroom/status"),
     Scenario("POST", "/api/v1/auth/google/classroom/callback"),

@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Float,
     ForeignKey,
@@ -141,6 +142,9 @@ class ClassroomAssignment(Base):
         String(50),
         default="PUBLISHED",
         nullable=False,
+    )
+    is_completed: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False,
     )
     alternate_link: Mapped[Optional[str]] = mapped_column(
         String(500),

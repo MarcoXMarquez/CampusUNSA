@@ -14,6 +14,10 @@ module.exports = konstaConfig({
         "primary-dark": "#E5575B",
         urgent: "#FF3B30",
         "urgent-dark": "#FF453A",
+        "deadline-soon": "#FFCC00",
+        "deadline-soon-dark": "#FFD60A",
+        "deadline-later": "#34C759",
+        "deadline-later-dark": "#30D158",
         unsa: {
           blue: "#1B365D",
           red: "#8B0000",
