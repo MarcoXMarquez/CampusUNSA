@@ -53,6 +53,7 @@ class DuticAssignmentResponse(BaseModel):
     due_date: Optional[datetime] = None
     max_points: Optional[float] = None
     state: str
+    is_completed: bool = False
     alternate_link: Optional[str] = None
     origin: str
     created_at: datetime

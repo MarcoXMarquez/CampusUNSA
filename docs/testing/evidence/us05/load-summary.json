@@ -1,0 +1,195 @@
+{
+  "project": "campusunsa-perf-f4fabc21890b",
+  "passed": true,
+  "violations": [],
+  "run": {
+    "users": 1000,
+    "spawn_rate": 50.0,
+    "steady_seconds": 60.12692471799983,
+    "user_errors": 0,
+    "student_sessions": 1000,
+    "pacing_seconds": 5,
+    "cpu_warning": false,
+    "metrics": [
+      {
+        "name": "POST /api/v1/dutic/sync",
+        "count": 580,
+        "failures": 0,
+        "p50": 84.81987849995676,
+        "p95": 162.2461333002547
+      },
+      {
+        "name": "GET /api/v1/tickets/all [student denied]",
+        "count": 576,
+        "failures": 0,
+        "p50": 72.32910599987008,
+        "p95": 148.09050600001683
+      },
+      {
+        "name": "DELETE /api/v1/classroom/assignments",
+        "count": 580,
+        "failures": 0,
+        "p50": 77.90911649999543,
+        "p95": 149.35255365003277
+      },
+      {
+        "name": "GET /api/v1/tickets/all",
+        "count": 573,
+        "failures": 0,
+        "p50": 82.04830900012894,
+        "p95": 160.18720079991908
+      },
+      {
+        "name": "GET /api/v1/dutic/assignments",
+        "count": 579,
+        "failures": 0,
+        "p50": 79.93135399965468,
+        "p95": 158.56512930017743
+      },
+      {
+        "name": "POST /api/v1/classroom/sync",
+        "count": 579,
+        "failures": 0,
+        "p50": 86.96782800006986,
+        "p95": 162.6370059002511
+      },
+      {
+        "name": "GET /api/v1/dutic/ical/status",
+        "count": 577,
+        "failures": 0,
+        "p50": 75.41403899995203,
+        "p95": 150.71028859965702
+      },
+      {
+        "name": "GET /api/v1/dutic/courses",
+        "count": 580,
+        "failures": 0,
+        "p50": 79.91036950011221,
+        "p95": 155.52048109973381
+      },
+      {
+        "name": "POST /api/v1/dutic/ical/sync",
+        "count": 577,
+        "failures": 0,
+        "p50": 95.21412000003693,
+        "p95": 185.99951460000733
+      },
+      {
+        "name": "GET /api/v1/auth/me",
+        "count": 573,
+        "failures": 0,
+        "p50": 79.99023100001068,
+        "p95": 158.4066361999248
+      },
+      {
+        "name": "GET /",
+        "count": 575,
+        "failures": 0,
+        "p50": 55.078538000088884,
+        "p95": 132.672078300311
+      },
+      {
+        "name": "POST /api/v1/dutic/ical/subscribe",
+        "count": 577,
+        "failures": 0,
+        "p50": 87.07537300006152,
+        "p95": 171.3167132003036
+      },
+      {
+        "name": "GET /api/v1/classroom/assignments",
+        "count": 576,
+        "failures": 0,
+        "p50": 80.45686399987062,
+        "p95": 149.28506199987623
+      },
+      {
+        "name": "GET /api/v1/health",
+        "count": 576,
+        "failures": 0,
+        "p50": 75.32535850009481,
+        "p95": 155.96008074976453
+      },
+      {
+        "name": "GET /api/v1/auth/google/classroom/status",
+        "count": 579,
+        "failures": 0,
+        "p50": 78.17965499998536,
+        "p95": 152.11408920004035
+      },
+      {
+        "name": "PATCH /api/v1/classroom/assignments/{assignment_id}/completion",
+        "count": 577,
+        "failures": 0,
+        "p50": 89.03232500006197,
+        "p95": 160.7393534000948
+      },
+      {
+        "name": "POST /api/v1/nlp/parse-task",
+        "count": 575,
+        "failures": 0,
+        "p50": 77.56392200008122,
+        "p95": 154.50294370002655
+      },
+      {
+        "name": "POST /api/v1/auth/google",
+        "count": 574,
+        "failures": 0,
+        "p50": 76.75792349982657,
+        "p95": 157.8913534000549
+      },
+      {
+        "name": "GET /api/v1/classroom/courses",
+        "count": 576,
+        "failures": 0,
+        "p50": 81.18491000004724,
+        "p95": 162.66679174975707
+      },
+      {
+        "name": "DELETE /api/v1/classroom/courses",
+        "count": 577,
+        "failures": 0,
+        "p50": 89.30269399979807,
+        "p95": 164.58649640007923
+      },
+      {
+        "name": "POST /api/v1/auth/google/classroom/callback",
+        "count": 580,
+        "failures": 0,
+        "p50": 87.5113639999654,
+        "p95": 162.4360150498202
+      }
+    ],
+    "worker_requests": {
+      "89fe874b6fc1": 3060,
+      "5404ca0db31b": 3053,
+      "235736351d7d": 2995,
+      "94401e985a92": 3008
+    },
+    "server_p50_ms": {
+      "POST /api/v1/classroom/sync": 76.54141100010747,
+      "GET /api/v1/tickets/all [student denied]": 61.96435400011069,
+      "POST /api/v1/auth/google/classroom/callback": 77.08282600015082,
+      "GET /api/v1/dutic/ical/status": 65.07083599990438,
+      "PATCH /api/v1/classroom/assignments/{assignment_id}/completion": 78.40054400003282,
+      "GET /": 44.245300999591564,
+      "POST /api/v1/dutic/sync": 76.22083449996353,
+      "POST /api/v1/auth/google": 65.91143750006268,
+      "GET /api/v1/classroom/courses": 71.24971949997416,
+      "DELETE /api/v1/classroom/courses": 77.86721000002217,
+      "GET /api/v1/auth/me": 69.41842700007328,
+      "GET /api/v1/health": 65.48619899990626,
+      "GET /api/v1/classroom/assignments": 70.09456800005864,
+      "GET /api/v1/auth/google/classroom/status": 65.93044300007023,
+      "GET /api/v1/dutic/assignments": 69.16364299968336,
+      "DELETE /api/v1/classroom/assignments": 67.06319600016286,
+      "GET /api/v1/tickets/all": 72.14495900007023,
+      "POST /api/v1/dutic/ical/sync": 85.67654399985258,
+      "GET /api/v1/dutic/courses": 68.70366899988767,
+      "POST /api/v1/dutic/ical/subscribe": 76.67366199984826,
+      "POST /api/v1/nlp/parse-task": 66.90764199993282
+    }
+  },
+  "resource_samples": 88,
+  "peak_memory_bytes": 390098944,
+  "peak_connections": 10
+}

@@ -15,11 +15,19 @@ interface AcademicCourse {
 interface CalendarioViewProps {
   assignments: AcademicAssignment[];
   courses: AcademicCourse[];
+  onCompletionChange?: (id: string, completed: boolean) => void;
+  completionPending?: boolean;
+  completionError?: string | null;
+  isOnline?: boolean;
 }
 
 export function CalendarioView({
   assignments,
   courses,
+  onCompletionChange,
+  completionPending,
+  completionError,
+  isOnline,
 }: CalendarioViewProps): React.JSX.Element {
   const [selectedTask, setSelectedTask] = useState<AcademicAssignment | null>(null);
 
@@ -125,9 +133,13 @@ export function CalendarioView({
       )}
 
       <TaskDetailSheet
-        assignment={selectedTask}
+        assignment={selectedTask ? { ...selectedTask, ...assignments.find(task => task.id === selectedTask.id) } : null}
         opened={!!selectedTask}
         onClose={() => setSelectedTask(null)}
+        onCompletionChange={onCompletionChange}
+        completionPending={completionPending}
+        completionError={completionError}
+        isOnline={isOnline}
       />
     </div>
   );
