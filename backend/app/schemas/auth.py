@@ -10,6 +10,15 @@ class GoogleAuthRequest(BaseModel):
     token: str
 
 
+class EmailLoginRequest(BaseModel):
+    """
+    Payload sent from client for institutional email and password sign-in or sign-up.
+    """
+    email: str
+    password: str
+    full_name: Optional[str] = None
+
+
 class UserResponse(BaseModel):
     """
     Standard serialized representation of an authenticated User.

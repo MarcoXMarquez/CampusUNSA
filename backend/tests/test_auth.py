@@ -111,3 +111,67 @@ def test_get_current_user_me_unauthorized_without_token(client: TestClient):
     """
     response = client.get("/api/v1/auth/me")
     assert response.status_code == 401
+
+
+def test_email_password_login_success_with_institutional_email(client: TestClient, mock_db_session: MagicMock):
+    """
+    Valid @unsa.edu.pe credentials issue a signed JWT access token and user profile.
+    """
+    mock_user = MagicMock()
+    mock_user.id = "b4f2c001-0000-0000-0000-000000000099"
+    mock_user.email = "alumnosistema@unsa.edu.pe"
+    mock_user.role = "student"
+    mock_user.full_name = "Alumno Sistema"
+
+    with patch("app.api.v1.auth.get_or_create_user", return_value=mock_user):
+        response = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "alumnosistema@unsa.edu.pe",
+                "password": "validpassword123",
+                "full_name": "Alumno Sistema",
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
+    assert data["user"]["email"] == "alumnosistema@unsa.edu.pe"
+    assert data["user"]["role"] == "student"
+
+
+def test_email_password_login_rejects_external_domain(client: TestClient):
+    """
+    Attempts to sign in with an external non-UNSA email domain must be rejected with HTTP 403 DOMAIN_NOT_ALLOWED.
+    """
+    response = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "intruso@gmail.com",
+            "password": "somepassword123",
+        },
+    )
+
+    assert response.status_code == 403
+    data = response.json()
+    assert data["detail"]["code"] == "DOMAIN_NOT_ALLOWED"
+    assert "unsa.edu.pe" in data["detail"]["message"].lower()
+
+
+def test_email_password_login_rejects_empty_password(client: TestClient):
+    """
+    Attempts to submit an empty password must return HTTP 400 with INVALID_CREDENTIALS.
+    """
+    response = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "estudiante@unsa.edu.pe",
+            "password": "   ",
+        },
+    )
+
+    assert response.status_code == 400
+    data = response.json()
+    assert data["detail"]["code"] == "INVALID_CREDENTIALS"
+    assert "empty" in data["detail"]["message"].lower()

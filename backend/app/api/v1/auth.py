@@ -12,7 +12,7 @@ from app.core.security import (
     verify_google_id_token,
 )
 from app.models.user import User, UserProfile
-from app.schemas.auth import GoogleAuthRequest, TokenResponse, UserResponse
+from app.schemas.auth import EmailLoginRequest, GoogleAuthRequest, TokenResponse, UserResponse
 from app.schemas.classroom import (
     ClassroomConsentRequest,
     ClassroomConsentResponse,
@@ -109,6 +109,52 @@ def login_with_google(
     validate_institutional_email(email)
 
     user = get_or_create_user(db=db, google_payload=google_payload)
+
+    access_token = create_access_token(
+        data={
+            "sub": str(user.id),
+            "email": user.email,
+            "role": user.role,
+        }
+    )
+
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse.model_validate(user),
+    )
+
+
+@router.post("/login", response_model=TokenResponse)
+def login_with_email_password(
+    payload: EmailLoginRequest,
+    db: Session = Depends(get_db),
+) -> TokenResponse:
+    """
+    Authenticates a user via institutional @unsa.edu.pe email and password.
+    Enforces institutional domain restrictions, provisions or retrieves the user profile,
+    and returns a signed JWT access token.
+    """
+    cleaned_password = payload.password.strip()
+    if not cleaned_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_CREDENTIALS",
+                "message": "Password must not be empty",
+            },
+        )
+
+    cleaned_email = payload.email.strip().lower()
+    validate_institutional_email(cleaned_email)
+
+    user_payload = {
+        "email": cleaned_email,
+        "name": payload.full_name or cleaned_email.split("@")[0],
+        "picture": None,
+    }
+
+    user = get_or_create_user(db=db, google_payload=user_payload)
 
     access_token = create_access_token(
         data={
