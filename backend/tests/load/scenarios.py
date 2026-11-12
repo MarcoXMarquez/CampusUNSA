@@ -21,6 +21,7 @@ BASE_SCENARIOS = (
     Scenario("GET", "/"),
     Scenario("GET", "/api/v1/health"),
     Scenario("POST", "/api/v1/auth/google"),
+    Scenario("POST", "/api/v1/auth/login"),
     Scenario("GET", "/api/v1/auth/me"),
     Scenario("GET", "/api/v1/tickets/all", role="secretary"),
     Scenario("GET", "/api/v1/tickets/all", expected=403, suffix=" [student denied]"),
