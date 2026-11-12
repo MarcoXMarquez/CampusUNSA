@@ -25,7 +25,7 @@ EMOJI_FOUND=0
 
 for FILE in $CHANGED_FILES; do
     if [ -f "$FILE" ]; then
-        if grep -P -q "$EMOJI_REGEX" "$FILE" 2>/dev/null; then
+        if grep -I -P -q "$EMOJI_REGEX" "$FILE" 2>/dev/null; then
             echo "  [FAIL] Emoji detected in: $FILE"
             EMOJI_FOUND=1
         fi
