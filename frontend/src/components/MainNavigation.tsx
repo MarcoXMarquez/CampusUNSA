@@ -305,7 +305,15 @@ function NavigationContent(): React.JSX.Element {
         onClose={() => setLoginModalOpened(false)}
         onSuccess={(authToken, authUser) => {
           setToken(authToken);
-          setUser(authUser);
+          setUser({
+            id: authUser.id || "",
+            email: authUser.email,
+            role: authUser.role,
+            is_active: authUser.is_active ?? true,
+            profile: {
+              full_name: authUser.full_name,
+            },
+          });
           fetchAcademicData();
         }}
       />
