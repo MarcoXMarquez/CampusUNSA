@@ -133,9 +133,9 @@ Light and dark mode MUST both be supported. The interface follows the system col
 
 #### 3.2.6 Authentication and Pairing Patterns
 
-* **Two-Screen iOS 18 Authentication Flow:**
-  * **Screen 1 (WelcomeScreen):** Clean collegiate presentation with centered CampusUNSA emblem, Large Title greeting ("Bienvenido a tu Hub Académico"), concise value proposition subtitle, and full-width prominent primary action button ("Siguiente") transitioning to authentication.
-  * **Screen 2 (SignInScreen / SignUpScreen):** Native iOS navigation bar with back action ("Atrás"), dynamic headline ("Iniciar sesión" / "Crear cuenta"), inset grouped form fields for institutional email (`@unsa.edu.pe`) and password (with interactive show/hide toggle), crimson primary submit button, subtle divider ("o continúa con"), official Google Identity button, and classic interactive footer toggle between Sign In ("¿No tienes una cuenta? Regístrate") and Sign Up ("¿Ya tienes una cuenta? Inicia sesión").
+* **iOS 18 Onboarding and Authentication Flow:**
+  * **Screen 1 (Onboarding Carousel — 4 Steps):** Four-step illustrated progression starring the official CampusUNSA mascot (student penguin with headphones and backpack). Clean two-tone curved card header (`#E5E5EA` on `#000000` chassis), optimized local Retina WebP illustrations (`560x560px`, `<30KB`), interactive 4-dot indicator, and full-width crimson action button ("SIGUIENTE" for steps 1–3, "COMENZAR" on step 4).
+  * **Screen 2 (SignInScreen / SignUpScreen — Reference Card):** Native iOS navigation bar with back action ("Atrás"), top grabber pill, centered minimalist SVG mascot logo (`penguin-logo-minimal.svg`), dynamic greeting ("¡Bienvenido de nuevo!" / "Crea tu cuenta agustina"), rounded input fields (`rounded-[14px]`) for institutional email (`@unsa.edu.pe`) and password with visibility toggle, "Recordarme" checkbox, crimson primary submit button, subtle divider ("O continúa con"), official Google Identity button, and classic interactive footer toggle between Sign In and Sign Up.
 * **Google sign-in button:** Follow official Google Identity branding: neutral white or dark surface, subtle `#DADCE0` border, official colored "G" logo on the left, neutral text. No crimson borders or colored backgrounds.
 * **Institutional Domain Restriction:** Authentication credentials and Google OAuth tokens are strictly restricted to verified `@unsa.edu.pe` institutional accounts.
 * **WhatsApp pairing sheet (`Sheet`):**
