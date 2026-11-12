@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Minimalist stylized penguin mascot logo mark for CampusUNSA -->
+  <defs>
+    <linearGradient id="pBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E2024"/>
+      <stop offset="100%" stop-color="#0F1012"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer Penguin Silhouette / Head & Torso -->
+  <path d="M50 12 C34 12 24 26 24 45 C24 64 28 82 50 82 C72 82 76 64 76 45 C76 26 66 12 50 12 Z" fill="url(#pBody)"/>
+  
+  <!-- Headphones in crimson institutional accent -->
+  <path d="M22 42 C22 24 34 16 50 16 C66 16 78 24 78 42" fill="none" stroke="#8B0000" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- Headphone ear pads -->
+  <rect x="18" y="36" width="7" height="16" rx="3.5" fill="#8B0000"/>
+  <rect x="75" y="36" width="7" height="16" rx="3.5" fill="#8B0000"/>
+  
+  <!-- White Belly & Face Patch -->
+  <path d="M50 25 C40 25 33 34 33 48 C33 64 38 78 50 78 C62 78 67 64 67 48 C67 34 60 25 50 25 Z" fill="#F4F5F8"/>
+  
+  <!-- Sleek Minimal Eyes -->
+  <circle cx="43.5" cy="42" r="3.2" fill="#18191B"/>
+  <circle cx="56.5" cy="42" r="3.2" fill="#18191B"/>
+  <circle cx="44.6" cy="40.8" r="1.1" fill="#FFFFFF"/>
+  <circle cx="57.6" cy="40.8" r="1.1" fill="#FFFFFF"/>
+  
+  <!-- Soft Blush Spots -->
+  <ellipse cx="38.5" cy="47" rx="3" ry="1.6" fill="#F87171" opacity="0.45"/>
+  <ellipse cx="61.5" cy="47" rx="3" ry="1.6" fill="#F87171" opacity="0.45"/>
+  
+  <!-- Subtle Minimalist Beak -->
+  <path d="M47 46 Q50 51 53 46 Z" fill="#F59E0B"/>
+  
+  <!-- Small collegiate crimson heart crest on chest -->
+  <path d="M50 63 C49 61.5 45.5 58.5 45.5 56.5 C45.5 54.8 47 53.5 48.5 53.5 C49.4 53.5 50 54.2 50 54.2 C50 54.2 50.6 53.5 51.5 53.5 C53 53.5 54.5 54.8 54.5 56.5 C54.5 58.5 51 61.5 50 63 Z" fill="#8B0000"/>
+</svg>
