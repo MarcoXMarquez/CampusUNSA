@@ -65,8 +65,11 @@ scanDirectory(
 
       // 1. Check prohibited shadows in components
       if (filePath.includes("/components/") && SHADOW_REGEX.test(line)) {
-        // Exclude LoginModal official Google button which is exempt or third-party styles
-        if (!filePath.endsWith("LoginModal.tsx") || !line.includes("shadow-sm")) {
+        // Exclude LoginModal and AuthFlow official Google button which is exempt or third-party styles
+        const isAuthGoogleButton =
+          (filePath.endsWith("LoginModal.tsx") || filePath.endsWith("AuthFlow.tsx")) &&
+          line.includes("shadow-sm");
+        if (!isAuthGoogleButton) {
           reportViolation(
             filePath,
             lineNum,

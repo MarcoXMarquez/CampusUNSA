@@ -133,8 +133,11 @@ Light and dark mode MUST both be supported. The interface follows the system col
 
 #### 3.2.6 Authentication and Pairing Patterns
 
-* **Google sign-in button:** Follow the official Google Identity branding: neutral white or dark surface, subtle `#DADCE0` border, official colored "G" logo on the left, neutral text. No crimson borders or colored backgrounds.
-* **Manual credentials:** Presented as a text link ("Usar C.I. y contraseña UNSA") that navigates to an input list. Accordions are prohibited.
+* **Two-Screen iOS 18 Authentication Flow:**
+  * **Screen 1 (WelcomeScreen):** Clean collegiate presentation with centered CampusUNSA emblem, Large Title greeting ("Bienvenido a tu Hub Académico"), concise value proposition subtitle, and full-width prominent primary action button ("Siguiente") transitioning to authentication.
+  * **Screen 2 (SignInScreen / SignUpScreen):** Native iOS navigation bar with back action ("Atrás"), dynamic headline ("Iniciar sesión" / "Crear cuenta"), inset grouped form fields for institutional email (`@unsa.edu.pe`) and password (with interactive show/hide toggle), crimson primary submit button, subtle divider ("o continúa con"), official Google Identity button, and classic interactive footer toggle between Sign In ("¿No tienes una cuenta? Regístrate") and Sign Up ("¿Ya tienes una cuenta? Inicia sesión").
+* **Google sign-in button:** Follow official Google Identity branding: neutral white or dark surface, subtle `#DADCE0` border, official colored "G" logo on the left, neutral text. No crimson borders or colored backgrounds.
+* **Institutional Domain Restriction:** Authentication credentials and Google OAuth tokens are strictly restricted to verified `@unsa.edu.pe` institutional accounts.
 * **WhatsApp pairing sheet (`Sheet`):**
   * Top grabber and an iOS navigation bar ("Cancelar" on the left, centered title). No circular close button.
   * Six-digit input with `inputMode="numeric"`, `autoComplete="one-time-code"`, `maxLength={6}`, and automatic submission on the sixth digit.
