@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthFlow } from "./AuthFlow";
-import { AUTH_MESSAGES } from "@/lib/auth-messages";
+import { AUTH_MESSAGES, ONBOARDING_SLIDES } from "@/lib/auth-messages";
 
 describe("AuthFlow Component", () => {
   const mockOnSuccess = vi.fn();
@@ -16,61 +16,77 @@ describe("AuthFlow Component", () => {
     cleanup();
   });
 
-  it("renders WelcomeScreen initially with CampusUNSA badge and Siguiente button", () => {
+  it("renders Onboarding step 1 initially with CampusUNSA title and SIGUIENTE button", () => {
     render(<AuthFlow onSuccess={mockOnSuccess} onCancel={mockOnCancel} />);
 
-    expect(screen.getByText(AUTH_MESSAGES.welcomeBadge)).toBeDefined();
-    expect(screen.getByText(AUTH_MESSAGES.welcomeTitle)).toBeDefined();
-    expect(screen.getByText(AUTH_MESSAGES.welcomeSubtitle)).toBeDefined();
-    expect(screen.getByText(AUTH_MESSAGES.welcomeFeature1Title)).toBeDefined();
-    expect(screen.getByText(AUTH_MESSAGES.welcomeNextButton)).toBeDefined();
+    expect(screen.getByRole("heading", { name: ONBOARDING_SLIDES[0].title, level: 1 })).toBeDefined();
+    expect(screen.getByText(ONBOARDING_SLIDES[0].description)).toBeDefined();
+    expect(screen.getByAltText(ONBOARDING_SLIDES[0].imageAlt)).toBeDefined();
+    expect(screen.getByRole("button", { name: /siguiente/i })).toBeDefined();
   });
 
-  it("navigates to SignInScreen when Siguiente is clicked", () => {
+  it("advances sequentially through all 4 onboarding steps and navigates to login on step 4 CTA", () => {
     render(<AuthFlow onSuccess={mockOnSuccess} onCancel={mockOnCancel} />);
 
-    fireEvent.click(screen.getByText(AUTH_MESSAGES.welcomeNextButton));
+    // Step 1 -> Step 2
+    fireEvent.click(screen.getByRole("button", { name: /siguiente/i }));
+    expect(screen.getByRole("heading", { name: ONBOARDING_SLIDES[1].title, level: 1 })).toBeDefined();
+    expect(screen.getByText(ONBOARDING_SLIDES[1].description)).toBeDefined();
 
-    expect(
-      screen.getByRole("heading", { name: AUTH_MESSAGES.signInTitle, level: 2 })
-    ).toBeDefined();
+    // Step 2 -> Step 3
+    fireEvent.click(screen.getByRole("button", { name: /siguiente/i }));
+    expect(screen.getByRole("heading", { name: ONBOARDING_SLIDES[2].title, level: 1 })).toBeDefined();
+    expect(screen.getByText(ONBOARDING_SLIDES[2].description)).toBeDefined();
+
+    // Step 3 -> Step 4
+    fireEvent.click(screen.getByRole("button", { name: /siguiente/i }));
+    expect(screen.getByRole("heading", { name: ONBOARDING_SLIDES[3].title, level: 1 })).toBeDefined();
+    expect(screen.getByRole("button", { name: /comenzar/i })).toBeDefined();
+
+    // Step 4 -> Login card
+    fireEvent.click(screen.getByRole("button", { name: /comenzar/i }));
+    expect(screen.getByText(AUTH_MESSAGES.signInGreeting)).toBeDefined();
     expect(screen.getByPlaceholderText(AUTH_MESSAGES.emailPlaceholder)).toBeDefined();
     expect(screen.getByPlaceholderText(AUTH_MESSAGES.passwordPlaceholder)).toBeDefined();
     expect(screen.getByText(AUTH_MESSAGES.googleButton)).toBeDefined();
   });
 
-  it("navigates back to WelcomeScreen when Atras is clicked", () => {
+  it("navigates directly between onboarding steps via pagination dots and supports skip button", () => {
     render(<AuthFlow onSuccess={mockOnSuccess} onCancel={mockOnCancel} />);
 
-    fireEvent.click(screen.getByText(AUTH_MESSAGES.welcomeNextButton));
-    expect(
-      screen.getByRole("heading", { name: AUTH_MESSAGES.signInTitle, level: 2 })
-    ).toBeDefined();
+    // Click Dot for Step 3 directly
+    const dotStep3 = screen.getByLabelText("Paso 3");
+    fireEvent.click(dotStep3);
+    expect(screen.getByRole("heading", { name: ONBOARDING_SLIDES[2].title, level: 1 })).toBeDefined();
 
-    fireEvent.click(screen.getByText(AUTH_MESSAGES.backButton));
-    expect(screen.getByText(AUTH_MESSAGES.welcomeTitle)).toBeDefined();
+    // Click Saltar to go straight to login
+    const skipBtn = screen.getByRole("button", { name: AUTH_MESSAGES.skipButton });
+    fireEvent.click(skipBtn);
+    expect(screen.getByText(AUTH_MESSAGES.signInGreeting)).toBeDefined();
   });
 
-  it("toggles between Sign In and Sign Up modes cleanly", () => {
+  it("navigates back to Onboarding step 4 when Atras is clicked on SignIn card", () => {
+    render(<AuthFlow onSuccess={mockOnSuccess} onCancel={mockOnCancel} initialStep="auth" />);
+
+    expect(screen.getByText(AUTH_MESSAGES.signInGreeting)).toBeDefined();
+    fireEvent.click(screen.getByText(AUTH_MESSAGES.backButton));
+    expect(screen.getByRole("heading", { name: ONBOARDING_SLIDES[3].title, level: 1 })).toBeDefined();
+  });
+
+  it("toggles between Sign In and Sign Up modes cleanly in reference card", () => {
     render(<AuthFlow onSuccess={mockOnSuccess} initialStep="auth" />);
 
-    expect(
-      screen.getByRole("heading", { name: AUTH_MESSAGES.signInTitle, level: 2 })
-    ).toBeDefined();
+    expect(screen.getByText(AUTH_MESSAGES.signInGreeting)).toBeDefined();
     expect(screen.queryByPlaceholderText(AUTH_MESSAGES.fullNamePlaceholder)).toBeNull();
 
     // Toggle to Sign Up
     fireEvent.click(screen.getByText(AUTH_MESSAGES.switchToSignUpAction));
-    expect(
-      screen.getByRole("heading", { name: AUTH_MESSAGES.signUpTitle, level: 2 })
-    ).toBeDefined();
+    expect(screen.getByText(AUTH_MESSAGES.signUpGreeting)).toBeDefined();
     expect(screen.getByPlaceholderText(AUTH_MESSAGES.fullNamePlaceholder)).toBeDefined();
 
     // Toggle back to Sign In
     fireEvent.click(screen.getByText(AUTH_MESSAGES.switchToSignInAction));
-    expect(
-      screen.getByRole("heading", { name: AUTH_MESSAGES.signInTitle, level: 2 })
-    ).toBeDefined();
+    expect(screen.getByText(AUTH_MESSAGES.signInGreeting)).toBeDefined();
     expect(screen.queryByPlaceholderText(AUTH_MESSAGES.fullNamePlaceholder)).toBeNull();
   });
 
@@ -101,7 +117,7 @@ describe("AuthFlow Component", () => {
       },
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => mockAuthResponse,
     });
@@ -113,16 +129,12 @@ describe("AuthFlow Component", () => {
     const submitBtn = screen.getByRole("button", { name: AUTH_MESSAGES.signInSubmit });
 
     fireEvent.change(emailInput, { target: { value: "mmarquezhe@unsa.edu.pe" } });
-    fireEvent.change(passwordInput, { target: { value: "passwordSeguro123" } });
+    fireEvent.change(passwordInput, { target: { value: "Seguridad2026!" } });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(mockOnSuccess).toHaveBeenCalledWith(
-        mockAuthResponse.access_token,
-        mockAuthResponse.user
-      );
+      expect(mockOnSuccess).toHaveBeenCalledWith("jwt-mock-test-token-12345", mockAuthResponse.user);
     });
-
-    expect(localStorage.getItem("campusunsa_token")).toBe(mockAuthResponse.access_token);
+    expect(localStorage.getItem("campusunsa_token")).toBe("jwt-mock-test-token-12345");
   });
 });
