@@ -12,6 +12,7 @@ import uuid
 from typing import Dict
 from unittest.mock import MagicMock, patch
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -21,7 +22,11 @@ from sqlalchemy.pool import StaticPool
 from app.core.database import Base, get_db
 from app.core.security import create_access_token
 from app.main import app
-from app.models.classroom import ClassroomAssignment, ClassroomCourse
+from app.models.classroom import (
+    ClassroomAssignment,
+    CourseExternalSource,
+    UserExternalCourse,
+)
 from app.models.user import User
 
 
@@ -117,34 +122,97 @@ def test_dutic_ical_subscribe_valid_url(
     auth_headers: Dict[str, str],
     auth_student: User,
 ) -> None:
-    """Tests subscribing a valid Moodle calendar URL and encrypting it at rest."""
+    """Tests subscribing a valid Moodle calendar URL, encrypting it, and triggering initial sync."""
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.headers = {"content-type": "text/calendar; charset=utf-8"}
+    mock_resp.text = SAMPLE_ICS_FEED
+
     app.dependency_overrides[get_db] = lambda: test_db_session
 
     valid_url = "https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?userid=18277&authtoken=abc123token&preset_what=all&preset_time=recentupcoming"
 
     with TestClient(app) as client:
-        res = client.post(
-            "/api/v1/dutic/ical/subscribe",
-            headers=auth_headers,
-            json={"calendar_url": valid_url},
-        )
+        with patch("httpx.Client.get", return_value=mock_resp):
+            res = client.post(
+                "/api/v1/dutic/ical/subscribe",
+                headers=auth_headers,
+                json={"calendar_url": valid_url},
+            )
         assert res.status_code == 200
         data = res.json()
         assert data["status"] == "CONNECTED"
         assert data["connected_at"] is not None
 
-        # Verify database record is encrypted
+        # Verify database record is encrypted and initial sync populated Moodle tasks
         test_db_session.expire_all()
         refreshed = test_db_session.query(User).filter(User.id == auth_student.id).first()
         assert refreshed is not None
         assert refreshed.moodle_calendar_url is not None
         assert refreshed.moodle_calendar_url != valid_url
-        assert refreshed.moodle_calendar_sync_status == "CONNECTED"
+        assert refreshed.moodle_calendar_sync_status == "SYNCED"
 
-        # Verify status endpoint reflects connection
+        moodle_courses = (
+            test_db_session.query(UserExternalCourse)
+            .join(UserExternalCourse.source)
+            .filter(
+                UserExternalCourse.user_id == auth_student.id,
+                CourseExternalSource.origin == "moodle",
+            )
+            .all()
+        )
+        assert len(moodle_courses) >= 1
+
+        moodle_assignments = (
+            test_db_session.query(ClassroomAssignment)
+            .filter(ClassroomAssignment.user_id == auth_student.id)
+            .all()
+        )
+        assert len(moodle_assignments) >= 1
+
+        # Verify status endpoint reflects connection (outside httpx.Client.get patch)
         status_res = client.get("/api/v1/dutic/ical/status", headers=auth_headers)
         assert status_res.status_code == 200
         assert status_res.json()["connected"] is True
+
+    app.dependency_overrides.clear()
+
+
+def test_dutic_ical_subscribe_preserves_connection_if_initial_sync_fails(
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+    auth_student: User,
+) -> None:
+    """Tests that transient Moodle fetch failures during subscribe do not discard the saved URL."""
+    mock_resp = MagicMock()
+    mock_resp.status_code = 502
+    mock_resp.headers = {"content-type": "text/plain"}
+    mock_resp.text = "Bad Gateway"
+    mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+        "502 Bad Gateway",
+        request=MagicMock(),
+        response=mock_resp,
+    )
+
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    valid_url = "https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?userid=18277&authtoken=abc123token"
+
+    with TestClient(app) as client:
+        with patch("httpx.Client.get", return_value=mock_resp):
+            res = client.post(
+                "/api/v1/dutic/ical/subscribe",
+                headers=auth_headers,
+                json={"calendar_url": valid_url},
+            )
+        assert res.status_code == 200
+        assert res.json()["status"] == "CONNECTED"
+
+        test_db_session.expire_all()
+        refreshed = test_db_session.query(User).filter(User.id == auth_student.id).first()
+        assert refreshed is not None
+        assert refreshed.moodle_calendar_url is not None
+        assert refreshed.moodle_calendar_sync_status == "CONNECTED"
 
     app.dependency_overrides.clear()
 
@@ -265,19 +333,21 @@ def test_clear_assignments_endpoint(
     auth_student: User,
 ) -> None:
     """Tests clearing/deleting assignments for clean manual testing and verification."""
-    course = ClassroomCourse(
+    source = CourseExternalSource(
         id=uuid.uuid4(),
-        user_id=auth_student.id,
-        classroom_course_id="test-course-1",
-        name="Test Course",
+        term="2026B",
+        origin="classroom",
+        external_course_id="test-course-1",
+        raw_name="Test Course",
     )
-    test_db_session.add(course)
+    test_db_session.add(source)
     test_db_session.flush()
+    test_db_session.add(UserExternalCourse(user_id=auth_student.id, source_id=source.id))
 
     a1 = ClassroomAssignment(
         id=uuid.uuid4(),
         user_id=auth_student.id,
-        course_id=course.id,
+        source_id=source.id,
         classroom_assignment_id="a1",
         title="Moodle Task",
         origin="moodle",
@@ -286,7 +356,7 @@ def test_clear_assignments_endpoint(
     a2 = ClassroomAssignment(
         id=uuid.uuid4(),
         user_id=auth_student.id,
-        course_id=course.id,
+        source_id=source.id,
         classroom_assignment_id="a2",
         title="Classroom Task",
         origin="classroom",
@@ -324,25 +394,33 @@ def test_clear_courses_endpoint(
     auth_student: User,
 ) -> None:
     """Tests clearing/deleting courses and cascading to associated assignments."""
-    c1 = ClassroomCourse(
+    s1 = CourseExternalSource(
         id=uuid.uuid4(),
-        user_id=auth_student.id,
-        classroom_course_id="moodle-cs101",
-        name="Moodle CS101",
+        term="2026B",
+        origin="moodle",
+        external_course_id="moodle-cs101",
+        raw_name="Moodle CS101",
     )
-    c2 = ClassroomCourse(
+    s2 = CourseExternalSource(
         id=uuid.uuid4(),
-        user_id=auth_student.id,
-        classroom_course_id="classroom-g202",
-        name="Classroom G202",
+        term="2026B",
+        origin="classroom",
+        external_course_id="classroom-g202",
+        raw_name="Classroom G202",
     )
-    test_db_session.add_all([c1, c2])
+    test_db_session.add_all([s1, s2])
     test_db_session.flush()
+    test_db_session.add_all(
+        [
+            UserExternalCourse(user_id=auth_student.id, source_id=s1.id),
+            UserExternalCourse(user_id=auth_student.id, source_id=s2.id),
+        ]
+    )
 
     a1 = ClassroomAssignment(
         id=uuid.uuid4(),
         user_id=auth_student.id,
-        course_id=c1.id,
+        source_id=s1.id,
         classroom_assignment_id="task-c1",
         title="Moodle Task",
         origin="moodle",
@@ -360,9 +438,13 @@ def test_clear_courses_endpoint(
         assert res_m.json()["deleted_count"] == 1
 
         # Check moodle course and cascaded assignment are gone
-        remaining_courses = test_db_session.query(ClassroomCourse).filter(ClassroomCourse.user_id == auth_student.id).all()
+        remaining_courses = (
+            test_db_session.query(UserExternalCourse)
+            .filter(UserExternalCourse.user_id == auth_student.id)
+            .all()
+        )
         assert len(remaining_courses) == 1
-        assert remaining_courses[0].classroom_course_id == "classroom-g202"
+        assert remaining_courses[0].source.external_course_id == "classroom-g202"
 
         remaining_assigns = test_db_session.query(ClassroomAssignment).filter(ClassroomAssignment.user_id == auth_student.id).all()
         assert len(remaining_assigns) == 0
@@ -372,7 +454,11 @@ def test_clear_courses_endpoint(
         assert res_all.status_code == 200
         assert res_all.json()["deleted_count"] == 1
 
-        remaining_all = test_db_session.query(ClassroomCourse).filter(ClassroomCourse.user_id == auth_student.id).all()
+        remaining_all = (
+            test_db_session.query(UserExternalCourse)
+            .filter(UserExternalCourse.user_id == auth_student.id)
+            .all()
+        )
         assert len(remaining_all) == 0
 
     app.dependency_overrides.clear()
@@ -588,21 +674,28 @@ def test_course_origin_column_filters_moodle_without_id_prefix_hack(
     auth_student: User,
 ) -> None:
     """Courses must filter by explicit origin column instead of fragile 'moodle-' ID prefixes."""
-    moodle_course = ClassroomCourse(
+    moodle_course = CourseExternalSource(
         id=uuid.uuid4(),
-        user_id=auth_student.id,
-        classroom_course_id="unsa-2026-sis",
-        name="Arquitectura de Software",
+        term="2026B",
         origin="moodle",
+        external_course_id="unsa-2026-sis",
+        raw_name="Arquitectura de Software",
     )
-    classroom_course = ClassroomCourse(
+    classroom_course = CourseExternalSource(
         id=uuid.uuid4(),
-        user_id=auth_student.id,
-        classroom_course_id="gclass-99",
-        name="Base de Datos",
+        term="2026B",
         origin="classroom",
+        external_course_id="gclass-99",
+        raw_name="Base de Datos",
     )
     test_db_session.add_all([moodle_course, classroom_course])
+    test_db_session.flush()
+    test_db_session.add_all(
+        [
+            UserExternalCourse(user_id=auth_student.id, source_id=moodle_course.id),
+            UserExternalCourse(user_id=auth_student.id, source_id=classroom_course.id),
+        ]
+    )
     test_db_session.commit()
 
     app.dependency_overrides[get_db] = lambda: test_db_session
@@ -622,12 +715,12 @@ def test_course_origin_column_filters_moodle_without_id_prefix_hack(
         app.dependency_overrides.clear()
 
     remaining = (
-        test_db_session.query(ClassroomCourse)
-        .filter(ClassroomCourse.user_id == auth_student.id)
+        test_db_session.query(UserExternalCourse)
+        .filter(UserExternalCourse.user_id == auth_student.id)
         .all()
     )
     assert len(remaining) == 1
-    assert remaining[0].classroom_course_id == "gclass-99"
+    assert remaining[0].source.external_course_id == "gclass-99"
 
 
 def test_moodle_sync_does_not_overwrite_google_classroom_sync_state(

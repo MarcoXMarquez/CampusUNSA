@@ -195,6 +195,16 @@
       "category": "academic_hub",
       "target_page": "DUTIC-Moodle-Extraction-Service.md",
       "title": "Moodle iCal URL Validation and SSRF Hardening (CWE-918)"
+    },
+    "98": {
+      "category": "security_and_auth",
+      "target_page": "Auth-and-Institutional-SSO.md",
+      "title": "Feature Auth (Issue #98)"
+    },
+    "99": {
+      "category": "security_and_auth",
+      "target_page": "Auth-and-Institutional-SSO.md",
+      "title": "Feature Auth (Issue #99)"
     }
   },
   "dynamic_heuristics": {

@@ -8,7 +8,7 @@ Orchestrates:
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -18,7 +18,7 @@ from app.core.exceptions import (  # noqa: F401
     DuticRateLimitError,
     DuticSessionExpiredError,
 )
-from app.models.classroom import ClassroomCourse
+from app.models.classroom import CourseExternalSource, UserCourseEnrollment
 from app.models.user import User
 from app.repositories.academic_repo import AcademicSyncRepository
 from app.schemas.dutic import SyncDuticResponse
@@ -199,8 +199,15 @@ class DuticSyncService:
         synced_courses_count = 0
         synced_assignments_count = 0
 
-        # Cache courses map for assignment foreign keys
-        courses_map: Dict[str, ClassroomCourse] = {}
+        task_texts_by_course: Dict[str, List[str]] = {}
+        for t_item in tasks_data:
+            raw_cid = str(t_item.get("courseId", ""))
+            task_title = str(t_item.get("name", "")).strip()
+            if raw_cid and task_title:
+                task_texts_by_course.setdefault(raw_cid, []).append(task_title)
+
+        # Cache sources map for assignment foreign keys
+        courses_map: Dict[str, Tuple[CourseExternalSource, Optional[UserCourseEnrollment]]] = {}
 
         for c_item in courses_data:
             moodle_course_id = str(c_item.get("id"))
@@ -208,38 +215,43 @@ class DuticSyncService:
             fullname = c_item.get("fullname", "Untitled Course")
             shortname = c_item.get("shortname")
 
-            course = AcademicSyncRepository.upsert_course(
+            source, _user_ext, enrollment = AcademicSyncRepository.upsert_course_source(
                 db,
-                user_id=user.id,
-                course_ref_id=course_ref_id,
+                user=user,
+                external_course_id=course_ref_id,
                 name=fullname,
                 section=shortname,
                 alternate_link=f"https://aulavirtual.unsa.edu.pe/course/view.php?id={moodle_course_id}",
                 origin="moodle",
+                task_texts=task_texts_by_course.get(moodle_course_id, ()),
             )
 
-            courses_map[moodle_course_id] = course
-            courses_map[course_ref_id] = course
+            courses_map[moodle_course_id] = (source, enrollment)
+            courses_map[course_ref_id] = (source, enrollment)
             synced_courses_count += 1
 
         for t_item in tasks_data:
             moodle_task_id = str(t_item.get("id"))
             task_ref_id = f"moodle-{moodle_task_id}"
             raw_course_id = str(t_item.get("courseId", ""))
-            course = courses_map.get(raw_course_id)
+            mapped = courses_map.get(raw_course_id)
 
-            # If course is not mapped yet, create a placeholder course record
-            if not course:
+            # If course is not mapped yet, create a placeholder source record
+            if not mapped:
                 placeholder_course_id = f"moodle-{raw_course_id}"
-                course = AcademicSyncRepository.upsert_course(
+                source, _user_ext, enrollment = AcademicSyncRepository.upsert_course_source(
                     db,
-                    user_id=user.id,
-                    course_ref_id=placeholder_course_id,
+                    user=user,
+                    external_course_id=placeholder_course_id,
                     name=f"Moodle Course {raw_course_id}",
                     alternate_link=f"https://aulavirtual.unsa.edu.pe/course/view.php?id={raw_course_id}",
                     origin="moodle",
+                    task_texts=task_texts_by_course.get(raw_course_id, ()),
                 )
-                courses_map[raw_course_id] = course
+                mapped = (source, enrollment)
+                courses_map[raw_course_id] = mapped
+
+            source, enrollment = mapped
 
             due_epoch = t_item.get("dueDate")
             due_dt = (
@@ -255,7 +267,9 @@ class DuticSyncService:
             AcademicSyncRepository.upsert_assignment(
                 db,
                 user_id=user.id,
-                course_id=course.id,
+                source_id=source.id,
+                course_code=source.course_code,
+                enrollment_id=enrollment.id if enrollment else None,
                 assignment_ref_id=task_ref_id,
                 title=title,
                 due_date=due_dt,
@@ -264,6 +278,8 @@ class DuticSyncService:
                 origin="moodle",
             )
             synced_assignments_count += 1
+
+        AcademicSyncRepository.reconcile_user_academic_links(db, user)
 
         sync_timestamp = datetime.now(timezone.utc)
         user.moodle_calendar_sync_status = "SYNCED"

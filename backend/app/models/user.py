@@ -2,13 +2,17 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import String, DateTime, ForeignKey, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
 if TYPE_CHECKING:
-    from app.models.classroom import ClassroomAssignment, ClassroomCourse
+    from app.models.classroom import (
+        ClassroomAssignment,
+        UserCourseEnrollment,
+        UserExternalCourse,
+    )
 
 
 class User(Base):
@@ -95,6 +99,11 @@ class User(Base):
         server_default="NOT_CONNECTED",
         nullable=False,
     )
+    inferred_curriculum_year: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        nullable=True,
+        default=None,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -115,9 +124,14 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
-    # 1-to-many relationships for academic synchronization
-    courses: Mapped[List["ClassroomCourse"]] = relationship(
-        "ClassroomCourse",
+    # 1-to-many relationships for unified academic synchronization
+    enrollments: Mapped[List["UserCourseEnrollment"]] = relationship(
+        "UserCourseEnrollment",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    external_courses: Mapped[List["UserExternalCourse"]] = relationship(
+        "UserExternalCourse",
         back_populates="user",
         cascade="all, delete-orphan",
     )

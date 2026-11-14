@@ -185,10 +185,10 @@ class ClassroomSyncService:
             section = course_item.get("section")
             alternate_link = course_item.get("alternateLink")
 
-            course = AcademicSyncRepository.upsert_course(
+            source, _user_ext, enrollment = AcademicSyncRepository.upsert_course_source(
                 db,
-                user_id=user.id,
-                course_ref_id=course_id_str,
+                user=user,
+                external_course_id=course_id_str,
                 name=course_name,
                 section=section,
                 alternate_link=alternate_link,
@@ -242,7 +242,9 @@ class ClassroomSyncService:
                 AcademicSyncRepository.upsert_assignment(
                     db,
                     user_id=user.id,
-                    course_id=course.id,
+                    source_id=source.id,
+                    course_code=source.course_code,
+                    enrollment_id=enrollment.id if enrollment else None,
                     assignment_ref_id=assignment_id_str,
                     title=title,
                     description=description,
@@ -253,6 +255,8 @@ class ClassroomSyncService:
                     origin="classroom",
                 )
                 synced_assignments_count += 1
+
+        AcademicSyncRepository.reconcile_user_academic_links(db, user)
 
         # Mark user synchronization state as successful
         sync_timestamp = datetime.now(timezone.utc)

@@ -13,13 +13,13 @@ import hashlib
 import ipaddress
 import posixpath
 import socket
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
 import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.models.classroom import ClassroomCourse
+from app.models.classroom import CourseExternalSource, UserCourseEnrollment
 from app.models.user import User
 from app.repositories.academic_repo import AcademicSyncRepository
 from app.schemas.dutic import SyncDuticResponse
@@ -338,30 +338,41 @@ class DuticIcalService:
             ) from exc
 
         events = cls.parse_ical_content(ics_content)
-        courses_by_category: Dict[str, ClassroomCourse] = {}
+        task_texts_by_cat: Dict[str, List[str]] = {}
+        for item in events:
+            cat = item["category"]
+            hint = (item.get("title") or "").strip()
+            if hint:
+                task_texts_by_cat.setdefault(cat, []).append(hint)
+
+        courses_by_category: Dict[str, Tuple[CourseExternalSource, Optional[UserCourseEnrollment]]] = {}
         synced_assignments_count = 0
 
         for item in events:
             category = item["category"]
             course_code = f"moodle-{category}"
 
-            # Idempotently upsert course
+            # Idempotently upsert shared external source + user link
             if category not in courses_by_category:
-                courses_by_category[category] = AcademicSyncRepository.upsert_course(
+                source, _user_ext, enrollment = AcademicSyncRepository.upsert_course_source(
                     db,
-                    user_id=user.id,
-                    course_ref_id=course_code,
+                    user=user,
+                    external_course_id=course_code,
                     name=f"Curso {category}",
                     section=category,
                     origin="moodle",
+                    task_texts=task_texts_by_cat.get(category, ()),
                 )
-            course = courses_by_category[category]
+                courses_by_category[category] = (source, enrollment)
+            source, enrollment = courses_by_category[category]
 
             # Idempotently upsert assignment
             AcademicSyncRepository.upsert_assignment(
                 db,
                 user_id=user.id,
-                course_id=course.id,
+                source_id=source.id,
+                course_code=source.course_code,
+                enrollment_id=enrollment.id if enrollment else None,
                 assignment_ref_id=item["uid"],
                 title=item["title"],
                 description=item["description"],
@@ -372,6 +383,8 @@ class DuticIcalService:
             )
 
             synced_assignments_count += 1
+
+        AcademicSyncRepository.reconcile_user_academic_links(db, user)
 
         sync_timestamp = datetime.now(timezone.utc)
         user.moodle_calendar_sync_status = "SYNCED"

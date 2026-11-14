@@ -9,9 +9,15 @@ from uuid import uuid4
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import create_access_token, hash_password
-from app.models.classroom import ClassroomAssignment, ClassroomCourse
+from app.models.classroom import (
+    ClassroomAssignment,
+    CourseExternalSource,
+    UserCourseEnrollment,
+    UserExternalCourse,
+)
 from app.models.ticket import Ticket
 from app.models.user import User, UserProfile
+from app.services.curriculum_resolver import CurriculumResolverService, DEFAULT_TERM
 
 
 def require_isolation() -> None:
@@ -38,6 +44,23 @@ def seed() -> None:
     with SessionLocal() as db:
         if db.query(User).count():
             raise RuntimeError("Refusing to seed a nonempty performance database")
+        CurriculumResolverService.ensure_catalog_seeded(db)
+        shared_sources = []
+        for origin, course_ref in (
+            ("classroom", "perf-google"),
+            ("moodle", "moodle-42"),
+        ):
+            source = CourseExternalSource(
+                id=uuid4(),
+                term="2026B",
+                origin=origin,
+                external_course_id=course_ref,
+                raw_name=f"Performance {origin.title()}",
+            )
+            db.add(source)
+            shared_sources.append((origin, source))
+        db.flush()
+
         for index in range(1000):
             name = identity(index)
             user = User(
@@ -51,22 +74,17 @@ def seed() -> None:
             # Ticket has a foreign key but no ORM relationship to order its insert.
             db.flush()
             db.add(UserProfile(user_id=user.id, full_name=f"Synthetic Student {index}"))
-            for origin, course_ref in (
-                ("classroom", "perf-google"),
-                ("moodle", "moodle-42"),
-            ):
-                course = ClassroomCourse(
-                    id=uuid4(),
-                    user_id=user.id,
-                    origin=origin,
-                    classroom_course_id=course_ref,
-                    name=f"Performance {origin.title()}",
+            for origin, source in shared_sources:
+                db.add(
+                    UserExternalCourse(
+                        user_id=user.id,
+                        source_id=source.id,
+                    )
                 )
-                db.add(course)
                 db.add(
                     ClassroomAssignment(
                         user_id=user.id,
-                        course_id=course.id,
+                        source_id=source.id,
                         classroom_assignment_id=f"{origin}-fixture",
                         title="Synthetic assignment",
                         origin=origin,
@@ -99,14 +117,43 @@ def seed() -> None:
         )
         db.add(completion_user)
         db.flush()
-        completion_course = ClassroomCourse(
-            id=uuid4(), user_id=completion_user.id,
-            classroom_course_id="completion-course", name="Completion Performance",
+        completion_source = CourseExternalSource(
+            id=uuid4(),
+            term=DEFAULT_TERM,
+            origin="classroom",
+            external_course_id="completion-course",
+            raw_name="Completion Performance",
+            course_code="1705275",
+            component_type="UNICO",
+            mapping_status="LINKED",
+            mapping_source="PERF_SEED",
         )
-        db.add(completion_course)
+        db.add(completion_source)
+        db.flush()
+        completion_enrollment = UserCourseEnrollment(
+            id=uuid4(),
+            user_id=completion_user.id,
+            course_code="1705275",
+            term=DEFAULT_TERM,
+            theory_group="A",
+        )
+        db.add(completion_enrollment)
+        db.flush()
+        db.add(
+            UserExternalCourse(
+                user_id=completion_user.id,
+                source_id=completion_source.id,
+                enrollment_id=completion_enrollment.id,
+            )
+        )
         completion_assignment = ClassroomAssignment(
-            id=uuid4(), user_id=completion_user.id, course_id=completion_course.id,
-            classroom_assignment_id="completion-fixture", title="Completion fixture",
+            id=uuid4(),
+            user_id=completion_user.id,
+            source_id=completion_source.id,
+            course_code="1705275",
+            enrollment_id=completion_enrollment.id,
+            classroom_assignment_id="completion-fixture",
+            title="Completion fixture",
         )
         db.add(completion_assignment)
         db.commit()
@@ -115,6 +162,8 @@ def seed() -> None:
             "staff_token": create_access_token({"sub": str(staff.id)}),
             "completion_token": create_access_token({"sub": str(completion_user.id)}),
             "completion_assignment_id": str(completion_assignment.id),
+            "completion_source_id": str(completion_source.id),
+            "completion_course_code": "1705275",
         }
         Path("/load-data/users.json").write_text(json.dumps(payload), encoding="utf-8")
     print(

@@ -6,9 +6,10 @@ DUTIC Moodle API endpoints:
 """
 
 from datetime import datetime, timezone
+import logging
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import _resolve_authenticated_user
@@ -29,6 +30,7 @@ from app.services.dutic_ical import DuticIcalService
 from app.services.dutic_sync import DuticSyncService
 from app.services.token_encryption import encrypt_token
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -103,6 +105,19 @@ def subscribe_moodle_ical(
     current_user.moodle_calendar_sync_status = "CONNECTED"
     db.commit()
     db.refresh(current_user)
+
+    try:
+        DuticIcalService.sync_student_moodle_ical(
+            db=db,
+            user=current_user,
+            calendar_url=canonical_url,
+        )
+    except HTTPException as exc:
+        logger.warning(
+            "Initial Moodle iCal sync deferred after subscribe for user %s: %s",
+            current_user.id,
+            exc.detail,
+        )
 
     return MoodleIcalSubscribeResponse(
         status="CONNECTED",

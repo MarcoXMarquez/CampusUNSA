@@ -22,11 +22,82 @@ describe("HomePage Component", () => {
     localStorage.clear();
   });
 
-  it("renders main iOS application navigation with Hoy view", () => {
+  it("renders 5-item bottom navigation and first-time TareasSyncView when platforms are disconnected", () => {
     render(<HomePage />);
-    expect(screen.getAllByText("Hoy").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Calendario")).toBeDefined();
-    expect(screen.getByText("Ajustes")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Tareas" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Horario" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Crear nueva tarea" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Hugo" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Ajustes" })).toBeDefined();
+    expect(screen.getByText("Sincroniza tus plataformas")).toBeDefined();
+    expect(screen.getByText("0 de 2 sincronizadas")).toBeDefined();
+  });
+
+  it("transitions from TareasSyncView to HoyView once both Classroom and DUTIC are connected", async () => {
+    localStorage.setItem("campusunsa_token", testToken);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.endsWith("/auth/me")) {
+          return jsonResponse({
+            id: "42",
+            email: "marco@unsa.edu.pe",
+            role: "student",
+            full_name: "Marco Marquez",
+          });
+        }
+        if (url.endsWith("/auth/google/classroom/status") || url.endsWith("/dutic/ical/status")) {
+          return jsonResponse({ connected: true, sync_status: "CONNECTED" });
+        }
+        if (url.endsWith("/health")) {
+          return jsonResponse({ status: "healthy" });
+        }
+        return jsonResponse([]);
+      })
+    );
+
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Hoy").length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryByText("Sincroniza tus plataformas")).toBeNull();
+    });
+  });
+
+  it("keeps TareasSyncView visible when only 1 of 2 platforms is connected", async () => {
+    localStorage.setItem("campusunsa_token", testToken);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.endsWith("/auth/me")) {
+          return jsonResponse({
+            id: "42",
+            email: "marco@unsa.edu.pe",
+            role: "student",
+            full_name: "Marco Marquez",
+          });
+        }
+        if (url.endsWith("/auth/google/classroom/status")) {
+          return jsonResponse({ connected: true, sync_status: "CONNECTED" });
+        }
+        if (url.endsWith("/dutic/ical/status")) {
+          return jsonResponse({ connected: false, sync_status: "NOT_CONNECTED" });
+        }
+        if (url.endsWith("/health")) {
+          return jsonResponse({ status: "healthy" });
+        }
+        return jsonResponse([]);
+      })
+    );
+
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("1 de 2 sincronizadas")).toBeDefined();
+    });
+    expect(screen.getByText("Sincroniza tus plataformas")).toBeDefined();
   });
 
   it("renders the 3 campus geographical locations in Ajustes", () => {

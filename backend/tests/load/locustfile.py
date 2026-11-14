@@ -38,7 +38,8 @@ def full_population(user_count: int, **kwargs: object) -> None:
     global started
     if user_count == 1000 and started is None and current_environment:
         started = time.monotonic()
-        gevent.spawn_later(60.1, current_environment.runner.quit)
+        steady_duration = max(60.1, len(SCENARIOS) * 2.85)
+        gevent.spawn_later(steady_duration, current_environment.runner.quit)
 
 
 @events.user_error.add_listener
@@ -106,10 +107,22 @@ class StudentBrowser(FastHttpUser):
         )
         if case.role == "completion":
             token = dataset["completion_token"]
-        request_path = case.path.format(assignment_id=dataset["completion_assignment_id"])
+        request_path = case.path.format(
+            assignment_id=dataset["completion_assignment_id"],
+            source_id=dataset.get("completion_source_id", ""),
+            course_code=dataset.get("completion_course_code", "1705275"),
+        )
         payload = None
         if case.path.endswith("/completion"):
             payload = {"is_completed": True}
+        elif case.path.endswith("/link"):
+            payload = {
+                "course_code": dataset.get("completion_course_code", "1705275"),
+                "component_type": "UNICO",
+                "group_code": "A",
+            }
+        elif case.path.endswith("/groups"):
+            payload = {"theory_group": "A"}
         elif case.path.endswith("/auth/google/classroom/callback"):
             payload = {"code": "perf-code-123"}
         elif case.path.endswith("/auth/google"):
@@ -167,9 +180,15 @@ class StudentBrowser(FastHttpUser):
                 elif case.path.endswith("/completion"):
                     assert body["is_completed"] is True
                     assert body["id"] == dataset["completion_assignment_id"]
+                elif case.path.endswith("/link"):
+                    assert body["mapping_status"] == "LINKED"
+                elif case.path.endswith("/groups"):
+                    assert body["theory_group"] == "A"
                 elif case.method == "DELETE" and case.path.endswith(("/assignments", "/courses")):
                     assert "deleted_count" in body
-                elif case.path.endswith(("/courses", "/assignments", "/tickets/all")):
+                elif case.path.endswith(("/enrolled", "/pending-links")):
+                    assert isinstance(body, list)
+                elif case.path.endswith(("/courses", "/assignments", "/tickets/all", "/catalog")):
                     assert isinstance(body, list) and len(body) > 0
                 elif case.path.endswith("/dutic/ical/sync"):
                     assert (

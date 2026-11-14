@@ -6,12 +6,30 @@ import type { AcademicAssignment } from "../components/TaskDetailSheet";
 import { getApiBaseUrl } from "../lib/api-client";
 import { taskBoardMessages } from "../lib/task-board-messages";
 
+export interface AcademicCourseSource {
+  source_id: string;
+  origin: string;
+  external_course_id: string;
+  raw_name: string;
+  raw_section?: string | null;
+  component_type: string;
+  alternate_link?: string | null;
+  mapping_status: string;
+}
+
 export interface AcademicCourse {
   id: string;
   classroom_course_id: string;
   name: string;
   section?: string | null;
   alternate_link?: string | null;
+  origin?: string;
+  course_code?: string | null;
+  curriculum_year?: number | null;
+  theory_group?: string | null;
+  lab_group?: string | null;
+  mapping_status?: string;
+  sources?: AcademicCourseSource[];
   created_at: string;
 }
 
@@ -64,10 +82,10 @@ function writeCache(token: string | null, data: AcademicBoardData): void {
 async function loadBoard(token: string, signal: AbortSignal): Promise<AcademicBoardData> {
   const apiUrl = getApiBaseUrl();
   const headers = { Authorization: `Bearer ${token}` };
-  // Both list endpoints include every LMS origin; avoid fetching duplicate Moodle records.
+  // Fetch deduplicated curriculum enrollments (+ pending sources) and normalized assignments.
   const [coursesResponse, assignmentsResponse, statusResponse] = await Promise.all([
-    fetch(`${apiUrl}/classroom/courses`, { headers, signal }),
-    fetch(`${apiUrl}/classroom/assignments`, { headers, signal }),
+    fetch(`${apiUrl}/courses/enrolled`, { headers, signal }),
+    fetch(`${apiUrl}/courses/assignments`, { headers, signal }),
     fetch(`${apiUrl}/dutic/ical/status`, { headers, signal }).catch(() => null),
   ]);
   if (!coursesResponse.ok || !assignmentsResponse.ok) throw new Error(taskBoardMessages.syncError);

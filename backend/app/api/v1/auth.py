@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 from typing import Any, Dict, Optional
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -20,9 +21,11 @@ from app.schemas.classroom import (
     ClassroomConsentResponse,
     ClassroomStatusResponse,
 )
+from app.services.classroom_sync import ClassroomSyncService, GoogleClassroomError
 from app.services.google_oauth import GoogleOAuthService
 from app.services.token_encryption import encrypt_token
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -263,6 +266,21 @@ def handle_classroom_oauth_callback(
     current_user.google_classroom_sync_status = "CONNECTED"
     db.commit()
     db.refresh(current_user)
+
+    initial_token = token_data.get("access_token") or refresh_token
+    if initial_token:
+        try:
+            ClassroomSyncService.sync_student_classroom(
+                db=db,
+                user=current_user,
+                token=initial_token,
+            )
+        except GoogleClassroomError as exc:
+            logger.warning(
+                "Initial Classroom sync deferred after OAuth callback for user %s: %s",
+                current_user.id,
+                exc,
+            )
 
     return ClassroomConsentResponse(
         status="CONNECTED",
