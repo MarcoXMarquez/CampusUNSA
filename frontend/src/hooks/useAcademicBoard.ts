@@ -1,9 +1,14 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AcademicAssignment } from "../components/TaskDetailSheet";
 import { getApiBaseUrl, type CourseScheduleBlock } from "../lib/api-client";
+import {
+  readBoardFromIndexedDb,
+  readBoardSnapshotSync,
+  writeBoardSnapshot,
+} from "../lib/offline-db";
 import { taskBoardMessages } from "../lib/task-board-messages";
 
 export interface AcademicCourseSource {
@@ -49,35 +54,12 @@ interface CompletionChange {
 const EMPTY_BOARD: AcademicBoardData = { courses: [], assignments: [], moodleSessionExpired: false };
 export const academicBoardKey = (token: string | null) => ["academic-board", token] as const;
 
-function cacheKey(token: string | null): string | null {
-  if (!token || typeof window === "undefined") return null;
-  try {
-    const payload: unknown = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    if (typeof payload === "object" && payload !== null && "sub" in payload && typeof payload.sub === "string") {
-      return `campusunsa_board:${payload.sub}`;
-    }
-  } catch { /* Invalid sessions never share a persisted cache. */ }
-  return null;
-}
-
 function readCache(token: string | null): AcademicBoardData | undefined {
-  const key = cacheKey(token);
-  if (!key) return undefined;
-  try {
-    const value: unknown = JSON.parse(localStorage.getItem(key) ?? "null");
-    if (typeof value === "object" && value !== null && "courses" in value &&
-        "assignments" in value && Array.isArray(value.courses) && Array.isArray(value.assignments)) {
-      return value as AcademicBoardData;
-    }
-  } catch { /* A damaged or unavailable cache must not prevent a network load. */ }
-  return undefined;
+  return readBoardSnapshotSync(token);
 }
 
 function writeCache(token: string | null, data: AcademicBoardData): void {
-  const key = cacheKey(token);
-  if (!key) return;
-  try { localStorage.setItem(key, JSON.stringify(data)); }
-  catch { /* Storage quota and browser privacy settings do not invalidate server saves. */ }
+  void writeBoardSnapshot(token, data);
 }
 
 async function loadBoard(token: string, signal: AbortSignal): Promise<AcademicBoardData> {
@@ -112,6 +94,21 @@ export function useAcademicBoard(token: string | null) {
     retry: false,
     refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    if (!token || readBoardSnapshotSync(token)) {
+      return;
+    }
+    let cancelled = false;
+    void readBoardFromIndexedDb(token).then((stored) => {
+      if (!cancelled && stored && !client.getQueryData(key)) {
+        client.setQueryData(key, stored);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [client, key, token]);
 
   const mutation = useMutation({
     mutationFn: async ({ id, completed, token: sessionToken }: CompletionChange): Promise<AcademicAssignment> => {
