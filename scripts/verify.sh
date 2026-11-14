@@ -96,6 +96,24 @@ else
 fi
 
 echo ""
+echo "Running Frontend TypeScript Type Check (tsc --noEmit)..."
+if docker compose exec -T frontend npx tsc --noEmit; then
+    echo "  PASSED: TypeScript strict type check clean."
+else
+    echo "  FAILED: TypeScript type errors detected."
+    ALL_PASSED=1
+fi
+
+echo ""
+echo "Running Frontend Linter (Next.js ESLint)..."
+if docker compose exec -T frontend npm run lint; then
+    echo "  PASSED: Frontend ESLint checks clean."
+else
+    echo "  FAILED: Frontend ESLint errors detected."
+    ALL_PASSED=1
+fi
+
+echo ""
 echo "Checking Section 3.2 UI Directives Gate..."
 if node scripts/verify-ui-directives.mjs; then
     echo "  PASSED: Frontend presentation compliance verified."

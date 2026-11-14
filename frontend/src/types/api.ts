@@ -15,6 +15,7 @@ export interface paths {
          * Check Health
          * @description Healthcheck endpoint verifying backend connectivity to PostgreSQL and Redis.
          *     Returns HTTP 200 if all dependencies are healthy, or HTTP 503 if any dependency fails.
+         *     Sanitizes technical exception details to prevent information exposure (CWE-209).
          */
         get: operations["check_health_api_v1_health_get"];
         put?: never;
@@ -47,6 +48,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login With Email Password
+         * @description Authenticates a user via institutional @unsa.edu.pe email and password.
+         *     Enforces institutional domain restrictions, provisions or retrieves the user profile,
+         *     and returns a signed JWT access token.
+         */
+        post: operations["login_with_email_password_api_v1_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/me": {
         parameters: {
             query?: never;
@@ -61,6 +84,47 @@ export interface paths {
         get: operations["get_my_profile_api_v1_auth_me_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/google/classroom/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Classroom Connection Status
+         * @description Retrieves the Google Classroom linkage status and last connection timestamp.
+         */
+        get: operations["get_classroom_connection_status_api_v1_auth_google_classroom_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/google/classroom/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Handle Classroom Oauth Callback
+         * @description Exchanges Google OAuth authorization code for tokens, securely encrypts the refresh token,
+         *     and marks the student account as connected for automatic background synchronization.
+         */
+        post: operations["handle_classroom_oauth_callback_api_v1_auth_google_classroom_callback_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -85,6 +149,26 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/classroom/assignments/{assignment_id}/completion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set Assignment Completion
+         * @description Persist an idempotent completion change for an assignment owned by the caller.
+         */
+        patch: operations["set_assignment_completion_api_v1_classroom_assignments__assignment_id__completion_patch"];
         trace?: never;
     };
     "/api/v1/classroom/sync": {
@@ -122,7 +206,13 @@ export interface paths {
         get: operations["get_student_courses_api_v1_classroom_courses_get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Clear Student Courses
+         * @description Clears academic courses for the authenticated student.
+         *     Can filter by origin ('moodle', 'classroom') or clear all if unspecified.
+         *     Cascades deletion to associated assignments.
+         */
+        delete: operations["clear_student_courses_api_v1_classroom_courses_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -142,7 +232,12 @@ export interface paths {
         get: operations["get_student_assignments_api_v1_classroom_assignments_get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Clear Student Assignments
+         * @description Clears academic assignments for the authenticated student.
+         *     Can filter by origin ('moodle', 'classroom') or clear all if unspecified.
+         */
+        delete: operations["clear_student_assignments_api_v1_classroom_assignments_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -209,6 +304,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dutic/ical/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Moodle Ical Status
+         * @description Retrieves the status of the student's Moodle iCal calendar subscription.
+         */
+        get: operations["get_moodle_ical_status_api_v1_dutic_ical_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dutic/ical/subscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Subscribe Moodle Ical
+         * @description Validates, encrypts, and persists the student's Moodle iCalendar export URL.
+         */
+        post: operations["subscribe_moodle_ical_api_v1_dutic_ical_subscribe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dutic/ical/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync Moodle Ical
+         * @description Synchronizes assignments from the student's subscribed Moodle iCal feed into PostgreSQL.
+         */
+        post: operations["sync_moodle_ical_api_v1_dutic_ical_sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/nlp/parse-task": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Parse Task
+         * @description Extract a draft or request clarification without creating a database record.
+         */
+        post: operations["parse_task_api_v1_nlp_parse_task_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -230,6 +405,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AssignmentCompletionRequest
+         * @description Set a student's local completion flag without changing LMS publication state.
+         */
+        AssignmentCompletionRequest: {
+            /** Is Completed */
+            is_completed: boolean;
+        };
         /**
          * AssignmentResponse
          * @description Serialized coursework assignment entity.
@@ -257,6 +440,11 @@ export interface components {
             max_points?: number | null;
             /** State */
             state: string;
+            /**
+             * Is Completed
+             * @default false
+             */
+            is_completed: boolean;
             /** Alternate Link */
             alternate_link?: string | null;
             /** Origin */
@@ -271,6 +459,43 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /**
+         * ClassroomConsentRequest
+         * @description Payload containing Google OAuth authorization code from client consent popup.
+         */
+        ClassroomConsentRequest: {
+            /** Code */
+            code: string;
+            /**
+             * Redirect Uri
+             * @default postmessage
+             */
+            redirect_uri: string | null;
+        };
+        /**
+         * ClassroomConsentResponse
+         * @description Response returned after successful authorization code exchange and token persistence.
+         */
+        ClassroomConsentResponse: {
+            /** Status */
+            status: string;
+            /** Connected At */
+            connected_at?: string | null;
+            /** Message */
+            message: string;
+        };
+        /**
+         * ClassroomStatusResponse
+         * @description Status of the student's Google Classroom integration linkage.
+         */
+        ClassroomStatusResponse: {
+            /** Connected */
+            connected: boolean;
+            /** Connected At */
+            connected_at?: string | null;
+            /** Sync Status */
+            sync_status: string;
         };
         /**
          * CourseResponse
@@ -328,6 +553,11 @@ export interface components {
             max_points?: number | null;
             /** State */
             state: string;
+            /**
+             * Is Completed
+             * @default false
+             */
+            is_completed: boolean;
             /** Alternate Link */
             alternate_link?: string | null;
             /** Origin */
@@ -373,6 +603,18 @@ export interface components {
             updated_at: string;
         };
         /**
+         * EmailLoginRequest
+         * @description Payload sent from client for institutional email and password sign-in or sign-up.
+         */
+        EmailLoginRequest: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+            /** Full Name */
+            full_name?: string | null;
+        };
+        /**
          * GoogleAuthRequest
          * @description Payload sent from client containing the Google OAuth ID token.
          */
@@ -384,6 +626,79 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * MoodleIcalStatusResponse
+         * @description Status of the student's Moodle iCal calendar subscription.
+         */
+        MoodleIcalStatusResponse: {
+            /** Connected */
+            connected: boolean;
+            /** Connected At */
+            connected_at?: string | null;
+            /** Sync Status */
+            sync_status: string;
+        };
+        /**
+         * MoodleIcalSubscribeRequest
+         * @description Payload for subscribing a Moodle iCalendar export URL.
+         */
+        MoodleIcalSubscribeRequest: {
+            /** Calendar Url */
+            calendar_url: string;
+        };
+        /**
+         * MoodleIcalSubscribeResponse
+         * @description Response after successfully subscribing and encrypting the Moodle calendar URL.
+         */
+        MoodleIcalSubscribeResponse: {
+            /** Status */
+            status: string;
+            /** Connected At */
+            connected_at?: string | null;
+            /** Message */
+            message: string;
+        };
+        /**
+         * MoodleIcalSyncRequest
+         * @description Optional payload for triggering immediate sync with an ad-hoc calendar URL.
+         */
+        MoodleIcalSyncRequest: {
+            /** Calendar Url */
+            calendar_url?: string | null;
+        };
+        /** ParseTaskRequest */
+        ParseTaskRequest: {
+            /** Message */
+            message: string;
+            /**
+             * Reference Time
+             * Format: date-time
+             */
+            reference_time?: string;
+            /**
+             * Timezone
+             * @default UTC
+             */
+            timezone: string;
+            /** Courses */
+            courses?: string[];
+        };
+        /** ParseTaskResponse */
+        ParseTaskResponse: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "parsed" | "needs_clarification";
+            task: components["schemas"]["TaskDraft"];
+            /** Clarification */
+            clarification: string | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "ollama" | "gemini" | "fallback";
         };
         /**
          * SyncClassroomRequest
@@ -430,6 +745,15 @@ export interface components {
             synced_assignments_count: number;
             /** Synced At */
             synced_at?: string | null;
+        };
+        /** TaskDraft */
+        TaskDraft: {
+            /** Title */
+            title: string | null;
+            /** Course */
+            course: string | null;
+            /** Due Date */
+            due_date: string | null;
         };
         /** TicketResponse */
         TicketResponse: {
@@ -563,6 +887,39 @@ export interface operations {
             };
         };
     };
+    login_with_email_password_api_v1_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_my_profile_api_v1_auth_me_get: {
         parameters: {
             query?: never;
@@ -579,6 +936,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    get_classroom_connection_status_api_v1_auth_google_classroom_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassroomStatusResponse"];
+                };
+            };
+        };
+    };
+    handle_classroom_oauth_callback_api_v1_auth_google_classroom_callback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClassroomConsentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassroomConsentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -602,6 +1012,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_assignment_completion_api_v1_classroom_assignments__assignment_id__completion_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignmentCompletionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentResponse"];
                 };
             };
             /** @description Validation Error */
@@ -668,6 +1113,37 @@ export interface operations {
             };
         };
     };
+    clear_student_courses_api_v1_classroom_courses_delete: {
+        parameters: {
+            query?: {
+                origin?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_student_assignments_api_v1_classroom_assignments_get: {
         parameters: {
             query?: never;
@@ -684,6 +1160,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AssignmentResponse"][];
+                };
+            };
+        };
+    };
+    clear_student_assignments_api_v1_classroom_assignments_delete: {
+        parameters: {
+            query?: {
+                origin?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -757,6 +1264,125 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DuticAssignmentResponse"][];
+                };
+            };
+        };
+    };
+    get_moodle_ical_status_api_v1_dutic_ical_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoodleIcalStatusResponse"];
+                };
+            };
+        };
+    };
+    subscribe_moodle_ical_api_v1_dutic_ical_subscribe_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoodleIcalSubscribeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoodleIcalSubscribeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_moodle_ical_api_v1_dutic_ical_sync_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoodleIcalSyncRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncDuticResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    parse_task_api_v1_nlp_parse_task_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ParseTaskRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParseTaskResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

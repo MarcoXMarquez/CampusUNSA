@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # CampusUNSA — Verification Oracle Script (PowerShell)
 # Enforces: Linters, Pytest with coverage, Vitest, and Zero-Emoji policy.
 # ==============================================================================
@@ -105,6 +105,26 @@ if ($LASTEXITCODE -ne 0) {
     $allPassed = $false
 } else {
     Write-Host "  PASSED: Vitest frontend tests passed." -ForegroundColor Green
+}
+
+Write-Host "`nRunning Frontend TypeScript Type Check (tsc --noEmit)..." -ForegroundColor Yellow
+$tscOutput = docker compose exec -T frontend npx tsc --noEmit 2>&1
+Write-Host $tscOutput
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  FAILED: TypeScript type errors detected." -ForegroundColor Red
+    $allPassed = $false
+} else {
+    Write-Host "  PASSED: TypeScript strict type check clean." -ForegroundColor Green
+}
+
+Write-Host "`nRunning Frontend Linter (Next.js ESLint)..." -ForegroundColor Yellow
+$eslintOutput = docker compose exec -T frontend npm run lint 2>&1
+Write-Host $eslintOutput
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  FAILED: Frontend ESLint errors detected." -ForegroundColor Red
+    $allPassed = $false
+} else {
+    Write-Host "  PASSED: Frontend ESLint checks clean." -ForegroundColor Green
 }
 
 Write-Host "`nChecking Section 3.2 UI Directives Gate..." -ForegroundColor Yellow
