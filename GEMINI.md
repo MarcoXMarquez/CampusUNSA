@@ -12,4 +12,4 @@ Read and strictly obey `AGENTS.md` before executing any task or generating code 
 6. No Force Flags: Never execute `git push --force`, `--force-with-lease`, or rewrite published Git history.
 7. Verification Oracle: Run `./scripts/verify.ps1` (Windows) or `./scripts/verify.sh` (Linux/macOS) to validate all quality gates before finishing.
 8. Continuous Documentation: Execute `campusunsa-wiki-orchestrator` on issue closure to update the GitHub Wiki.
-9. Frontend Presentation Standard: All UI code under `frontend/` must adhere to Konsta UI iOS directives in `AGENTS.md` section 3.2.
+9. Frontend Presentation Standard: All UI code under `frontend/` must follow the Stitch-First workflow and engineering directives in `AGENTS.md` section 3.2.

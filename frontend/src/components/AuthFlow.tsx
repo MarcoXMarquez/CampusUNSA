@@ -132,7 +132,7 @@ export function AuthFlow({
   if (currentStep === "welcome") {
     return (
       <main className="w-full min-h-screen bg-black text-white flex flex-col items-center justify-between font-sans select-none safe-areas">
-        <div className="w-full max-w-[390px] min-h-screen flex flex-col justify-between relative bg-black overflow-hidden border-x border-black/10 dark:border-white/10">
+        <div className="w-full max-w-[390px] min-h-screen flex flex-col justify-between relative bg-black overflow-hidden shadow-2xl">
           {/* Top Two-Tone Arc matching Stitch Prototype */}
           <div className="relative w-full">
             <div className="w-full bg-[#E5E5EA] rounded-b-[44px] pt-4 pb-20 px-6 relative flex flex-col items-center">
@@ -142,7 +142,7 @@ export function AuthFlow({
                   <button
                     type="button"
                     onClick={onCancel}
-                    className="text-black/60 hover:text-black py-1 px-1 transition-colors"
+                    className="text-neutral-700 hover:text-black py-1 px-1 transition-colors"
                   >
                     {AUTH_MESSAGES.cancelButton}
                   </button>
@@ -152,7 +152,7 @@ export function AuthFlow({
                 <button
                   type="button"
                   onClick={() => setCurrentStep("auth")}
-                  className="text-black/60 hover:text-black py-1 px-2 text-[13px] font-semibold transition-colors"
+                  className="text-neutral-700 hover:text-black py-1 px-2 text-[13px] font-semibold transition-colors"
                 >
                   {AUTH_MESSAGES.skipButton}
                 </button>
@@ -163,7 +163,7 @@ export function AuthFlow({
 
             {/* Mascot Showcase Card (Floating WebP Asset) */}
             <div className="absolute top-[82px] left-1/2 -translate-x-1/2 z-20">
-              <div className="w-64 h-64 sm:w-72 sm:h-72 rounded-[32px] overflow-hidden bg-black dark:bg-[#1C1C1E] border border-black/10 dark:border-white/15 flex items-center justify-center">
+              <div className="w-64 h-64 sm:w-72 sm:h-72 rounded-[32px] overflow-hidden shadow-2xl bg-[#0d0f17] border-[3px] border-black/10 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={currentSlide.imageSrc}
@@ -195,7 +195,7 @@ export function AuthFlow({
                     className={`rounded-full transition-all duration-200 cursor-pointer ${
                       isActive
                         ? "w-2.5 h-2.5 bg-white ring-2 ring-white/20"
-                        : "w-2 h-2 bg-white/40 hover:bg-white/60"
+                        : "w-2 h-2 bg-neutral-600 hover:bg-neutral-400"
                     }`}
                   />
                 );
@@ -207,7 +207,7 @@ export function AuthFlow({
               <h1 className="text-3xl font-extrabold text-white text-center tracking-tight leading-tight mb-3">
                 {currentSlide.title}
               </h1>
-              <p className="text-sm font-normal text-white/70 text-center leading-relaxed max-w-[290px] mx-auto min-h-[4.5rem]">
+              <p className="text-sm font-normal text-neutral-400 text-center leading-relaxed max-w-[290px] mx-auto min-h-[4.5rem]">
                 {currentSlide.description}
               </p>
             </div>
@@ -217,7 +217,7 @@ export function AuthFlow({
               <button
                 type="button"
                 onClick={handleNextSlide}
-                className="w-full h-[54px] bg-primary hover:bg-primary/90 active:scale-[0.98] text-white rounded-2xl font-bold text-sm tracking-wider uppercase flex items-center justify-center space-x-2 transition-all duration-150 shadow-sm cursor-pointer"
+                className="w-full h-[54px] bg-[#990000] hover:bg-[#800000] active:scale-[0.98] text-white rounded-2xl font-bold text-sm tracking-wider uppercase flex items-center justify-center space-x-2 transition-all duration-150 shadow-lg cursor-pointer"
               >
                 <span>{isLastSlide ? AUTH_MESSAGES.welcomeStartButton : AUTH_MESSAGES.welcomeNextButton}</span>
                 <CaretRight size={18} weight="bold" />
@@ -237,7 +237,7 @@ export function AuthFlow({
   // --------------------------------------------------------------------------
   return (
     <main className="w-full min-h-screen bg-black text-white flex flex-col items-center justify-between font-sans select-none safe-areas">
-      <div className="w-full max-w-[390px] min-h-screen flex flex-col justify-between relative bg-black overflow-hidden border-x border-black/10 dark:border-white/10 p-0 sm:p-2">
+      <div className="w-full max-w-[390px] min-h-screen flex flex-col justify-between relative bg-black overflow-hidden shadow-2xl p-0 sm:p-2">
         {/* iOS Navigation Header */}
         <header className="w-full px-6 pt-4 pb-2 flex justify-between items-center text-white z-20">
           <button
@@ -246,19 +246,19 @@ export function AuthFlow({
               setSlideIndex(ONBOARDING_SLIDES.length - 1);
               setCurrentStep("welcome");
             }}
-            className="flex items-center space-x-1 text-primary-dark hover:opacity-80 transition-opacity font-semibold text-[15px]"
+            className="flex items-center space-x-1 text-[#E5575B] hover:opacity-80 transition-opacity font-semibold text-[15px]"
           >
             <CaretLeft size={20} weight="bold" />
             <span>{AUTH_MESSAGES.backButton}</span>
           </button>
-          <span className="text-xs font-semibold tracking-wide text-white/60 uppercase">
+          <span className="text-xs font-semibold tracking-wide text-neutral-400 uppercase">
             {AUTH_MESSAGES.welcomeBadge}
           </span>
           {onCancel ? (
             <button
               type="button"
               onClick={onCancel}
-              className="text-white/60 hover:text-white transition-colors text-[14px]"
+              className="text-neutral-400 hover:text-white transition-colors text-[14px]"
             >
               {AUTH_MESSAGES.cancelButton}
             </button>
@@ -268,16 +268,16 @@ export function AuthFlow({
         </header>
 
         {/* Main Reference Card Container */}
-        <div className="w-full flex-1 bg-[#F2F2F7] dark:bg-[#1C1C1E] rounded-[38px] px-7 pt-3.5 pb-6 flex flex-col justify-between mt-2 mb-2 text-black dark:text-white">
+        <div className="w-full flex-1 bg-[#d6d8db] dark:bg-[#1C1C1E] rounded-[38px] px-7 pt-3.5 pb-6 flex flex-col justify-between shadow-inner mt-2 mb-2 text-[#1f2429] dark:text-white">
           {/* Top Grabber */}
-          <div className="w-12 h-1 bg-black/20 dark:bg-white/20 rounded-full mx-auto mb-2" />
+          <div className="w-12 h-1 bg-[#b4b7bd] dark:bg-white/20 rounded-full mx-auto mb-2" />
 
           {/* Card Header & Mascot Branding */}
           <section className="text-center">
-            <h1 className="text-[23px] font-extrabold text-black dark:text-white tracking-tight">
+            <h1 className="text-[23px] font-extrabold text-[#111315] dark:text-white tracking-tight">
               {authMode === "signin" ? AUTH_MESSAGES.signInGreeting : AUTH_MESSAGES.signUpGreeting}
             </h1>
-            <p className="text-[13px] text-black/60 dark:text-white/60 font-medium mt-1">
+            <p className="text-[13px] text-[#71767e] dark:text-neutral-400 font-medium mt-1">
               {authMode === "signin" ? AUTH_MESSAGES.signInSubtitle : AUTH_MESSAGES.signUpSubtitle}
             </p>
           </section>
@@ -294,7 +294,7 @@ export function AuthFlow({
                 className="w-full h-full object-contain pointer-events-none"
               />
             </div>
-            <h2 className="text-[18px] font-black tracking-wider text-black dark:text-white uppercase">
+            <h2 className="text-[18px] font-black tracking-wider text-[#121417] dark:text-white uppercase">
               {AUTH_MESSAGES.welcomeBadge}
             </h2>
           </div>
@@ -303,7 +303,7 @@ export function AuthFlow({
           {errorMessage && (
             <div
               role="alert"
-              className="rounded-xl bg-urgent/10 dark:bg-urgent-dark/15 border border-urgent/30 dark:border-urgent-dark/30 px-3 py-2 text-xs text-urgent dark:text-urgent-dark flex items-center space-x-2 my-1"
+              className="rounded-xl bg-red-500/10 border border-red-500/30 px-3 py-2 text-xs text-red-600 dark:text-red-400 flex items-center space-x-2 my-1"
             >
               <WarningCircle size={16} weight="bold" className="shrink-0" />
               <span>{errorMessage}</span>
@@ -314,11 +314,11 @@ export function AuthFlow({
           <form onSubmit={handleEmailPasswordSubmit} className="space-y-3 mt-0.5">
             {authMode === "signup" && (
               <div className="space-y-1.5 text-left">
-                <label className="block text-[13px] font-bold text-black dark:text-white">
+                <label className="block text-[13px] font-bold text-[#1f2429] dark:text-neutral-200">
                   {AUTH_MESSAGES.fullNameLabel}
                 </label>
                 <div className="relative flex items-center">
-                  <div className="absolute left-4 pointer-events-none text-primary dark:text-primary-dark">
+                  <div className="absolute left-4 pointer-events-none text-[#ba131a]">
                     <UserIcon size={18} weight="bold" />
                   </div>
                   <input
@@ -326,18 +326,18 @@ export function AuthFlow({
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder={AUTH_MESSAGES.fullNamePlaceholder}
-                    className="w-full h-[46px] pl-11 pr-4 bg-white dark:bg-black text-black dark:text-white placeholder-black/40 dark:placeholder-white/40 text-[13.5px] rounded-[14px] border border-black/15 dark:border-white/15 focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark outline-none transition-all"
+                    className="w-full h-[46px] pl-11 pr-4 bg-[#c8cbd1] dark:bg-[#2C2C2E] text-[#2c3138] dark:text-white placeholder-[#7d828a] text-[13.5px] rounded-[14px] border-none focus:ring-2 focus:ring-[#ba131a] outline-none transition-all"
                   />
                 </div>
               </div>
             )}
 
             <div className="space-y-1.5 text-left">
-              <label className="block text-[13px] font-bold text-black dark:text-white">
+              <label className="block text-[13px] font-bold text-[#1f2429] dark:text-neutral-200">
                 {AUTH_MESSAGES.emailLabel}
               </label>
               <div className="relative flex items-center">
-                <div className="absolute left-4 pointer-events-none text-primary dark:text-primary-dark">
+                <div className="absolute left-4 pointer-events-none text-[#ba131a]">
                   <EnvelopeSimple size={18} weight="bold" />
                 </div>
                 <input
@@ -346,17 +346,17 @@ export function AuthFlow({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={AUTH_MESSAGES.emailPlaceholder}
                   autoComplete="email"
-                  className="w-full h-[46px] pl-11 pr-4 bg-white dark:bg-black text-black dark:text-white placeholder-black/40 dark:placeholder-white/40 text-[13.5px] rounded-[14px] border border-black/15 dark:border-white/15 focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark outline-none transition-all"
+                  className="w-full h-[46px] pl-11 pr-4 bg-[#c8cbd1] dark:bg-[#2C2C2E] text-[#2c3138] dark:text-white placeholder-[#7d828a] text-[13.5px] rounded-[14px] border-none focus:ring-2 focus:ring-[#ba131a] outline-none transition-all"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5 text-left">
-              <label className="block text-[13px] font-bold text-black dark:text-white">
+              <label className="block text-[13px] font-bold text-[#1f2429] dark:text-neutral-200">
                 {AUTH_MESSAGES.passwordLabel}
               </label>
               <div className="relative flex items-center">
-                <div className="absolute left-4 pointer-events-none text-primary dark:text-primary-dark">
+                <div className="absolute left-4 pointer-events-none text-[#ba131a]">
                   <LockKey size={18} weight="bold" />
                 </div>
                 <input
@@ -365,13 +365,13 @@ export function AuthFlow({
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={AUTH_MESSAGES.passwordPlaceholder}
                   autoComplete={authMode === "signup" ? "new-password" : "current-password"}
-                  className="w-full h-[46px] pl-11 pr-11 bg-white dark:bg-black text-black dark:text-white placeholder-black/40 dark:placeholder-white/40 text-[13.5px] rounded-[14px] border border-black/15 dark:border-white/15 focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark outline-none transition-all"
+                  className="w-full h-[46px] pl-11 pr-11 bg-[#c8cbd1] dark:bg-[#2C2C2E] text-[#2c3138] dark:text-white placeholder-[#7d828a] text-[13.5px] rounded-[14px] border-none focus:ring-2 focus:ring-[#ba131a] outline-none transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
-                  className="absolute right-4 text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors"
+                  className="absolute right-4 text-[#7d828a] hover:text-[#4a4f56] dark:hover:text-white transition-colors"
                 >
                   {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
                 </button>
@@ -379,21 +379,21 @@ export function AuthFlow({
             </div>
 
             <div className="flex items-center justify-between text-[12px] pt-0.5">
-              <label className="flex items-center space-x-2 text-black/60 dark:text-white/60 cursor-pointer">
+              <label className="flex items-center space-x-2 text-[#7d828a] dark:text-neutral-400 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-black/20 dark:border-white/25 text-primary dark:text-primary-dark focus:ring-0 focus:ring-offset-0 bg-white dark:bg-black"
+                  className="w-4 h-4 rounded border-[#a9adb5] text-[#ba131a] focus:ring-0 focus:ring-offset-0 bg-[#c0c3c9] dark:bg-[#3A3A3C]"
                 />
-                <span className="font-medium text-black/70 dark:text-white/70">
+                <span className="font-medium text-[#6e737c] dark:text-neutral-300">
                   {AUTH_MESSAGES.rememberMeLabel}
                 </span>
               </label>
               <a
                 href="#"
                 onClick={(e) => e.preventDefault()}
-                className="text-primary dark:text-primary-dark font-bold hover:underline"
+                className="text-[#ba131a] font-bold hover:underline"
               >
                 {AUTH_MESSAGES.forgotPasswordLink}
               </a>
@@ -403,7 +403,7 @@ export function AuthFlow({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-[48px] bg-primary dark:bg-primary-dark hover:opacity-90 active:scale-[0.99] text-white font-bold rounded-[14px] shadow-sm transition-all flex items-center justify-center text-[15px] cursor-pointer disabled:opacity-60"
+                className="w-full h-[48px] bg-[#ba131a] hover:bg-[#9f1016] active:scale-[0.99] text-white font-bold rounded-[14px] shadow-sm transition-all flex items-center justify-center text-[15px] cursor-pointer disabled:opacity-60"
               >
                 {loading
                   ? AUTH_MESSAGES.submitting
@@ -417,8 +417,8 @@ export function AuthFlow({
           {/* Social Sign-in (Google Official Identity Button) */}
           <section className="my-1.5">
             <div className="relative flex items-center justify-center mb-3">
-              <div className="border-t border-black/15 dark:border-white/15 w-full" />
-              <span className="bg-[#F2F2F7] dark:bg-[#1C1C1E] px-3 text-[11px] text-black/60 dark:text-white/60 font-medium absolute">
+              <div className="border-t border-[#bdc1c7] dark:border-neutral-700 w-full" />
+              <span className="bg-[#d6d8db] dark:bg-[#1C1C1E] px-3 text-[11px] text-[#71767e] dark:text-neutral-400 font-medium absolute">
                 {AUTH_MESSAGES.dividerText}
               </span>
             </div>
@@ -427,7 +427,7 @@ export function AuthFlow({
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
-                className="w-full h-[46px] rounded-[14px] bg-white dark:bg-black border border-[#DADCE0] dark:border-white/15 text-black dark:text-white font-medium text-[14px] flex items-center justify-center space-x-3 hover:bg-black/5 dark:hover:bg-white/5 active:scale-[0.99] transition-all shadow-sm"
+                className="w-full h-[46px] rounded-[14px] bg-white dark:bg-[#2C2C2E] border border-[#DADCE0] dark:border-[#444] text-[#3C4043] dark:text-[#E3E3E3] font-medium text-[14px] flex items-center justify-center space-x-3 hover:bg-neutral-50 dark:hover:bg-[#343438] active:scale-[0.99] transition-all shadow-sm"
               >
                 <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                   <path
@@ -454,7 +454,7 @@ export function AuthFlow({
 
           {/* Switch Mode Footer */}
           <footer className="text-center pt-1 pb-1">
-            <p className="text-[12px] font-semibold text-black dark:text-white">
+            <p className="text-[12px] font-semibold text-[#1f2429] dark:text-neutral-300">
               {authMode === "signin"
                 ? AUTH_MESSAGES.switchToSignUpPrompt
                 : AUTH_MESSAGES.switchToSignInPrompt}{" "}
@@ -464,7 +464,7 @@ export function AuthFlow({
                   setAuthMode(authMode === "signin" ? "signup" : "signin");
                   setErrorMessage(null);
                 }}
-                className="text-primary dark:text-primary-dark font-bold hover:underline cursor-pointer"
+                className="text-[#ba131a] font-bold hover:underline cursor-pointer"
               >
                 {authMode === "signin"
                   ? AUTH_MESSAGES.switchToSignUpAction
