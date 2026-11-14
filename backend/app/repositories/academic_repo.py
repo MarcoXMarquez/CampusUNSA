@@ -852,9 +852,14 @@ class AcademicSyncRepository:
         for slot_key, item in desired_by_slot.items():
             existing = existing_by_slot.get(slot_key)
             if existing is not None:
-                if existing.end_time != item.end_time or existing.room != item.room:
+                if (
+                    existing.end_time != item.end_time
+                    or existing.room != item.room
+                    or existing.pavilion != item.pavilion
+                ):
                     existing.end_time = item.end_time
                     existing.room = item.room
+                    existing.pavilion = item.pavilion
                     existing.updated_by_user_id = user_id
                     existing.updated_at = now
                     changed = True
@@ -868,6 +873,7 @@ class AcademicSyncRepository:
                     start_time=item.start_time,
                     end_time=item.end_time,
                     room=item.room,
+                    pavilion=item.pavilion,
                     updated_by_user_id=user_id,
                 )
                 db.add(new_block)

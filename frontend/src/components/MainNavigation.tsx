@@ -339,6 +339,7 @@ function NavigationContent(): React.JSX.Element {
                 syncError={syncError}
                 onRefresh={fetchAcademicData}
                 onOpenSettings={() => setActiveTab("ajustes")}
+                onOpenSchedule={() => setActiveTab("horario")}
                 onReconnectMoodle={() => setActiveTab("ajustes")}
                 onCompletionChange={setCompletion}
                 completionPending={completionPending}

@@ -103,4 +103,54 @@ describe("urgency task board", () => {
     expect(screen.getByRole("button", { name: "Marcar como completada" }).hasAttribute("disabled")).toBe(true);
     expect(screen.getByText("Conéctate para guardar cambios de estado.")).toBeDefined();
   });
+
+  it("hides the next-class countdown widget when courses have no schedule blocks", () => {
+    render(<HoyView {...baseProps} courses={[]} />);
+    expect(screen.queryByRole("button", { name: /Ver horario semanal completo/i })).toBeNull();
+  });
+
+  it("renders next-class widget below filter with room/pavilion and opens Horario tab on click", () => {
+    // Tuesday 2026-11-17 09:30 America/Lima -> 14:30Z
+    vi.setSystemTime(new Date("2026-11-17T14:30:00Z"));
+    const onOpenSchedule = vi.fn();
+    render(
+      <HoyView
+        {...baseProps}
+        onOpenSchedule={onOpenSchedule}
+        courses={[
+          {
+            id: "course-1",
+            classroom_course_id: "1705275",
+            name: "Ingeniería de Sistemas",
+            origin: "classroom",
+            course_code: "1705275",
+            mapping_status: "LINKED",
+            schedule_blocks: [
+              {
+                id: "blk-1",
+                course_code: "1705275",
+                term: "2026B",
+                component_type: "TEORIA",
+                group_code: "A",
+                day_of_week: 2,
+                start_time: "10:00",
+                end_time: "11:40",
+                room: "Aula 201",
+                pavilion: "Pabellón Matilde Pérez",
+              },
+            ],
+            created_at: "2026-11-01T00:00:00Z",
+          },
+        ]}
+      />
+    );
+
+    const widgetBtn = screen.getByRole("button", { name: /Ver horario semanal completo/i });
+    expect(within(widgetBtn).getByText("Próxima clase en 30 min")).toBeDefined();
+    expect(within(widgetBtn).getByText("Ingeniería de Sistemas")).toBeDefined();
+    expect(within(widgetBtn).getByText(/Aula 201 · Pabellón Matilde Pérez/)).toBeDefined();
+
+    fireEvent.click(widgetBtn);
+    expect(onOpenSchedule).toHaveBeenCalledOnce();
+  });
 });

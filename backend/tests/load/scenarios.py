@@ -46,6 +46,8 @@ BASE_SCENARIOS = (
     Scenario("PATCH", "/api/v1/courses/enrolled/{course_code}/groups", role="completion"),
     Scenario("GET", "/api/v1/courses/enrolled/{course_code}/schedule", role="completion"),
     Scenario("PUT", "/api/v1/courses/enrolled/{course_code}/schedule", role="completion"),
+    Scenario("GET", "/api/v1/courses/schedule/next-class"),
+    Scenario("GET", "/api/v1/courses/schedule/weekly"),
     Scenario("GET", "/api/v1/courses/assignments"),
 )
 

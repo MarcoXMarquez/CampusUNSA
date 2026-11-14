@@ -8,6 +8,7 @@ Unified curriculum, course enrollment, manual linking, and assignment endpoints:
 - GET /api/v1/courses/assignments: List normalized coursework assignments across all providers
 """
 
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
@@ -27,9 +28,12 @@ from app.schemas.academic import (
     EnrollmentGroupUpdateRequest,
     ExternalSourceSummaryResponse,
     ManualCourseLinkRequest,
+    NextClassResponse,
     PendingLinkSourceResponse,
+    WeeklyScheduleResponse,
 )
 from app.services.curriculum_resolver import DEFAULT_TERM
+from app.services.schedule_calculator import ScheduleCalculator
 
 router = APIRouter()
 
@@ -181,6 +185,37 @@ def update_enrolled_course_schedule(
             },
         )
     return updated_course
+
+
+@router.get("/schedule/next-class", response_model=NextClassResponse)
+def get_next_class_countdown(
+    at: Optional[datetime] = Query(default=None),
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+) -> NextClassResponse:
+    """Compute the student's active or next class countdown in America/Lima."""
+    courses = AcademicSyncRepository.list_courses(
+        db,
+        current_user.id,
+        include_pending=False,
+    )
+    return ScheduleCalculator.compute_next_class(courses, now=at)
+
+
+@router.get("/schedule/weekly", response_model=WeeklyScheduleResponse)
+def get_weekly_schedule_matrix(
+    at: Optional[datetime] = Query(default=None),
+    term: str = Query(default=DEFAULT_TERM),
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+) -> WeeklyScheduleResponse:
+    """Retrieve the student's dynamic Mon-Sun weekly class schedule and countdown."""
+    courses = AcademicSyncRepository.list_courses(
+        db,
+        current_user.id,
+        include_pending=False,
+    )
+    return ScheduleCalculator.build_weekly_schedule(courses, now=at, term=term)
 
 
 @router.get("/assignments", response_model=List[AcademicAssignmentResponse])

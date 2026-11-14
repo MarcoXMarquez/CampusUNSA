@@ -430,6 +430,7 @@ class CourseScheduleBlock(Base):
     start_time: Mapped[str] = mapped_column(String(5), nullable=False)
     end_time: Mapped[str] = mapped_column(String(5), nullable=False)
     room: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    pavilion: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     updated_by_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,

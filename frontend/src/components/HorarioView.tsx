@@ -8,30 +8,18 @@ import type {
   CourseScheduleBlock,
   CourseScheduleBlockInput,
 } from "../lib/api-client";
+import {
+  buildWeeklySchedule,
+  formatBlockComponentLabel,
+  formatBlockLocation,
+  getCourseColor,
+  getLimaClock,
+  resolveNextClass,
+} from "../lib/schedule-calculator";
 import { horarioMessages as messages, taskBoardMessages } from "../lib/task-board-messages";
-
-const COURSE_COLORS = [
-  "#3b82f6",
-  "#d946ef",
-  "#f59e0b",
-  "#10b981",
-  "#06b6d4",
-  "#f43f5e",
-  "#8b5cf6",
-] as const;
 
 const GROUP_OPTIONS = ["A", "B", "C", "D", "E", "F"] as const;
 const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7] as const;
-
-const WEEKDAY_MAP: Record<string, number> = {
-  Mon: 1,
-  Tue: 2,
-  Wed: 3,
-  Thu: 4,
-  Fri: 5,
-  Sat: 6,
-  Sun: 7,
-};
 
 export interface HorarioViewProps {
   courses: AcademicCourse[];
@@ -77,63 +65,7 @@ interface EditableBlock {
   start_time: string;
   end_time: string;
   room: string;
-}
-
-interface NextClassSummary {
-  subLabel: string;
-  course: AcademicCourse;
-  block: CourseScheduleBlock;
-}
-
-function getCourseColor(seed: string): string {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = (hash * 31 + seed.charCodeAt(i)) % 100_003;
-  }
-  return COURSE_COLORS[Math.abs(hash) % COURSE_COLORS.length];
-}
-
-function getLimaClock(date: Date): { dayOfWeek: number; minutesOfDay: number } {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Lima",
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(date);
-
-  const weekdayText = parts.find((p) => p.type === "weekday")?.value ?? "Mon";
-  const rawHour = Number.parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
-  const minute = Number.parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10);
-  const hour = rawHour === 24 ? 0 : rawHour;
-
-  return {
-    dayOfWeek: WEEKDAY_MAP[weekdayText] ?? 1,
-    minutesOfDay: hour * 60 + minute,
-  };
-}
-
-function parseMinutes(hhmm: string): number {
-  const [hh, mm] = hhmm.split(":").map((part) => Number.parseInt(part, 10));
-  if (Number.isNaN(hh) || Number.isNaN(mm)) {
-    return 0;
-  }
-  return hh * 60 + mm;
-}
-
-function formatDuration(minutes: number): string {
-  const safe = Math.max(1, minutes);
-  if (safe < 60) {
-    return `${safe} min`;
-  }
-  const hours = Math.floor(safe / 60);
-  const rem = safe % 60;
-  return rem === 0 ? `${hours} h` : `${hours} h ${rem} min`;
-}
-
-function formatBlockComponentLabel(block: CourseScheduleBlock): string {
-  const base = block.component_type === "LABORATORIO" ? "Lab" : "Teoría";
-  return `${base} ${block.group_code}${block.room ? ` · ${block.room}` : ""}`;
+  pavilion: string;
 }
 
 function formatGroupSubtitle(course: AcademicCourse): string | null {
@@ -147,71 +79,6 @@ function formatGroupSubtitle(course: AcademicCourse): string | null {
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
-function resolveNextClass(courses: AcademicCourse[], now: Date): NextClassSummary | null {
-  const entries: Array<{ course: AcademicCourse; block: CourseScheduleBlock; startMin: number; endMin: number }> = [];
-  for (const course of courses) {
-    for (const block of course.schedule_blocks ?? []) {
-      entries.push({
-        course,
-        block,
-        startMin: parseMinutes(block.start_time),
-        endMin: parseMinutes(block.end_time),
-      });
-    }
-  }
-  if (entries.length === 0) {
-    return null;
-  }
-
-  const { dayOfWeek, minutesOfDay } = getLimaClock(now);
-
-  // Priority 1: Active class right now
-  const active = entries
-    .filter((e) => e.block.day_of_week === dayOfWeek && e.startMin <= minutesOfDay && minutesOfDay < e.endMin)
-    .sort((a, b) => a.endMin - b.endMin);
-  if (active.length > 0) {
-    const first = active[0];
-    return {
-      subLabel: `${messages.inProgressLabel} · ${messages.endsInPrefix} ${formatDuration(first.endMin - minutesOfDay)}`,
-      course: first.course,
-      block: first.block,
-    };
-  }
-
-  // Priority 2: Upcoming later today
-  const laterToday = entries
-    .filter((e) => e.block.day_of_week === dayOfWeek && e.startMin > minutesOfDay)
-    .sort((a, b) => a.startMin - b.startMin);
-  if (laterToday.length > 0) {
-    const first = laterToday[0];
-    return {
-      subLabel: `${messages.nextLabel} · ${messages.startsInPrefix} ${formatDuration(first.startMin - minutesOfDay)}`,
-      course: first.course,
-      block: first.block,
-    };
-  }
-
-  // Priority 3: Upcoming class on a subsequent day of the week
-  const upcomingWeek = entries
-    .map((e) => {
-      const rawDelta = (e.block.day_of_week - dayOfWeek + 7) % 7;
-      const dayDelta = rawDelta === 0 ? 7 : rawDelta;
-      return {
-        ...e,
-        minutesAway: dayDelta * 1440 + (e.startMin - minutesOfDay),
-      };
-    })
-    .sort((a, b) => a.minutesAway - b.minutesAway);
-
-  const next = upcomingWeek[0];
-  const dayLabel = messages.dayAbbreviations[next.block.day_of_week] ?? "Lun";
-  return {
-    subLabel: `${messages.nextLabel} · ${dayLabel} ${next.block.start_time}`,
-    course: next.course,
-    block: next.block,
-  };
-}
-
 function toEditableBlocks(blocks: CourseScheduleBlock[] | undefined): EditableBlock[] {
   return (blocks ?? []).map((b, idx) => ({
     key: b.id || `block-${idx}`,
@@ -220,6 +87,7 @@ function toEditableBlocks(blocks: CourseScheduleBlock[] | undefined): EditableBl
     start_time: b.start_time,
     end_time: b.end_time,
     room: b.room ?? "",
+    pavilion: b.pavilion ?? "",
   }));
 }
 
@@ -265,6 +133,16 @@ export function HorarioView({
     () => resolveNextClass(linkedCourses, effectiveNow),
     [linkedCourses, effectiveNow]
   );
+
+  const weeklyDays = useMemo(
+    () => buildWeeklySchedule(linkedCourses),
+    [linkedCourses]
+  );
+  const limaToday = useMemo(
+    () => getLimaClock(effectiveNow).dayOfWeek,
+    [effectiveNow]
+  );
+  const [viewMode, setViewMode] = useState<"courses" | "weekly">("courses");
 
   const termLabel = useMemo(() => {
     const firstBlock = linkedCourses.find((c) => (c.schedule_blocks ?? []).length > 0)?.schedule_blocks?.[0];
@@ -344,6 +222,7 @@ export function HorarioView({
         start_time: "08:40",
         end_time: "10:20",
         room: "",
+        pavilion: "",
       },
     ]);
     setEditorError(null);
@@ -393,6 +272,7 @@ export function HorarioView({
         start_time: block.start_time,
         end_time: block.end_time,
         room: block.room.trim() || null,
+        pavilion: block.pavilion.trim() || null,
       });
     }
 
@@ -604,12 +484,128 @@ export function HorarioView({
                 className="space-y-6"
               >
                 {linkedCourses.length > 0 && (
-                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                    {messages.sectionTitle} · {termLabel}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                      {messages.sectionTitle} · {termLabel}
+                    </p>
+                    <div
+                      role="group"
+                      aria-label={messages.viewModeToggleAria}
+                      className="inline-flex rounded-xl bg-[#141416] border border-neutral-800 p-0.5 shrink-0"
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={viewMode === "courses"}
+                        onClick={() => setViewMode("courses")}
+                        className={`min-h-[44px] px-3 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                          viewMode === "courses"
+                            ? "bg-[#8B0000] text-white"
+                            : "text-neutral-400 hover:text-white"
+                        }`}
+                      >
+                        {messages.viewModeCourses}
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={viewMode === "weekly"}
+                        onClick={() => setViewMode("weekly")}
+                        className={`min-h-[44px] px-3 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                          viewMode === "weekly"
+                            ? "bg-[#8B0000] text-white"
+                            : "text-neutral-400 hover:text-white"
+                        }`}
+                      >
+                        {messages.viewModeWeekly}
+                      </button>
+                    </div>
+                  </div>
                 )}
 
-                {linkedCourses.map((course) => {
+                {viewMode === "weekly" && linkedCourses.length > 0 ? (
+                  <div
+                    data-purpose="weekly-schedule-grid"
+                    aria-label={messages.weeklySectionAria}
+                    className="space-y-3"
+                  >
+                    {weeklyDays
+                      .filter(
+                        (day) =>
+                          day.dayOfWeek <= 6 ||
+                          day.sessions.length > 0 ||
+                          day.dayOfWeek === limaToday
+                      )
+                      .map((day) => {
+                        const isToday = day.dayOfWeek === limaToday;
+                        return (
+                          <div
+                            key={day.dayOfWeek}
+                            className={`rounded-2xl border p-3.5 space-y-2.5 ${
+                              isToday
+                                ? "bg-[#19090c] border-[#4a1118]"
+                                : "bg-[#121214] border-neutral-800/80"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <h3 className="text-sm font-bold text-white">
+                                {messages.dayFullNames[day.dayOfWeek]}
+                              </h3>
+                              {isToday && (
+                                <span className="rounded-full bg-[#8B0000]/30 border border-[#f26c6d]/40 px-2 py-0.5 text-[11px] font-semibold text-[#f26c6d]">
+                                  {messages.weeklyTodayBadge}
+                                </span>
+                              )}
+                            </div>
+                            {day.sessions.length > 0 ? (
+                              <div className="space-y-2">
+                                {day.sessions.map((session) => {
+                                  const location = formatBlockLocation(session.block);
+                                  const comp =
+                                    session.block.component_type === "LABORATORIO"
+                                      ? "Lab"
+                                      : "Teoría";
+                                  return (
+                                    <div
+                                      key={session.block.id}
+                                      className="flex items-start gap-2.5 rounded-xl bg-black/50 border border-neutral-800/70 p-2.5"
+                                    >
+                                      <span
+                                        aria-hidden="true"
+                                        className="w-1 self-stretch rounded-full shrink-0"
+                                        style={{ backgroundColor: session.color }}
+                                      />
+                                      <div className="min-w-0 flex-1 space-y-0.5">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <span className="font-mono text-xs font-semibold text-neutral-200">
+                                            {session.block.start_time}–{session.block.end_time}
+                                          </span>
+                                          <span className="text-[11px] text-neutral-400 shrink-0">
+                                            {comp} {session.block.group_code}
+                                          </span>
+                                        </div>
+                                        <p className="text-sm font-semibold text-white line-clamp-2">
+                                          {session.course.name}
+                                        </p>
+                                        {location && (
+                                          <p className="text-xs text-neutral-400 truncate">
+                                            {location}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-neutral-500">
+                                {messages.weeklyNoDaySessions}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  linkedCourses.map((course) => {
                   const color = getCourseColor(course.course_code ?? course.id);
                   const groupSubtitle = formatGroupSubtitle(course);
                   const courseAssignments = assignments.filter(
@@ -671,23 +667,26 @@ export function HorarioView({
 
                       {(course.schedule_blocks ?? []).length > 0 ? (
                         <div className="pl-6 space-y-1 font-mono text-sm text-neutral-200">
-                          {(course.schedule_blocks ?? []).map((block) => (
-                            <div
-                              key={block.id}
-                              className="flex items-center min-w-0"
-                            >
-                              <span className="w-16 font-sans text-neutral-400 font-normal shrink-0">
-                                {block.component_type === "LABORATORIO"
-                                  ? "Lab"
-                                  : "Teoría"}
-                              </span>
-                              <span className="tracking-tight truncate">
-                                {messages.dayAbbreviations[block.day_of_week] ?? "Lun"}{" "}
-                                {block.start_time}–{block.end_time}
-                                {block.room ? ` · ${block.room}` : ""}
-                              </span>
-                            </div>
-                          ))}
+                          {(course.schedule_blocks ?? []).map((block) => {
+                            const location = formatBlockLocation(block);
+                            return (
+                              <div
+                                key={block.id}
+                                className="flex items-center min-w-0"
+                              >
+                                <span className="w-16 font-sans text-neutral-400 font-normal shrink-0">
+                                  {block.component_type === "LABORATORIO"
+                                    ? "Lab"
+                                    : "Teoría"}
+                                </span>
+                                <span className="tracking-tight truncate">
+                                  {messages.dayAbbreviations[block.day_of_week] ?? "Lun"}{" "}
+                                  {block.start_time}–{block.end_time}
+                                  {location ? ` · ${location}` : ""}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       ) : (
                         <p className="pl-6 text-xs text-neutral-500">
@@ -710,7 +709,8 @@ export function HorarioView({
                       </p>
                     </article>
                   );
-                })}
+                })
+                )}
               </section>
             )}
 
@@ -896,26 +896,40 @@ export function HorarioView({
                       </label>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          aria-label={messages.sessionRoomLabel}
+                          placeholder={messages.sessionRoomPlaceholder}
+                          value={block.room}
+                          onChange={(e) =>
+                            handleUpdateDraftBlock(block.key, {
+                              room: e.target.value,
+                            })
+                          }
+                          className="flex-1 min-h-[44px] rounded-lg bg-[#141416] border border-neutral-700 px-2.5 text-xs text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDraftBlock(block.key)}
+                          className="min-h-[44px] px-3 rounded-lg border border-neutral-700 text-xs text-neutral-300 hover:text-white cursor-pointer"
+                        >
+                          {messages.deleteSessionButton}
+                        </button>
+                      </div>
                       <input
                         type="text"
-                        aria-label={messages.sessionRoomLabel}
-                        placeholder={messages.sessionRoomPlaceholder}
-                        value={block.room}
+                        aria-label={messages.sessionPavilionLabel}
+                        placeholder={messages.sessionPavilionPlaceholder}
+                        value={block.pavilion}
                         onChange={(e) =>
                           handleUpdateDraftBlock(block.key, {
-                            room: e.target.value,
+                            pavilion: e.target.value,
                           })
                         }
-                        className="flex-1 min-h-[44px] rounded-lg bg-[#141416] border border-neutral-700 px-2.5 text-xs text-white"
+                        className="w-full min-h-[44px] rounded-lg bg-[#141416] border border-neutral-700 px-2.5 text-xs text-white"
                       />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveDraftBlock(block.key)}
-                        className="min-h-[44px] px-3 rounded-lg border border-neutral-700 text-xs text-neutral-300 hover:text-white cursor-pointer"
-                      >
-                        {messages.deleteSessionButton}
-                      </button>
                     </div>
                   </div>
                 ))}

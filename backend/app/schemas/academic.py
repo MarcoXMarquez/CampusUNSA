@@ -30,6 +30,7 @@ class CourseScheduleBlockInput(BaseModel):
     start_time: str = Field(pattern=TIME_HHMM_PATTERN)
     end_time: str = Field(pattern=TIME_HHMM_PATTERN)
     room: Optional[str] = Field(default=None, max_length=120)
+    pavilion: Optional[str] = Field(default=None, max_length=120)
 
     @field_validator("group_code")
     @classmethod
@@ -39,9 +40,9 @@ class CourseScheduleBlockInput(BaseModel):
             raise ValueError(VALID_GROUPS_MSG)
         return normalized
 
-    @field_validator("room")
+    @field_validator("room", "pavilion")
     @classmethod
-    def normalize_room(cls, value: Optional[str]) -> Optional[str]:
+    def normalize_optional_location(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
             return None
         cleaned = value.strip()
@@ -66,8 +67,58 @@ class CourseScheduleBlockResponse(BaseModel):
     start_time: str
     end_time: str
     room: Optional[str] = None
+    pavilion: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class NextClassResponse(BaseModel):
+    """Computed active or upcoming class session in America/Lima timezone."""
+
+    status: Literal["IN_PROGRESS", "UPCOMING_TODAY", "NEXT_DAY", "EMPTY"]
+    course_code: Optional[str] = None
+    course_name: Optional[str] = None
+    component_type: Optional[str] = None
+    group_code: Optional[str] = None
+    day_of_week: Optional[int] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    room: Optional[str] = None
+    pavilion: Optional[str] = None
+    minutes_remaining: Optional[int] = None
+    is_tomorrow: bool = False
+    computed_at: datetime
+
+
+class WeeklyScheduleSessionResponse(BaseModel):
+    """Single enrolled session inside the weekly class schedule matrix."""
+
+    id: uuid.UUID
+    course_code: str
+    course_name: str
+    term: str
+    component_type: str
+    group_code: str
+    day_of_week: int
+    start_time: str
+    end_time: str
+    room: Optional[str] = None
+    pavilion: Optional[str] = None
+
+
+class WeeklyScheduleDayResponse(BaseModel):
+    """All enrolled sessions falling on a single ISO weekday (1=Mon..7=Sun)."""
+
+    day_of_week: int
+    sessions: List[WeeklyScheduleSessionResponse] = []
+
+
+class WeeklyScheduleResponse(BaseModel):
+    """Full 7-day class schedule matrix alongside next-class countdown."""
+
+    term: str
+    days: List[WeeklyScheduleDayResponse]
+    next_class: NextClassResponse
 
 
 class CourseScheduleUpdateRequest(BaseModel):

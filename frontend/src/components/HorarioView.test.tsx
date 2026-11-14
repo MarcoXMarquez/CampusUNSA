@@ -385,4 +385,56 @@ describe("HorarioView component", () => {
       });
     });
   });
+
+  it("toggles between default Por curso and dynamic Semana matrix and saves pavilion", async () => {
+    const onSaveSchedule = vi.fn().mockResolvedValue(undefined);
+    const courseWithPavilion: AcademicCourse = {
+      ...baseLinkedCourse,
+      schedule_blocks: [
+        {
+          ...baseLinkedCourse.schedule_blocks![0],
+          pavilion: "Pabellón Matilde Pérez",
+        },
+        baseLinkedCourse.schedule_blocks![1],
+      ],
+    };
+
+    render(
+      <HorarioView
+        courses={[courseWithPavilion]}
+        assignments={baseAssignments}
+        loading={false}
+        syncing={false}
+        isOnline={true}
+        moodleSessionExpired={false}
+        syncError={null}
+        currentTime={new Date("2026-11-16T08:15:00-05:00")}
+        onRefresh={vi.fn()}
+        onReconnectMoodle={vi.fn()}
+        onOpenNewTask={vi.fn()}
+        onSaveSchedule={onSaveSchedule}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Por curso" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.queryByText("Sábado")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Semana" }));
+    expect(screen.getByRole("button", { name: "Semana" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("Lunes")).toBeDefined();
+    expect(screen.getByText("Hoy")).toBeDefined();
+    expect(screen.getByText("Miércoles")).toBeDefined();
+    expect(screen.getAllByText(/Aula 204 · Pabellón Matilde Pérez/).length).toBeGreaterThanOrEqual(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "Por curso" }));
+    fireEvent.click(screen.getByRole("button", { name: /Editar horario/i }));
+    const pavilionInputs = screen.getAllByLabelText("Pabellón (opcional)");
+    fireEvent.change(pavilionInputs[0], { target: { value: "Pabellón Alan Turing" } });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar horario" }));
+
+    await waitFor(() => {
+      expect(onSaveSchedule).toHaveBeenCalledTimes(1);
+    });
+    expect(onSaveSchedule.mock.calls[0][1].blocks[0].pavilion).toBe("Pabellón Alan Turing");
+  });
 });
