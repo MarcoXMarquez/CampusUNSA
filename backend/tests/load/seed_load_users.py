@@ -12,6 +12,7 @@ from app.core.security import create_access_token, hash_password
 from app.models.classroom import (
     ClassroomAssignment,
     CourseExternalSource,
+    CourseScheduleBlock,
     UserCourseEnrollment,
     UserExternalCourse,
 )
@@ -136,9 +137,38 @@ def seed() -> None:
             course_code="1705275",
             term=DEFAULT_TERM,
             theory_group="A",
+            lab_group="B",
         )
         db.add(completion_enrollment)
         db.flush()
+        db.add(
+            CourseScheduleBlock(
+                id=uuid4(),
+                course_code="1705275",
+                term=DEFAULT_TERM,
+                component_type="TEORIA",
+                group_code="A",
+                day_of_week=1,
+                start_time="16:40",
+                end_time="18:30",
+                room="Aula 302",
+                updated_by_user_id=completion_user.id,
+            )
+        )
+        db.add(
+            CourseScheduleBlock(
+                id=uuid4(),
+                course_code="1705275",
+                term=DEFAULT_TERM,
+                component_type="LABORATORIO",
+                group_code="B",
+                day_of_week=3,
+                start_time="15:50",
+                end_time="17:30",
+                room="Lab 4",
+                updated_by_user_id=completion_user.id,
+            )
+        )
         db.add(
             UserExternalCourse(
                 user_id=completion_user.id,

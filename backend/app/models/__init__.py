@@ -4,6 +4,7 @@ from app.models.classroom import (
     ClassroomAssignment,
     CourseCatalog,
     CourseExternalSource,
+    CourseScheduleBlock,
     UserCourseEnrollment,
     UserExternalCourse,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "Ticket",
     "CourseCatalog",
     "CourseExternalSource",
+    "CourseScheduleBlock",
     "UserCourseEnrollment",
     "UserExternalCourse",
     "ClassroomAssignment",

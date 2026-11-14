@@ -289,4 +289,79 @@ describe("HomePage Component", () => {
     expect(container.querySelector(".bg-emerald-100")).toBeNull();
     expect(screen.getAllByText("Operativo").length).toBeGreaterThanOrEqual(3);
   });
+
+  it("renders HorarioView inside Horario tab while preserving 5-tab bar and Pendiente de implementacion modal", async () => {
+    localStorage.setItem("campusunsa_token", testToken);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.endsWith("/auth/me")) {
+          return jsonResponse({
+            id: "42",
+            email: "marco@unsa.edu.pe",
+            role: "student",
+            full_name: "Marco Marquez",
+          });
+        }
+        if (url.endsWith("/auth/google/classroom/status") || url.endsWith("/dutic/ical/status")) {
+          return jsonResponse({ connected: true, sync_status: "CONNECTED" });
+        }
+        if (url.endsWith("/courses/enrolled")) {
+          return jsonResponse([
+            {
+              id: "enr-1",
+              classroom_course_id: "1705275",
+              name: "Desarrollo de Software para Juegos",
+              origin: "classroom",
+              course_code: "1705275",
+              curriculum_year: 2017,
+              theory_group: "A",
+              lab_group: "B",
+              mapping_status: "LINKED",
+              sources: [],
+              schedule_blocks: [
+                {
+                  id: "blk-1",
+                  course_code: "1705275",
+                  term: "2026B",
+                  component_type: "TEORIA",
+                  group_code: "A",
+                  day_of_week: 1,
+                  start_time: "08:40",
+                  end_time: "10:20",
+                  room: "Aula 204",
+                },
+              ],
+              created_at: "2026-11-01T00:00:00Z",
+              updated_at: "2026-11-01T00:00:00Z",
+            },
+          ]);
+        }
+        if (url.endsWith("/health")) {
+          return jsonResponse({ status: "healthy" });
+        }
+        return jsonResponse([]);
+      })
+    );
+
+    render(<HomePage />);
+    fireEvent.click(screen.getByRole("button", { name: "Horario" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Horario" })).toBeDefined();
+      expect(screen.getAllByText(/Aula 204/).length).toBeGreaterThanOrEqual(1);
+    });
+
+    // Bottom navigation keeps all 5 items
+    expect(screen.getByRole("button", { name: "Tareas" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Horario" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Crear nueva tarea" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Hugo" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Ajustes" })).toBeDefined();
+
+    // Tapping + Tarea opens Pendiente de implementacion modal
+    fireEvent.click(screen.getByRole("button", { name: "+ Tarea" }));
+    expect(screen.getByText(/Pendiente de implementación/i)).toBeDefined();
+  });
 });

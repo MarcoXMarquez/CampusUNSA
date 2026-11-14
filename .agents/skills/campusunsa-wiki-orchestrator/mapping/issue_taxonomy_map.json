@@ -205,6 +205,11 @@
       "category": "security_and_auth",
       "target_page": "Auth-and-Institutional-SSO.md",
       "title": "Feature Auth (Issue #99)"
+    },
+    "101": {
+      "category": "architecture_and_core",
+      "target_page": "Frontend-Architecture-and-Offline-First-PWA.md",
+      "title": "Stitch Horario View and Shared Course Schedule Blocks"
     }
   },
   "dynamic_heuristics": {

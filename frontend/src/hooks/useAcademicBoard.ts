@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AcademicAssignment } from "../components/TaskDetailSheet";
-import { getApiBaseUrl } from "../lib/api-client";
+import { getApiBaseUrl, type CourseScheduleBlock } from "../lib/api-client";
 import { taskBoardMessages } from "../lib/task-board-messages";
 
 export interface AcademicCourseSource {
@@ -30,6 +30,7 @@ export interface AcademicCourse {
   lab_group?: string | null;
   mapping_status?: string;
   sources?: AcademicCourseSource[];
+  schedule_blocks?: CourseScheduleBlock[];
   created_at: string;
 }
 

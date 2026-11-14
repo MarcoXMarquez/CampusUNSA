@@ -123,6 +123,29 @@ class StudentBrowser(FastHttpUser):
             }
         elif case.path.endswith("/groups"):
             payload = {"theory_group": "A"}
+        elif case.method == "PUT" and case.path.endswith("/schedule"):
+            payload = {
+                "theory_group": "A",
+                "lab_group": "B",
+                "blocks": [
+                    {
+                        "component_type": "TEORIA",
+                        "group_code": "A",
+                        "day_of_week": 1,
+                        "start_time": "16:40",
+                        "end_time": "18:30",
+                        "room": "Aula 302",
+                    },
+                    {
+                        "component_type": "LABORATORIO",
+                        "group_code": "B",
+                        "day_of_week": 3,
+                        "start_time": "15:50",
+                        "end_time": "17:30",
+                        "room": "Lab 4",
+                    },
+                ],
+            }
         elif case.path.endswith("/auth/google/classroom/callback"):
             payload = {"code": "perf-code-123"}
         elif case.path.endswith("/auth/google"):
@@ -184,6 +207,13 @@ class StudentBrowser(FastHttpUser):
                     assert body["mapping_status"] == "LINKED"
                 elif case.path.endswith("/groups"):
                     assert body["theory_group"] == "A"
+                elif case.method == "GET" and case.path.endswith("/schedule"):
+                    assert isinstance(body, list) and len(body) >= 1
+                elif case.method == "PUT" and case.path.endswith("/schedule"):
+                    assert (
+                        body["course_code"] == dataset.get("completion_course_code", "1705275")
+                        and len(body["schedule_blocks"]) == 2
+                    )
                 elif case.method == "DELETE" and case.path.endswith(("/assignments", "/courses")):
                     assert "deleted_count" in body
                 elif case.path.endswith(("/enrolled", "/pending-links")):

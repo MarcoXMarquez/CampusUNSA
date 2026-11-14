@@ -64,6 +64,11 @@ class CourseCatalog(Base):
         "UserCourseEnrollment",
         back_populates="catalog_course",
     )
+    schedule_blocks: Mapped[List["CourseScheduleBlock"]] = relationship(
+        "CourseScheduleBlock",
+        back_populates="catalog_course",
+        cascade="all, delete-orphan",
+    )
 
     @property
     def prerequisites(self) -> List[str]:
@@ -392,3 +397,75 @@ class ClassroomAssignment(Base):
 
     def __repr__(self) -> str:
         return f"<ClassroomAssignment(id={self.id}, title='{self.title}', due_date='{self.due_date}')>"
+
+
+class CourseScheduleBlock(Base):
+    """
+    Shared weekly class schedule slot (Teoria or Laboratorio) keyed by canonical
+    course_code, term, component_type, and group_code (A-F).
+    """
+
+    __tablename__ = "course_schedule_blocks"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True,
+    )
+    course_code: Mapped[str] = mapped_column(
+        ForeignKey("course_catalog.code", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    term: Mapped[str] = mapped_column(
+        String(20),
+        default="2026B",
+        server_default="2026B",
+        nullable=False,
+        index=True,
+    )
+    component_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    group_code: Mapped[str] = mapped_column(String(5), nullable=False)
+    day_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    start_time: Mapped[str] = mapped_column(String(5), nullable=False)
+    end_time: Mapped[str] = mapped_column(String(5), nullable=False)
+    room: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    updated_by_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    catalog_course: Mapped["CourseCatalog"] = relationship(
+        "CourseCatalog",
+        back_populates="schedule_blocks",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "course_code",
+            "term",
+            "component_type",
+            "group_code",
+            "day_of_week",
+            "start_time",
+            name="uq_course_schedule_block_slot",
+        ),
+        Index(
+            "idx_course_schedule_lookup",
+            "course_code",
+            "term",
+            "component_type",
+            "group_code",
+        ),
+    )

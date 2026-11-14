@@ -6,7 +6,7 @@ import { WhatsappLogo } from "@phosphor-icons/react";
 import Script from "next/script";
 import { HoyView } from "./HoyView";
 import { TareasSyncView } from "./TareasSyncView";
-import { CalendarioView } from "./CalendarioView";
+import { HorarioView } from "./HorarioView";
 import { AjustesView } from "./AjustesView";
 import { LoginModal } from "./LoginModal";
 import { WhatsAppSheet } from "./WhatsAppSheet";
@@ -20,11 +20,18 @@ import {
   clearSyncedCourses,
   exchangeClassroomCode,
   fetchBackendHealth,
+  fetchCourseScheduleBlocks,
   fetchCurrentUser,
+  fetchCurriculumCatalog,
   fetchIntegrationStatuses,
   getGoogleClientId,
+  linkExternalCourseSource,
+  saveCourseSchedule,
   subscribeMoodleIcal,
   type BackendHealthStatus,
+  type CourseCatalogItem,
+  type CourseScheduleBlock,
+  type CourseScheduleBlockInput,
   type UserProfile,
 } from "../lib/api-client";
 
@@ -47,6 +54,7 @@ function NavigationContent(): React.JSX.Element {
   const [hugoSheetOpened, setHugoSheetOpened] = useState<boolean>(false);
   const [newTaskModalOpened, setNewTaskModalOpened] = useState<boolean>(false);
   const [backendHealth, setBackendHealth] = useState<BackendHealthStatus | null>(null);
+  const [catalogCourses, setCatalogCourses] = useState<CourseCatalogItem[]>([]);
 
   // Sync statuses
   const [classroomConnected, setClassroomConnected] = useState<boolean>(false);
@@ -215,6 +223,75 @@ function NavigationContent(): React.JSX.Element {
     setAssignments([]);
   };
 
+  const handleSaveCourseSchedule = useCallback(
+    async (
+      courseCode: string,
+      payload: {
+        theory_group: string | null;
+        lab_group: string | null;
+        blocks: CourseScheduleBlockInput[];
+      }
+    ): Promise<void> => {
+      if (!token) {
+        throw new Error("Inicia sesión para guardar el horario");
+      }
+      const updated = await saveCourseSchedule(token, courseCode, payload);
+      setCourses(
+        courses.map((item) =>
+          item.course_code === courseCode ? { ...item, ...updated } : item
+        )
+      );
+      await fetchAcademicData();
+    },
+    [token, courses, setCourses, fetchAcademicData]
+  );
+
+  const handleLoadGroupSchedule = useCallback(
+    async (
+      courseCode: string,
+      theoryGroup: string | null,
+      labGroup: string | null
+    ): Promise<CourseScheduleBlock[]> => {
+      if (!token) {
+        return [];
+      }
+      return fetchCourseScheduleBlocks(token, courseCode, theoryGroup, labGroup);
+    },
+    [token]
+  );
+
+  const handleLoadCatalog = useCallback(
+    async (query?: string): Promise<CourseCatalogItem[]> => {
+      if (!token) {
+        return [];
+      }
+      const loaded = await fetchCurriculumCatalog(token, query);
+      if (!query) {
+        setCatalogCourses(loaded);
+      }
+      return loaded;
+    },
+    [token]
+  );
+
+  const handleLinkPendingSource = useCallback(
+    async (
+      sourceId: string,
+      payload: {
+        course_code: string;
+        component_type: "TEORIA" | "LABORATORIO" | "UNICO";
+        group_code: string | null;
+      }
+    ): Promise<void> => {
+      if (!token) {
+        throw new Error("Inicia sesión para vincular cursos");
+      }
+      await linkExternalCourseSource(token, sourceId, payload);
+      await fetchAcademicData();
+    },
+    [token, fetchAcademicData]
+  );
+
   const handleLogout = () => {
     localStorage.removeItem("campusunsa_token");
     setUser(null);
@@ -227,7 +304,8 @@ function NavigationContent(): React.JSX.Element {
 
   const allSourcesSynced = classroomConnected && moodleIcalConnected;
   const isSyncDarkFullBleed = activeTab === "tareas" && !allSourcesSynced;
-  const useDarkBottomBar = isSyncDarkFullBleed || activeTab === "hugo";
+  const useDarkBottomBar =
+    isSyncDarkFullBleed || activeTab === "hugo" || activeTab === "horario";
 
   return (
     <Page
@@ -270,16 +348,23 @@ function NavigationContent(): React.JSX.Element {
           ))}
 
         {activeTab === "horario" && (
-          <div className="w-full max-w-lg mx-auto">
-            <CalendarioView
-              assignments={assignments}
-              courses={courses}
-              onCompletionChange={setCompletion}
-              completionPending={completionPending}
-              completionError={completionError}
-              isOnline={isOnline}
-            />
-          </div>
+          <HorarioView
+            courses={courses}
+            assignments={assignments}
+            catalogCourses={catalogCourses}
+            loading={loading}
+            syncing={syncing}
+            isOnline={isOnline}
+            moodleSessionExpired={moodleSessionExpired}
+            syncError={syncError}
+            onRefresh={fetchAcademicData}
+            onReconnectMoodle={() => setActiveTab("ajustes")}
+            onOpenNewTask={() => setNewTaskModalOpened(true)}
+            onSaveSchedule={handleSaveCourseSchedule}
+            onLoadCatalog={handleLoadCatalog}
+            onLoadGroupSchedule={handleLoadGroupSchedule}
+            onLinkPendingSource={handleLinkPendingSource}
+          />
         )}
 
         {activeTab === "hugo" && (

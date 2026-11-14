@@ -10,6 +10,7 @@ import { taskBoardMessages as messages } from "../lib/task-board-messages";
 export interface AcademicAssignment {
   id: string;
   course_id: string;
+  course_code?: string | null;
   classroom_assignment_id: string;
   title: string;
   description?: string | null;
