@@ -207,6 +207,10 @@ class StudentBrowser(FastHttpUser):
                     assert body["mapping_status"] == "LINKED"
                 elif case.path.endswith("/groups"):
                     assert body["theory_group"] == "A"
+                elif case.path.endswith("/schedule/next-class"):
+                    assert "status" in body
+                elif case.path.endswith("/schedule/weekly"):
+                    assert isinstance(body.get("days"), list) and len(body["days"]) == 7
                 elif case.method == "GET" and case.path.endswith("/schedule"):
                     assert isinstance(body, list) and len(body) >= 1
                 elif case.method == "PUT" and case.path.endswith("/schedule"):

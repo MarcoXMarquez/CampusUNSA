@@ -367,6 +367,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/courses/schedule/next-class": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Next Class Countdown
+         * @description Compute the student's active or next class countdown in America/Lima.
+         */
+        get: operations["get_next_class_countdown_api_v1_courses_schedule_next_class_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/schedule/weekly": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Weekly Schedule Matrix
+         * @description Retrieve the student's dynamic Mon-Sun weekly class schedule and countdown.
+         */
+        get: operations["get_weekly_schedule_matrix_api_v1_courses_schedule_weekly_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/courses/assignments": {
         parameters: {
             query?: never;
@@ -650,7 +690,7 @@ export interface components {
              * Schedule Blocks
              * @default []
              */
-            schedule_blocks?: components["schemas"]["CourseScheduleBlockResponse"][];
+            schedule_blocks: components["schemas"]["CourseScheduleBlockResponse"][];
             /**
              * Created At
              * Format: date-time
@@ -798,69 +838,6 @@ export interface components {
             lab_hours: number;
         };
         /**
-         * CourseScheduleBlockInput
-         * @description Input payload describing a single shared weekly class schedule block.
-         */
-        CourseScheduleBlockInput: {
-            /**
-             * Component Type
-             * @enum {string}
-             */
-            component_type: "TEORIA" | "LABORATORIO";
-            /** Group Code */
-            group_code: string;
-            /** Day Of Week */
-            day_of_week: number;
-            /** Start Time */
-            start_time: string;
-            /** End Time */
-            end_time: string;
-            /** Room */
-            room?: string | null;
-        };
-        /**
-         * CourseScheduleBlockResponse
-         * @description Serialized shared weekly schedule slot for a course component group.
-         */
-        CourseScheduleBlockResponse: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Course Code */
-            course_code: string;
-            /** Term */
-            term: string;
-            /** Component Type */
-            component_type: string;
-            /** Group Code */
-            group_code: string;
-            /** Day Of Week */
-            day_of_week: number;
-            /** Start Time */
-            start_time: string;
-            /** End Time */
-            end_time: string;
-            /** Room */
-            room?: string | null;
-        };
-        /**
-         * CourseScheduleUpdateRequest
-         * @description Payload to update student groups (A-F) and shared weekly schedule blocks.
-         */
-        CourseScheduleUpdateRequest: {
-            /** Theory Group */
-            theory_group?: string | null;
-            /** Lab Group */
-            lab_group?: string | null;
-            /**
-             * Blocks
-             * @default []
-             */
-            blocks?: components["schemas"]["CourseScheduleBlockInput"][];
-        };
-        /**
          * CourseResponse
          * @description Serialized course entity.
          */
@@ -905,7 +882,7 @@ export interface components {
              * Schedule Blocks
              * @default []
              */
-            schedule_blocks?: components["schemas"]["CourseScheduleBlockResponse"][];
+            schedule_blocks: components["schemas"]["CourseScheduleBlockResponse"][];
             /**
              * Created At
              * Format: date-time
@@ -916,6 +893,73 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /**
+         * CourseScheduleBlockInput
+         * @description Input payload describing a single shared weekly class schedule block.
+         */
+        CourseScheduleBlockInput: {
+            /**
+             * Component Type
+             * @enum {string}
+             */
+            component_type: "TEORIA" | "LABORATORIO";
+            /** Group Code */
+            group_code: string;
+            /** Day Of Week */
+            day_of_week: number;
+            /** Start Time */
+            start_time: string;
+            /** End Time */
+            end_time: string;
+            /** Room */
+            room?: string | null;
+            /** Pavilion */
+            pavilion?: string | null;
+        };
+        /**
+         * CourseScheduleBlockResponse
+         * @description Serialized shared weekly schedule slot for a course component group.
+         */
+        CourseScheduleBlockResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Course Code */
+            course_code: string;
+            /** Term */
+            term: string;
+            /** Component Type */
+            component_type: string;
+            /** Group Code */
+            group_code: string;
+            /** Day Of Week */
+            day_of_week: number;
+            /** Start Time */
+            start_time: string;
+            /** End Time */
+            end_time: string;
+            /** Room */
+            room?: string | null;
+            /** Pavilion */
+            pavilion?: string | null;
+        };
+        /**
+         * CourseScheduleUpdateRequest
+         * @description Payload to update student groups (A-F) and shared weekly schedule blocks.
+         */
+        CourseScheduleUpdateRequest: {
+            /** Theory Group */
+            theory_group?: string | null;
+            /** Lab Group */
+            lab_group?: string | null;
+            /**
+             * Blocks
+             * @default []
+             */
+            blocks: components["schemas"]["CourseScheduleBlockInput"][];
         };
         /**
          * DuticAssignmentResponse
@@ -1018,7 +1062,7 @@ export interface components {
              * Schedule Blocks
              * @default []
              */
-            schedule_blocks?: components["schemas"]["CourseScheduleBlockResponse"][];
+            schedule_blocks: components["schemas"]["CourseScheduleBlockResponse"][];
             /**
              * Created At
              * Format: date-time
@@ -1151,6 +1195,47 @@ export interface components {
         MoodleIcalSyncRequest: {
             /** Calendar Url */
             calendar_url?: string | null;
+        };
+        /**
+         * NextClassResponse
+         * @description Computed active or upcoming class session in America/Lima timezone.
+         */
+        NextClassResponse: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "IN_PROGRESS" | "UPCOMING_TODAY" | "NEXT_DAY" | "EMPTY";
+            /** Course Code */
+            course_code?: string | null;
+            /** Course Name */
+            course_name?: string | null;
+            /** Component Type */
+            component_type?: string | null;
+            /** Group Code */
+            group_code?: string | null;
+            /** Day Of Week */
+            day_of_week?: number | null;
+            /** Start Time */
+            start_time?: string | null;
+            /** End Time */
+            end_time?: string | null;
+            /** Room */
+            room?: string | null;
+            /** Pavilion */
+            pavilion?: string | null;
+            /** Minutes Remaining */
+            minutes_remaining?: number | null;
+            /**
+             * Is Tomorrow
+             * @default false
+             */
+            is_tomorrow: boolean;
+            /**
+             * Computed At
+             * Format: date-time
+             */
+            computed_at: string;
         };
         /** ParseTaskRequest */
         ParseTaskRequest: {
@@ -1341,6 +1426,61 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * WeeklyScheduleDayResponse
+         * @description All enrolled sessions falling on a single ISO weekday (1=Mon..7=Sun).
+         */
+        WeeklyScheduleDayResponse: {
+            /** Day Of Week */
+            day_of_week: number;
+            /**
+             * Sessions
+             * @default []
+             */
+            sessions: components["schemas"]["WeeklyScheduleSessionResponse"][];
+        };
+        /**
+         * WeeklyScheduleResponse
+         * @description Full 7-day class schedule matrix alongside next-class countdown.
+         */
+        WeeklyScheduleResponse: {
+            /** Term */
+            term: string;
+            /** Days */
+            days: components["schemas"]["WeeklyScheduleDayResponse"][];
+            next_class: components["schemas"]["NextClassResponse"];
+        };
+        /**
+         * WeeklyScheduleSessionResponse
+         * @description Single enrolled session inside the weekly class schedule matrix.
+         */
+        WeeklyScheduleSessionResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Course Code */
+            course_code: string;
+            /** Course Name */
+            course_name: string;
+            /** Term */
+            term: string;
+            /** Component Type */
+            component_type: string;
+            /** Group Code */
+            group_code: string;
+            /** Day Of Week */
+            day_of_week: number;
+            /** Start Time */
+            start_time: string;
+            /** End Time */
+            end_time: string;
+            /** Room */
+            room?: string | null;
+            /** Pavilion */
+            pavilion?: string | null;
         };
     };
     responses: never;
@@ -1928,6 +2068,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AcademicCourseResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_next_class_countdown_api_v1_courses_schedule_next_class_get: {
+        parameters: {
+            query?: {
+                at?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NextClassResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_weekly_schedule_matrix_api_v1_courses_schedule_weekly_get: {
+        parameters: {
+            query?: {
+                at?: string | null;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeeklyScheduleResponse"];
                 };
             };
             /** @description Validation Error */

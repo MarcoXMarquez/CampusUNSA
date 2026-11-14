@@ -2,13 +2,14 @@
 
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Navbar, BlockTitle, List, ListItem, Segmented, SegmentedButton, Dialog, DialogButton } from "konsta/react";
-import { Gear, QrCode, FileText, ArrowClockwise, CheckCircle } from "@phosphor-icons/react";
+import { Gear, QrCode, FileText, ArrowClockwise, CheckCircle, CaretRight, Clock } from "@phosphor-icons/react";
 import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { AcademicAssignment, TaskDetailSheet } from "./TaskDetailSheet";
 import type { AcademicCourse } from "../hooks/useAcademicBoard";
+import { resolveNextClass } from "../lib/schedule-calculator";
 import { groupTasksByUrgency, TaskGroup } from "../lib/task-urgency";
-import { taskBoardMessages as messages } from "../lib/task-board-messages";
+import { horarioMessages, taskBoardMessages as messages } from "../lib/task-board-messages";
 
 interface HoyViewProps {
   assignments: AcademicAssignment[];
@@ -20,6 +21,7 @@ interface HoyViewProps {
   syncError: string | null;
   onRefresh: () => void;
   onOpenSettings: () => void;
+  onOpenSchedule?: () => void;
   onReconnectMoodle: () => void;
   onCompletionChange?: (id: string, completed: boolean) => void;
   completionPending?: boolean;
@@ -69,7 +71,7 @@ const TaskRow = memo(function TaskRow({ task, courseName, group, onOpen }: {
 
 export function HoyView({
   assignments, courses, loading, syncing, isOnline, moodleSessionExpired, syncError,
-  onRefresh, onOpenSettings, onReconnectMoodle, onCompletionChange,
+  onRefresh, onOpenSettings, onOpenSchedule, onReconnectMoodle, onCompletionChange,
   completionPending = false, completionError = null,
 }: HoyViewProps): React.JSX.Element {
   const [filter, setFilter] = useState<"all" | "moodle" | "classroom">("all");
@@ -82,6 +84,7 @@ export function HoyView({
   }, []);
 
   const courseMap = useMemo(() => new Map(courses.map(course => [course.id, course.name])), [courses]);
+  const nextClass = useMemo(() => resolveNextClass(courses, now), [courses, now]);
   const visible = useMemo(() => assignments.filter(task => filter === "all" ||
     (filter === "moodle" ? task.origin === "moodle" || task.origin === "dutic" : task.origin === "classroom")), [assignments, filter]);
   const groups = useMemo(() => groupTasksByUrgency(visible, now), [visible, now]);
@@ -105,6 +108,29 @@ export function HoyView({
             <SegmentedButton key={value} strong rounded active={filter === value} onClick={() => setFilter(value)} className="min-h-[44px]">{label}</SegmentedButton>
           ))}
         </Segmented>
+        {nextClass && (
+          <button
+            type="button"
+            onClick={onOpenSchedule}
+            aria-label={horarioMessages.widgetOpenScheduleAria}
+            className="mb-4 min-h-[44px] w-full rounded-2xl bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 p-3.5 text-left flex items-center justify-between gap-3 transition active:scale-[0.99] cursor-pointer"
+          >
+            <div className="min-w-0 flex-1 space-y-0.5">
+              <div className="flex items-center gap-1.5 text-[13px] font-semibold text-primary dark:text-primary-dark">
+                <Clock size={14} weight="regular" aria-hidden="true" />
+                <span className="truncate">{nextClass.widgetStatusLabel}</span>
+              </div>
+              <p className="text-[16px] font-semibold text-black dark:text-white line-clamp-1">
+                {nextClass.course.name}
+              </p>
+              <p className="text-[13px] text-black/60 dark:text-white/60 truncate">
+                {nextClass.block.start_time}–{nextClass.block.end_time}
+                {nextClass.locationLabel ? ` · ${nextClass.locationLabel}` : ""}
+              </p>
+            </div>
+            <CaretRight size={18} weight="regular" aria-hidden="true" className="shrink-0 text-black/40 dark:text-white/40" />
+          </button>
+        )}
       </div>
 
       {loading && assignments.length === 0 ? (
