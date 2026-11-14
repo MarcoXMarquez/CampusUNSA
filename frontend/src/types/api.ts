@@ -343,6 +343,30 @@ export interface paths {
         patch: operations["update_enrolled_course_groups_api_v1_courses_enrolled__course_code__groups_patch"];
         trace?: never;
     };
+    "/api/v1/courses/enrolled/{course_code}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Enrolled Course Schedule
+         * @description Retrieve shared weekly schedule blocks for a course filtered by theory and lab groups.
+         */
+        get: operations["get_enrolled_course_schedule_api_v1_courses_enrolled__course_code__schedule_get"];
+        /**
+         * Update Enrolled Course Schedule
+         * @description Update caller groups (A-F) and shared weekly schedule blocks for an enrolled course.
+         */
+        put: operations["update_enrolled_course_schedule_api_v1_courses_enrolled__course_code__schedule_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/courses/assignments": {
         parameters: {
             query?: never;
@@ -623,6 +647,11 @@ export interface components {
              */
             sources: components["schemas"]["ExternalSourceSummaryResponse"][];
             /**
+             * Schedule Blocks
+             * @default []
+             */
+            schedule_blocks?: components["schemas"]["CourseScheduleBlockResponse"][];
+            /**
              * Created At
              * Format: date-time
              */
@@ -769,6 +798,69 @@ export interface components {
             lab_hours: number;
         };
         /**
+         * CourseScheduleBlockInput
+         * @description Input payload describing a single shared weekly class schedule block.
+         */
+        CourseScheduleBlockInput: {
+            /**
+             * Component Type
+             * @enum {string}
+             */
+            component_type: "TEORIA" | "LABORATORIO";
+            /** Group Code */
+            group_code: string;
+            /** Day Of Week */
+            day_of_week: number;
+            /** Start Time */
+            start_time: string;
+            /** End Time */
+            end_time: string;
+            /** Room */
+            room?: string | null;
+        };
+        /**
+         * CourseScheduleBlockResponse
+         * @description Serialized shared weekly schedule slot for a course component group.
+         */
+        CourseScheduleBlockResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Course Code */
+            course_code: string;
+            /** Term */
+            term: string;
+            /** Component Type */
+            component_type: string;
+            /** Group Code */
+            group_code: string;
+            /** Day Of Week */
+            day_of_week: number;
+            /** Start Time */
+            start_time: string;
+            /** End Time */
+            end_time: string;
+            /** Room */
+            room?: string | null;
+        };
+        /**
+         * CourseScheduleUpdateRequest
+         * @description Payload to update student groups (A-F) and shared weekly schedule blocks.
+         */
+        CourseScheduleUpdateRequest: {
+            /** Theory Group */
+            theory_group?: string | null;
+            /** Lab Group */
+            lab_group?: string | null;
+            /**
+             * Blocks
+             * @default []
+             */
+            blocks?: components["schemas"]["CourseScheduleBlockInput"][];
+        };
+        /**
          * CourseResponse
          * @description Serialized course entity.
          */
@@ -809,6 +901,11 @@ export interface components {
              * @default []
              */
             sources: components["schemas"]["ExternalSourceSummaryResponse"][];
+            /**
+             * Schedule Blocks
+             * @default []
+             */
+            schedule_blocks?: components["schemas"]["CourseScheduleBlockResponse"][];
             /**
              * Created At
              * Format: date-time
@@ -917,6 +1014,11 @@ export interface components {
              * @default []
              */
             sources: components["schemas"]["ExternalSourceSummaryResponse"][];
+            /**
+             * Schedule Blocks
+             * @default []
+             */
+            schedule_blocks?: components["schemas"]["CourseScheduleBlockResponse"][];
             /**
              * Created At
              * Format: date-time
@@ -1744,6 +1846,78 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["EnrollmentGroupUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicCourseResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_enrolled_course_schedule_api_v1_courses_enrolled__course_code__schedule_get: {
+        parameters: {
+            query?: {
+                theory_group?: string | null;
+                lab_group?: string | null;
+                term?: string;
+            };
+            header?: never;
+            path: {
+                course_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseScheduleBlockResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_enrolled_course_schedule_api_v1_courses_enrolled__course_code__schedule_put: {
+        parameters: {
+            query?: {
+                term?: string;
+            };
+            header?: never;
+            path: {
+                course_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CourseScheduleUpdateRequest"];
             };
         };
         responses: {

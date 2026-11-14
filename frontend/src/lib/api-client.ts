@@ -6,6 +6,13 @@ export type ClassroomStatusResponse = components["schemas"]["ClassroomStatusResp
 export type ClassroomConsentResponse = components["schemas"]["ClassroomConsentResponse"];
 export type MoodleIcalStatusResponse = components["schemas"]["MoodleIcalStatusResponse"];
 export type MoodleIcalSubscribeResponse = components["schemas"]["MoodleIcalSubscribeResponse"];
+export type CourseCatalogItem = components["schemas"]["CourseCatalogResponse"];
+export type CourseScheduleBlock = components["schemas"]["CourseScheduleBlockResponse"];
+export type CourseScheduleBlockInput = components["schemas"]["CourseScheduleBlockInput"];
+export type CourseScheduleUpdateRequest = components["schemas"]["CourseScheduleUpdateRequest"];
+export type ExternalSourceSummary = components["schemas"]["ExternalSourceSummaryResponse"];
+export type ApiAcademicCourseResponse = components["schemas"]["AcademicCourseResponse"];
+export type ManualCourseLinkPayload = components["schemas"]["ManualCourseLinkRequest"];
 
 export interface UserProfile extends Omit<UserResponse, "full_name"> {
   full_name?: string | null;
@@ -263,4 +270,95 @@ export async function verifyWhatsAppPairingCode(
       res.status
     );
   }
+}
+
+export async function fetchCurriculumCatalog(
+  token: string,
+  query?: string
+): Promise<CourseCatalogItem[]> {
+  const params = new URLSearchParams();
+  if (query && query.trim()) {
+    params.set("q", query.trim());
+  }
+  const suffix = params.toString() ? `?${params.toString()}` : "";
+  const res = await fetch(`${getApiBaseUrl()}/courses/catalog${suffix}`, {
+    headers: buildHeaders(token),
+  });
+  if (!res.ok) {
+    throw new ApiRequestError(
+      await parseErrorMessage(res, "No se pudo cargar el catálogo de cursos"),
+      res.status
+    );
+  }
+  return (await res.json()) as CourseCatalogItem[];
+}
+
+export async function linkExternalCourseSource(
+  token: string,
+  sourceId: string,
+  payload: ManualCourseLinkPayload
+): Promise<ExternalSourceSummary> {
+  const res = await fetch(`${getApiBaseUrl()}/courses/sources/${encodeURIComponent(sourceId)}/link`, {
+    method: "POST",
+    headers: buildHeaders(token, true),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new ApiRequestError(
+      await parseErrorMessage(res, "No se pudo vincular el curso"),
+      res.status
+    );
+  }
+  return (await res.json()) as ExternalSourceSummary;
+}
+
+export async function fetchCourseScheduleBlocks(
+  token: string,
+  courseCode: string,
+  theoryGroup?: string | null,
+  labGroup?: string | null
+): Promise<CourseScheduleBlock[]> {
+  const params = new URLSearchParams();
+  if (theoryGroup) {
+    params.set("theory_group", theoryGroup);
+  }
+  if (labGroup) {
+    params.set("lab_group", labGroup);
+  }
+  const suffix = params.toString() ? `?${params.toString()}` : "";
+  const res = await fetch(
+    `${getApiBaseUrl()}/courses/enrolled/${encodeURIComponent(courseCode)}/schedule${suffix}`,
+    {
+      headers: buildHeaders(token),
+    }
+  );
+  if (!res.ok) {
+    throw new ApiRequestError(
+      await parseErrorMessage(res, "No se pudieron cargar los horarios del grupo"),
+      res.status
+    );
+  }
+  return (await res.json()) as CourseScheduleBlock[];
+}
+
+export async function saveCourseSchedule(
+  token: string,
+  courseCode: string,
+  payload: CourseScheduleUpdateRequest
+): Promise<ApiAcademicCourseResponse> {
+  const res = await fetch(
+    `${getApiBaseUrl()}/courses/enrolled/${encodeURIComponent(courseCode)}/schedule`,
+    {
+      method: "PUT",
+      headers: buildHeaders(token, true),
+      body: JSON.stringify(payload),
+    }
+  );
+  if (!res.ok) {
+    throw new ApiRequestError(
+      await parseErrorMessage(res, "No se pudo guardar el horario del curso"),
+      res.status
+    );
+  }
+  return (await res.json()) as ApiAcademicCourseResponse;
 }

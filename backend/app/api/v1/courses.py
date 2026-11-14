@@ -22,6 +22,8 @@ from app.schemas.academic import (
     AcademicAssignmentResponse,
     AcademicCourseResponse,
     CourseCatalogResponse,
+    CourseScheduleBlockResponse,
+    CourseScheduleUpdateRequest,
     EnrollmentGroupUpdateRequest,
     ExternalSourceSummaryResponse,
     ManualCourseLinkRequest,
@@ -121,6 +123,53 @@ def update_enrolled_course_groups(
         theory_group=payload.theory_group,
         lab_group=payload.lab_group,
         fields_to_update=set(payload.model_fields_set),
+        term=term,
+    )
+    if updated_course is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "ENROLLMENT_NOT_FOUND",
+                "message": f"Student is not enrolled in course {course_code} for term {term}.",
+            },
+        )
+    return updated_course
+
+
+@router.get("/enrolled/{course_code}/schedule", response_model=List[CourseScheduleBlockResponse])
+def get_enrolled_course_schedule(
+    course_code: str,
+    theory_group: Optional[str] = Query(default=None, pattern=r"^[A-Fa-f]$"),
+    lab_group: Optional[str] = Query(default=None, pattern=r"^[A-Fa-f]$"),
+    term: str = Query(default=DEFAULT_TERM),
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+) -> List[CourseScheduleBlockResponse]:
+    """Retrieve shared weekly schedule blocks for a course filtered by theory and lab groups."""
+    return AcademicSyncRepository.list_course_schedule_blocks(
+        db,
+        course_code=course_code,
+        user_id=current_user.id,
+        theory_group=theory_group,
+        lab_group=lab_group,
+        term=term,
+    )
+
+
+@router.put("/enrolled/{course_code}/schedule", response_model=AcademicCourseResponse)
+def update_enrolled_course_schedule(
+    course_code: str,
+    payload: CourseScheduleUpdateRequest,
+    term: str = Query(default=DEFAULT_TERM),
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+) -> AcademicCourseResponse:
+    """Update caller groups (A-F) and shared weekly schedule blocks for an enrolled course."""
+    updated_course = AcademicSyncRepository.upsert_course_schedule(
+        db,
+        user_id=current_user.id,
+        course_code=course_code,
+        payload=payload,
         term=term,
     )
     if updated_course is None:

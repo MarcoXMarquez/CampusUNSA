@@ -4,9 +4,10 @@ import uuid
 from datetime import datetime
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 VALID_GROUPS_MSG = "Group code must be a single letter between A and F"
+TIME_HHMM_PATTERN = r"^([01]\d|2[0-3]):[0-5]\d$"
 
 
 def _normalize_group_letter(value: Optional[str]) -> Optional[str]:
@@ -18,6 +19,68 @@ def _normalize_group_letter(value: Optional[str]) -> Optional[str]:
     if cleaned not in {"A", "B", "C", "D", "E", "F"}:
         raise ValueError(VALID_GROUPS_MSG)
     return cleaned
+
+
+class CourseScheduleBlockInput(BaseModel):
+    """Input payload describing a single shared weekly class schedule block."""
+
+    component_type: Literal["TEORIA", "LABORATORIO"]
+    group_code: str
+    day_of_week: int = Field(ge=1, le=7)
+    start_time: str = Field(pattern=TIME_HHMM_PATTERN)
+    end_time: str = Field(pattern=TIME_HHMM_PATTERN)
+    room: Optional[str] = Field(default=None, max_length=120)
+
+    @field_validator("group_code")
+    @classmethod
+    def validate_required_group(cls, value: str) -> str:
+        normalized = _normalize_group_letter(value)
+        if normalized is None:
+            raise ValueError(VALID_GROUPS_MSG)
+        return normalized
+
+    @field_validator("room")
+    @classmethod
+    def normalize_room(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        cleaned = value.strip()
+        return cleaned if cleaned else None
+
+    @model_validator(mode="after")
+    def validate_time_order(self) -> "CourseScheduleBlockInput":
+        if self.end_time <= self.start_time:
+            raise ValueError("end_time must be strictly later than start_time")
+        return self
+
+
+class CourseScheduleBlockResponse(BaseModel):
+    """Serialized shared weekly schedule slot for a course component group."""
+
+    id: uuid.UUID
+    course_code: str
+    term: str
+    component_type: str
+    group_code: str
+    day_of_week: int
+    start_time: str
+    end_time: str
+    room: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CourseScheduleUpdateRequest(BaseModel):
+    """Payload to update student groups (A-F) and shared weekly schedule blocks."""
+
+    theory_group: Optional[str] = None
+    lab_group: Optional[str] = None
+    blocks: List[CourseScheduleBlockInput] = []
+
+    @field_validator("theory_group", "lab_group")
+    @classmethod
+    def validate_groups(cls, value: Optional[str]) -> Optional[str]:
+        return _normalize_group_letter(value)
 
 
 class ExternalSourceSummaryResponse(BaseModel):
@@ -48,6 +111,7 @@ class AcademicCourseResponse(BaseModel):
     lab_group: Optional[str] = None
     mapping_status: str = "LINKED"
     sources: List[ExternalSourceSummaryResponse] = []
+    schedule_blocks: List[CourseScheduleBlockResponse] = []
     created_at: datetime
     updated_at: datetime
 

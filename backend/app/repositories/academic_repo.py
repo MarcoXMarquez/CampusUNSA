@@ -1,7 +1,7 @@
 """Unified repository for curriculum catalog, shared LMS sources, enrollments, and assignments."""
 
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Set, Tuple
 from uuid import UUID
 
 from sqlalchemy import func
@@ -12,6 +12,7 @@ from app.models.classroom import (
     ClassroomAssignment,
     CourseCatalog,
     CourseExternalSource,
+    CourseScheduleBlock,
     UserCourseEnrollment,
     UserExternalCourse,
 )
@@ -19,6 +20,9 @@ from app.models.user import User
 from app.schemas.academic import (
     AcademicCourseResponse,
     CourseCatalogResponse,
+    CourseScheduleBlockInput,
+    CourseScheduleBlockResponse,
+    CourseScheduleUpdateRequest,
     ExternalSourceSummaryResponse,
     PendingLinkSourceResponse,
 )
@@ -103,7 +107,30 @@ def _build_source_summary(source: CourseExternalSource) -> ExternalSourceSummary
     )
 
 
-def _build_enrollment_response(enrollment: UserCourseEnrollment) -> AcademicCourseResponse:
+def _schedule_block_sort_key(block: CourseScheduleBlock) -> Tuple[int, int, str]:
+    return (0 if block.component_type == "TEORIA" else 1, block.day_of_week, block.start_time)
+
+
+def _filter_blocks_for_groups(
+    blocks: Sequence[CourseScheduleBlock],
+    *,
+    theory_group: Optional[str],
+    lab_group: Optional[str],
+) -> List[CourseScheduleBlockResponse]:
+    matched = [
+        b
+        for b in blocks
+        if (b.component_type == "TEORIA" and theory_group and b.group_code == theory_group)
+        or (b.component_type == "LABORATORIO" and lab_group and b.group_code == lab_group)
+    ]
+    matched.sort(key=_schedule_block_sort_key)
+    return [CourseScheduleBlockResponse.model_validate(item) for item in matched]
+
+
+def _build_enrollment_response(
+    enrollment: UserCourseEnrollment,
+    schedule_blocks: Optional[List[CourseScheduleBlockResponse]] = None,
+) -> AcademicCourseResponse:
     sources = [link.source for link in enrollment.user_sources if link.source is not None]
     primary_source = sources[0] if sources else None
     primary_link = next((s.alternate_link for s in sources if s.alternate_link), None)
@@ -121,6 +148,7 @@ def _build_enrollment_response(enrollment: UserCourseEnrollment) -> AcademicCour
         lab_group=enrollment.lab_group,
         mapping_status="LINKED",
         sources=[_build_source_summary(s) for s in sources],
+        schedule_blocks=schedule_blocks or [],
         created_at=enrollment.created_at,
         updated_at=enrollment.updated_at,
     )
@@ -682,7 +710,179 @@ class AcademicSyncRepository:
             changed = True
         if changed:
             enrollment.updated_at = datetime.now(timezone.utc)
-        response = _build_enrollment_response(enrollment)
+        course_blocks = (
+            db.query(CourseScheduleBlock)
+            .filter(
+                CourseScheduleBlock.course_code == enrollment.course_code,
+                CourseScheduleBlock.term == enrollment.term,
+            )
+            .all()
+        )
+        matched_blocks = _filter_blocks_for_groups(
+            course_blocks,
+            theory_group=enrollment.theory_group,
+            lab_group=enrollment.lab_group,
+        )
+        response = _build_enrollment_response(enrollment, matched_blocks)
+        if changed:
+            db.commit()
+        return response
+
+    @staticmethod
+    def list_course_schedule_blocks(
+        db: Session,
+        *,
+        course_code: str,
+        user_id: Optional[UUID] = None,
+        theory_group: Optional[str] = None,
+        lab_group: Optional[str] = None,
+        term: str = DEFAULT_TERM,
+    ) -> List[CourseScheduleBlockResponse]:
+        """Return shared weekly schedule blocks filtered by target theory/lab groups."""
+        resolved_theory = theory_group.strip().upper() if theory_group and theory_group.strip() else None
+        resolved_lab = lab_group.strip().upper() if lab_group and lab_group.strip() else None
+
+        if resolved_theory is None and resolved_lab is None and user_id is not None:
+            enrollment = (
+                db.query(UserCourseEnrollment)
+                .filter(
+                    UserCourseEnrollment.user_id == user_id,
+                    UserCourseEnrollment.course_code == course_code,
+                    UserCourseEnrollment.term == term,
+                )
+                .first()
+            )
+            if enrollment is not None:
+                resolved_theory = enrollment.theory_group
+                resolved_lab = enrollment.lab_group
+
+        if resolved_theory is None and resolved_lab is None:
+            return []
+
+        course_blocks = (
+            db.query(CourseScheduleBlock)
+            .filter(
+                CourseScheduleBlock.course_code == course_code,
+                CourseScheduleBlock.term == term,
+            )
+            .all()
+        )
+        return _filter_blocks_for_groups(
+            course_blocks,
+            theory_group=resolved_theory,
+            lab_group=resolved_lab,
+        )
+
+    @staticmethod
+    def upsert_course_schedule(
+        db: Session,
+        *,
+        user_id: UUID,
+        course_code: str,
+        payload: CourseScheduleUpdateRequest,
+        term: str = DEFAULT_TERM,
+    ) -> Optional[AcademicCourseResponse]:
+        """
+        Update caller's personal theory/lab groups (A-F) and reconcile shared
+        course_schedule_blocks for the targeted (component_type, group_code) pairs.
+        """
+        enrollment = (
+            db.query(UserCourseEnrollment)
+            .options(
+                selectinload(UserCourseEnrollment.catalog_course),
+                selectinload(UserCourseEnrollment.user_sources).selectinload(UserExternalCourse.source),
+            )
+            .filter(
+                UserCourseEnrollment.user_id == user_id,
+                UserCourseEnrollment.course_code == course_code,
+                UserCourseEnrollment.term == term,
+            )
+            .first()
+        )
+        if enrollment is None:
+            return None
+
+        now = datetime.now(timezone.utc)
+        changed = False
+        fields_set = payload.model_fields_set
+        if "theory_group" in fields_set and enrollment.theory_group != payload.theory_group:
+            enrollment.theory_group = payload.theory_group
+            changed = True
+        if "lab_group" in fields_set and enrollment.lab_group != payload.lab_group:
+            enrollment.lab_group = payload.lab_group
+            changed = True
+        if changed:
+            enrollment.updated_at = now
+
+        target_pairs: Set[Tuple[str, str]] = set()
+        if enrollment.theory_group:
+            target_pairs.add(("TEORIA", enrollment.theory_group))
+        if enrollment.lab_group:
+            target_pairs.add(("LABORATORIO", enrollment.lab_group))
+        for item in payload.blocks:
+            target_pairs.add((item.component_type, item.group_code))
+
+        desired_by_slot: Dict[Tuple[str, str, int, str], CourseScheduleBlockInput] = {
+            (item.component_type, item.group_code, item.day_of_week, item.start_time): item
+            for item in payload.blocks
+        }
+
+        all_course_blocks = (
+            db.query(CourseScheduleBlock)
+            .filter(
+                CourseScheduleBlock.course_code == course_code,
+                CourseScheduleBlock.term == term,
+            )
+            .all()
+        )
+        existing_by_slot: Dict[Tuple[str, str, int, str], CourseScheduleBlock] = {
+            (b.component_type, b.group_code, b.day_of_week, b.start_time): b
+            for b in all_course_blocks
+        }
+
+        surviving_blocks: List[CourseScheduleBlock] = []
+        for slot_key, existing in existing_by_slot.items():
+            pair = (existing.component_type, existing.group_code)
+            if pair in target_pairs and slot_key not in desired_by_slot:
+                db.delete(existing)
+                changed = True
+            else:
+                surviving_blocks.append(existing)
+
+        for slot_key, item in desired_by_slot.items():
+            existing = existing_by_slot.get(slot_key)
+            if existing is not None:
+                if existing.end_time != item.end_time or existing.room != item.room:
+                    existing.end_time = item.end_time
+                    existing.room = item.room
+                    existing.updated_by_user_id = user_id
+                    existing.updated_at = now
+                    changed = True
+            else:
+                new_block = CourseScheduleBlock(
+                    course_code=course_code,
+                    term=term,
+                    component_type=item.component_type,
+                    group_code=item.group_code,
+                    day_of_week=item.day_of_week,
+                    start_time=item.start_time,
+                    end_time=item.end_time,
+                    room=item.room,
+                    updated_by_user_id=user_id,
+                )
+                db.add(new_block)
+                surviving_blocks.append(new_block)
+                changed = True
+
+        if changed:
+            db.flush()
+
+        matched_blocks = _filter_blocks_for_groups(
+            surviving_blocks,
+            theory_group=enrollment.theory_group,
+            lab_group=enrollment.lab_group,
+        )
+        response = _build_enrollment_response(enrollment, matched_blocks)
         if changed:
             db.commit()
         return response
@@ -812,8 +1012,31 @@ class AcademicSyncRepository:
             .filter(UserCourseEnrollment.user_id == user_id)
             .all()
         )
+        blocks_by_course_term: Dict[Tuple[str, str], List[CourseScheduleBlock]] = {}
+        if enrollments:
+            enrolled_codes = {enrollment.course_code for enrollment in enrollments}
+            enrolled_terms = {enrollment.term for enrollment in enrollments}
+            schedule_rows = (
+                db.query(CourseScheduleBlock)
+                .filter(
+                    CourseScheduleBlock.course_code.in_(enrolled_codes),
+                    CourseScheduleBlock.term.in_(enrolled_terms),
+                )
+                .all()
+            )
+            for block in schedule_rows:
+                blocks_by_course_term.setdefault((block.course_code, block.term), []).append(block)
+
         unified: List[AcademicCourseResponse] = [
-            _build_enrollment_response(enrollment) for enrollment in enrollments
+            _build_enrollment_response(
+                enrollment,
+                _filter_blocks_for_groups(
+                    blocks_by_course_term.get((enrollment.course_code, enrollment.term), []),
+                    theory_group=enrollment.theory_group,
+                    lab_group=enrollment.lab_group,
+                ),
+            )
+            for enrollment in enrollments
         ]
 
         if include_pending:
