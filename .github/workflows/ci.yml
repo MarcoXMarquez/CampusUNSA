@@ -16,7 +16,7 @@ jobs:
   # ==============================================================================
   backend-tests:
     name: Backend Tests (Pytest & Linters)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
@@ -97,7 +97,7 @@ jobs:
   # ==============================================================================
   frontend-ci:
     name: Frontend CI (Vitest & TypeScript)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Repository
@@ -161,7 +161,7 @@ jobs:
 
   performance-ci:
     name: Performance CI (1,000 Users)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [backend-tests, frontend-ci]
     timeout-minutes: 20
     steps:
@@ -231,7 +231,7 @@ jobs:
   backend-ci:
     # Preserve the existing required-check name and make performance mandatory.
     name: Backend CI (Pytest & Linters)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: always()
     needs: [backend-tests, performance-ci]
     steps:

@@ -7,7 +7,7 @@ Implements deduplication via composite unique constraints:
 
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from sqlalchemy import (
     Boolean,
@@ -61,6 +61,13 @@ class ClassroomCourse(Base):
         String(500),
         nullable=True,
     )
+    origin: Mapped[str] = mapped_column(
+        String(50),
+        default="classroom",
+        server_default="classroom",
+        nullable=False,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -89,6 +96,12 @@ class ClassroomCourse(Base):
         ),
         Index("idx_classroom_courses_user_id", "user_id"),
     )
+
+    def __init__(self, **kwargs: Any) -> None:
+        if "origin" not in kwargs or kwargs["origin"] is None:
+            course_ref = str(kwargs.get("classroom_course_id", ""))
+            kwargs["origin"] = "moodle" if course_ref.startswith("moodle-") else "classroom"
+        super().__init__(**kwargs)
 
     def __repr__(self) -> str:
         return f"<ClassroomCourse(id={self.id}, name='{self.name}', google_id='{self.classroom_course_id}')>"

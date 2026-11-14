@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AcademicAssignment } from "../components/TaskDetailSheet";
+import { getApiBaseUrl } from "../lib/api-client";
 import { taskBoardMessages } from "../lib/task-board-messages";
 
 export interface AcademicCourse {
@@ -27,7 +28,6 @@ interface CompletionChange {
 }
 
 const EMPTY_BOARD: AcademicBoardData = { courses: [], assignments: [], moodleSessionExpired: false };
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9000/api/v1";
 export const academicBoardKey = (token: string | null) => ["academic-board", token] as const;
 
 function cacheKey(token: string | null): string | null {
@@ -62,6 +62,7 @@ function writeCache(token: string | null, data: AcademicBoardData): void {
 }
 
 async function loadBoard(token: string, signal: AbortSignal): Promise<AcademicBoardData> {
+  const apiUrl = getApiBaseUrl();
   const headers = { Authorization: `Bearer ${token}` };
   // Both list endpoints include every LMS origin; avoid fetching duplicate Moodle records.
   const [coursesResponse, assignmentsResponse, statusResponse] = await Promise.all([
@@ -95,7 +96,7 @@ export function useAcademicBoard(token: string | null) {
 
   const mutation = useMutation({
     mutationFn: async ({ id, completed, token: sessionToken }: CompletionChange): Promise<AcademicAssignment> => {
-      const response = await fetch(`${apiUrl}/classroom/assignments/${id}/completion`, {
+      const response = await fetch(`${getApiBaseUrl()}/classroom/assignments/${id}/completion`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionToken}` },
         body: JSON.stringify({ is_completed: completed }),
@@ -132,12 +133,23 @@ export function useAcademicBoard(token: string | null) {
   const setCompletion = useCallback((id: string, completed: boolean) => {
     if (token) mutate({ id, completed, token });
   }, [mutate, token]);
-  const setAssignments = (assignments: AcademicAssignment[]): void => {
-    client.setQueryData<AcademicBoardData>(key, old => ({ ...(old ?? EMPTY_BOARD), assignments }));
-  };
-  const setCourses = (courses: AcademicCourse[]): void => {
-    client.setQueryData<AcademicBoardData>(key, old => ({ ...(old ?? EMPTY_BOARD), courses }));
-  };
+  const setAssignments = useCallback((assignments: AcademicAssignment[]): void => {
+    client.setQueryData<AcademicBoardData>(key, (old) => {
+      const base = old ?? readCache(token) ?? EMPTY_BOARD;
+      const next = { ...base, assignments };
+      writeCache(token, next);
+      return next;
+    });
+  }, [client, key, token]);
+
+  const setCourses = useCallback((courses: AcademicCourse[]): void => {
+    client.setQueryData<AcademicBoardData>(key, (old) => {
+      const base = old ?? readCache(token) ?? EMPTY_BOARD;
+      const next = { ...base, courses };
+      writeCache(token, next);
+      return next;
+    });
+  }, [client, key, token]);
 
   return {
     ...(query.data ?? EMPTY_BOARD),

@@ -10,7 +10,7 @@ Refer to `AGENTS.md` for project architecture, environment setup, and test comma
 - Strict typing: use Pydantic v2 schemas in Python and strict TypeScript interfaces (no `any`).
 - Follow Conventional Commits: `feat`, `fix`, `test`, `docs`, `refactor`, `ci`.
 - Strict No-Force: Never run `git push --force`, `--force-with-lease`, or rewrite published Git history.
-- Frontend Presentation Standard: All UI code under `frontend/` must adhere to Konsta UI iOS directives in `AGENTS.md` section 3.2.
+- Frontend Presentation Standard: All UI code under `frontend/` must follow the Stitch-First workflow and engineering directives in `AGENTS.md` section 3.2.
 - All code changes must pass tests before submission (`./scripts/verify.ps1` or `./scripts/verify.sh`).
 
 # Backend (backend/)

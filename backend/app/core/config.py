@@ -1,6 +1,23 @@
 from typing import List, Literal
-from pydantic import Field, SecretStr
+from pydantic import ConfigDict, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings
+
+
+_INSECURE_SECRET_KEYS = frozenset(
+    {
+        "",
+        "temporary_development_secret_key_change_in_production",
+        "fallback_campusunsa_secret_key",
+        "isolated_performance_only_not_a_production_secret",
+    }
+)
+_INSECURE_ENCRYPTION_KEYS = frozenset(
+    {
+        "",
+        "temporary_development_encryption_key_change_in_production",
+        "fallback_campusunsa_secret_key",
+    }
+)
 
 
 class Settings(BaseSettings):
@@ -11,6 +28,7 @@ class Settings(BaseSettings):
 
     # Security
     SECRET_KEY: str = "temporary_development_secret_key_change_in_production"
+    ENCRYPTION_KEY: str = "temporary_development_encryption_key_change_in_production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     INSTITUTIONAL_DOMAIN: str = "unsa.edu.pe"
@@ -55,10 +73,27 @@ class Settings(BaseSettings):
     def REDIS_URL(self) -> str:
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
 
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
-        extra = "ignore"
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Settings":
+        env = self.ENVIRONMENT.strip().lower()
+        if env in {"production", "staging"}:
+            secret = self.SECRET_KEY.strip()
+            encryption = self.ENCRYPTION_KEY.strip()
+            if secret in _INSECURE_SECRET_KEYS:
+                raise ValueError("SECRET_KEY must be set to a strong non-default value in non-development environments")
+            if encryption in _INSECURE_ENCRYPTION_KEYS:
+                raise ValueError("ENCRYPTION_KEY must be set to a strong non-default value in non-development environments")
+            if encryption == secret:
+                raise ValueError("ENCRYPTION_KEY must be distinct from SECRET_KEY in non-development environments")
+            if self.POSTGRES_PASSWORD == "postgres_dev_password":
+                raise ValueError("POSTGRES_PASSWORD must be changed from the development default in non-development environments")
+        return self
+
+    model_config = ConfigDict(
+        case_sensitive=True,
+        env_file=".env",
+        extra="ignore",
+    )
 
 
 settings = Settings()

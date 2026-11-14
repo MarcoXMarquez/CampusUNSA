@@ -17,8 +17,8 @@ if [ -n "$STAGED_FILES" ]; then
     EMOJI_DETECTED=0
     for FILE in $STAGED_FILES; do
         if [ -f "$FILE" ]; then
-            # Scan file content for emojis
-            if grep -P -q "$EMOJI_REGEX" "$FILE" 2>/dev/null; then
+            # Scan file content for emojis (ignore binary files)
+            if grep -I -P -q "$EMOJI_REGEX" "$FILE" 2>/dev/null; then
                 echo "  [FAIL] Emoji detected in staged file: $FILE"
                 EMOJI_DETECTED=1
             fi

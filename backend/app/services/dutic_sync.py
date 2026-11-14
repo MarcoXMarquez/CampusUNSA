@@ -13,24 +13,15 @@ import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.models.classroom import ClassroomAssignment, ClassroomCourse
+from app.core.exceptions import (  # noqa: F401
+    DuticError,
+    DuticRateLimitError,
+    DuticSessionExpiredError,
+)
+from app.models.classroom import ClassroomCourse
 from app.models.user import User
+from app.repositories.academic_repo import AcademicSyncRepository
 from app.schemas.dutic import SyncDuticResponse
-
-
-class DuticError(Exception):
-    """Base exception for DUTIC Moodle integration errors."""
-    pass
-
-
-class DuticSessionExpiredError(DuticError):
-    """Raised when the MoodleSession cookie or sesskey is invalid or expired."""
-    pass
-
-
-class DuticRateLimitError(DuticError):
-    """Raised when Moodle rate limit or concurrency throttle is encountered."""
-    pass
 
 
 class DuticApiClient:
@@ -183,67 +174,27 @@ class DuticSyncService:
         """
         Executes full course and assignment ingestion from DUTIC Moodle.
         """
-        if moodle_session in ("demo", "mock"):
-            courses_data = [
-                {"id": 101, "fullname": "Ingenieria de Software 3 - Grupo A", "shortname": "IS3-A"},
-                {"id": 102, "fullname": "Sistemas Distribuidos - Grupo B", "shortname": "SD-B"},
-                {"id": 103, "fullname": "Arquitectura de Software - Grupo A", "shortname": "ARQ-A"},
-            ]
-            current_epoch = int(datetime.now(timezone.utc).timestamp())
-            tasks_data = [
-                {
-                    "id": 201,
-                    "courseId": 101,
-                    "name": "Laboratorio 04: Orquestacion de Microservicios con Docker",
-                    "dueDate": current_epoch + 86400,
-                    "submission": "not-submitted",
-                    "hidden": False,
-                    "url": "https://dutic.unsa.edu.pe/mod/assign/view.php?id=201",
-                    "grade": None,
+        try:
+            courses_data = DuticApiClient.fetch_enrolled_courses(moodle_session, sesskey)
+            tasks_data = DuticApiClient.fetch_all_tasks(moodle_session, sesskey)
+        except DuticSessionExpiredError as exc:
+            user.moodle_calendar_sync_status = "NEEDS_REAUTH"
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={
+                    "code": "NEEDS_REAUTH",
+                    "message": "DUTIC Moodle session expired or invalid. Reauthentication required.",
                 },
-                {
-                    "id": 202,
-                    "courseId": 101,
-                    "name": "Fase 2: Documento de Arquitectura de Sistemas (SAD)",
-                    "dueDate": current_epoch + 86400 * 3,
-                    "submission": "submitted",
-                    "hidden": False,
-                    "url": "https://dutic.unsa.edu.pe/mod/assign/view.php?id=202",
-                    "grade": 18.0,
+            ) from exc
+        except DuticRateLimitError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "code": "RATE_LIMIT_EXCEEDED",
+                    "message": "DUTIC Moodle rate limit exceeded. Please retry later.",
                 },
-                {
-                    "id": 203,
-                    "courseId": 102,
-                    "name": "Practica Calificada: Consenso Raft en Sistemas Distribuidos",
-                    "dueDate": current_epoch + 86400 * 5,
-                    "submission": "not-submitted",
-                    "hidden": True,
-                    "url": "https://dutic.unsa.edu.pe/mod/assign/view.php?id=203",
-                    "grade": None,
-                },
-            ]
-        else:
-            try:
-                courses_data = DuticApiClient.fetch_enrolled_courses(moodle_session, sesskey)
-                tasks_data = DuticApiClient.fetch_all_tasks(moodle_session, sesskey)
-            except DuticSessionExpiredError as exc:
-                user.classroom_sync_status = "NEEDS_REAUTH"
-                db.commit()
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail={
-                        "code": "NEEDS_REAUTH",
-                        "message": "DUTIC Moodle session expired or invalid. Reauthentication required.",
-                    },
-                ) from exc
-            except DuticRateLimitError as exc:
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail={
-                        "code": "RATE_LIMIT_EXCEEDED",
-                        "message": "DUTIC Moodle rate limit exceeded. Please retry later.",
-                    },
-                ) from exc
+            ) from exc
 
         synced_courses_count = 0
         synced_assignments_count = 0
@@ -257,28 +208,15 @@ class DuticSyncService:
             fullname = c_item.get("fullname", "Untitled Course")
             shortname = c_item.get("shortname")
 
-            course = (
-                db.query(ClassroomCourse)
-                .filter(
-                    ClassroomCourse.user_id == user.id,
-                    ClassroomCourse.classroom_course_id == course_ref_id,
-                )
-                .first()
+            course = AcademicSyncRepository.upsert_course(
+                db,
+                user_id=user.id,
+                course_ref_id=course_ref_id,
+                name=fullname,
+                section=shortname,
+                alternate_link=f"https://aulavirtual.unsa.edu.pe/course/view.php?id={moodle_course_id}",
+                origin="moodle",
             )
-            if not course:
-                course = ClassroomCourse(
-                    user_id=user.id,
-                    classroom_course_id=course_ref_id,
-                    name=fullname,
-                    section=shortname,
-                    alternate_link=f"https://aulavirtual.unsa.edu.pe/course/view.php?id={moodle_course_id}",
-                )
-                db.add(course)
-                db.flush()
-            else:
-                course.name = fullname
-                course.section = shortname
-                course.updated_at = datetime.now(timezone.utc)
 
             courses_map[moodle_course_id] = course
             courses_map[course_ref_id] = course
@@ -293,23 +231,14 @@ class DuticSyncService:
             # If course is not mapped yet, create a placeholder course record
             if not course:
                 placeholder_course_id = f"moodle-{raw_course_id}"
-                course = (
-                    db.query(ClassroomCourse)
-                    .filter(
-                        ClassroomCourse.user_id == user.id,
-                        ClassroomCourse.classroom_course_id == placeholder_course_id,
-                    )
-                    .first()
+                course = AcademicSyncRepository.upsert_course(
+                    db,
+                    user_id=user.id,
+                    course_ref_id=placeholder_course_id,
+                    name=f"Moodle Course {raw_course_id}",
+                    alternate_link=f"https://aulavirtual.unsa.edu.pe/course/view.php?id={raw_course_id}",
+                    origin="moodle",
                 )
-                if not course:
-                    course = ClassroomCourse(
-                        user_id=user.id,
-                        classroom_course_id=placeholder_course_id,
-                        name=f"Moodle Course {raw_course_id}",
-                        alternate_link=f"https://aulavirtual.unsa.edu.pe/course/view.php?id={raw_course_id}",
-                    )
-                    db.add(course)
-                    db.flush()
                 courses_map[raw_course_id] = course
 
             due_epoch = t_item.get("dueDate")
@@ -323,40 +252,21 @@ class DuticSyncService:
             submission_state = t_item.get("submission", "unknown")
             task_url = t_item.get("url")
 
-            assignment = (
-                db.query(ClassroomAssignment)
-                .filter(
-                    ClassroomAssignment.user_id == user.id,
-                    ClassroomAssignment.classroom_assignment_id == task_ref_id,
-                )
-                .first()
+            AcademicSyncRepository.upsert_assignment(
+                db,
+                user_id=user.id,
+                course_id=course.id,
+                assignment_ref_id=task_ref_id,
+                title=title,
+                due_date=due_dt,
+                state=submission_state,
+                alternate_link=task_url,
+                origin="moodle",
             )
-            if not assignment:
-                assignment = ClassroomAssignment(
-                    user_id=user.id,
-                    course_id=course.id,
-                    classroom_assignment_id=task_ref_id,
-                    title=title,
-                    due_date=due_dt,
-                    state=submission_state,
-                    alternate_link=task_url,
-                    origin="moodle",
-                )
-                db.add(assignment)
-            else:
-                assignment.course_id = course.id
-                assignment.title = title
-                assignment.due_date = due_dt
-                assignment.state = submission_state
-                assignment.alternate_link = task_url
-                assignment.origin = "moodle"
-                assignment.updated_at = datetime.now(timezone.utc)
-
             synced_assignments_count += 1
 
         sync_timestamp = datetime.now(timezone.utc)
-        user.classroom_sync_status = "SYNCED"
-        user.last_classroom_sync_at = sync_timestamp
+        user.moodle_calendar_sync_status = "SYNCED"
         db.commit()
 
         return SyncDuticResponse(

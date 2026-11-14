@@ -25,7 +25,7 @@ EMOJI_FOUND=0
 
 for FILE in $CHANGED_FILES; do
     if [ -f "$FILE" ]; then
-        if grep -P -q "$EMOJI_REGEX" "$FILE" 2>/dev/null; then
+        if grep -I -P -q "$EMOJI_REGEX" "$FILE" 2>/dev/null; then
             echo "  [FAIL] Emoji detected in: $FILE"
             EMOJI_FOUND=1
         fi
@@ -92,6 +92,24 @@ if docker compose exec -T frontend npm run test; then
     echo "  PASSED: Vitest frontend tests passed."
 else
     echo "  FAILED: Vitest frontend test suite failed."
+    ALL_PASSED=1
+fi
+
+echo ""
+echo "Running Frontend TypeScript Type Check (tsc --noEmit)..."
+if docker compose exec -T frontend npx tsc --noEmit; then
+    echo "  PASSED: TypeScript strict type check clean."
+else
+    echo "  FAILED: TypeScript type errors detected."
+    ALL_PASSED=1
+fi
+
+echo ""
+echo "Running Frontend Linter (Next.js ESLint)..."
+if docker compose exec -T frontend npm run lint; then
+    echo "  PASSED: Frontend ESLint checks clean."
+else
+    echo "  FAILED: Frontend ESLint errors detected."
     ALL_PASSED=1
 fi
 

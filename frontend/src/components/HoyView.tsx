@@ -95,9 +95,9 @@ export function HoyView({
         right={<button type="button" aria-label="Ajustes" onClick={onOpenSettings} className="min-h-[44px] min-w-[44px] flex items-center justify-center text-primary dark:text-primary-dark"><Gear size={22} weight="regular" /></button>}
       />
       <div className="px-4 pt-2">
-        {!isOnline && <p role="status" className="mb-3 rounded-xl bg-white dark:bg-ios-dark-surface p-3 text-[15px] text-black/60 dark:text-white/60">{messages.offline}</p>}
-        {moodleSessionExpired && <button type="button" aria-label="Reconectar Moodle" onClick={onReconnectMoodle} className="mb-3 min-h-[44px] w-full rounded-xl bg-white dark:bg-ios-dark-surface p-3 text-left text-[15px] text-primary dark:text-primary-dark">{messages.expired}</button>}
-        {syncError && <div role="alert" className="mb-3 rounded-xl bg-white dark:bg-ios-dark-surface p-3 text-[15px] text-black dark:text-white">
+        {!isOnline && <p role="status" className="mb-3 rounded-xl bg-white dark:bg-[#1C1C1E] p-3 text-[15px] text-black/60 dark:text-white/60">{messages.offline}</p>}
+        {moodleSessionExpired && <button type="button" aria-label="Reconectar Moodle" onClick={onReconnectMoodle} className="mb-3 min-h-[44px] w-full rounded-xl bg-white dark:bg-[#1C1C1E] p-3 text-left text-[15px] text-primary dark:text-primary-dark">{messages.expired}</button>}
+        {syncError && <div role="alert" className="mb-3 rounded-xl bg-white dark:bg-[#1C1C1E] p-3 text-[15px] text-black dark:text-white">
           <p>{messages.syncError}</p><button type="button" onClick={onRefresh} className="min-h-[44px] text-primary dark:text-primary-dark">{messages.retry}</button>
         </div>}
         <Segmented strong rounded className="mb-4">
@@ -109,7 +109,7 @@ export function HoyView({
 
       {loading && assignments.length === 0 ? (
         <div role="status" aria-label={messages.loading} className="mx-4 animate-pulse space-y-3">
-          {[0, 1, 2].map(index => <div key={index} className="rounded-xl bg-white dark:bg-ios-dark-surface p-4 space-y-3"><div className="h-4 w-3/4 rounded bg-black/10 dark:bg-white/10" /><div className="h-3 w-1/2 rounded bg-black/10 dark:bg-white/10" /></div>)}
+          {[0, 1, 2].map(index => <div key={index} className="rounded-xl bg-white dark:bg-[#1C1C1E] p-4 space-y-3"><div className="h-4 w-3/4 rounded bg-black/10 dark:bg-white/10" /><div className="h-3 w-1/2 rounded bg-black/10 dark:bg-white/10" /></div>)}
         </div>
       ) : visible.length === 0 ? (
         <p className="px-6 py-20 text-center text-[17px] text-black/60 dark:text-white/60">{messages.empty}</p>

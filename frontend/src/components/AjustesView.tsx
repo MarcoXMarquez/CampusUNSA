@@ -7,7 +7,6 @@ import {
   List,
   ListItem,
   Toggle,
-  Button,
   Dialog,
   DialogButton,
 } from "konsta/react";
@@ -24,21 +23,17 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { WhatsAppSheet } from "./WhatsAppSheet";
-
-interface GoogleAuthProfile {
-  id: string;
-  email: string;
-  role: string;
-  is_active: boolean;
-  profile?: {
-    full_name?: string | null;
-    avatar_url?: string | null;
-  } | null;
-}
+import {
+  getUserDisplayName,
+  type BackendHealthStatus,
+  type UserProfile,
+} from "../lib/api-client";
 
 interface AjustesViewProps {
-  user: GoogleAuthProfile | null;
+  user: UserProfile | null;
   token: string | null;
+  isOnline?: boolean;
+  backendHealth?: BackendHealthStatus | null;
   classroomConnected: boolean;
   classroomSyncStatus: string;
   moodleIcalConnected: boolean;
@@ -54,6 +49,8 @@ interface AjustesViewProps {
 export function AjustesView({
   user,
   token,
+  isOnline = true,
+  backendHealth = null,
   classroomConnected,
   classroomSyncStatus,
   moodleIcalConnected,
@@ -72,19 +69,41 @@ export function AjustesView({
   const [cleaningTasks, setCleaningTasks] = useState<boolean>(false);
   const [cleaningCourses, setCleaningCourses] = useState<boolean>(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const displayName = getUserDisplayName(user);
+  const avatarInitial = displayName[0]?.toUpperCase() || "U";
+
+  const showNotice = (message: string) => {
+    setActionError(null);
+    setActionMessage(message);
+    setTimeout(() => setActionMessage(null), 3000);
+  };
+
+  const showError = (err: unknown, fallback: string) => {
+    setActionMessage(null);
+    setActionError(err instanceof Error ? err.message : fallback);
+    setTimeout(() => setActionError(null), 4000);
+  };
 
   const handleIcalSubmit = async () => {
     if (!icalUrl.trim()) return;
-    await onSubscribeMoodleIcal(icalUrl);
-    setIcalDialogOpened(false);
+    try {
+      await onSubscribeMoodleIcal(icalUrl.trim());
+      setIcalDialogOpened(false);
+      showNotice("Calendario Moodle suscrito correctamente");
+    } catch (err: unknown) {
+      showError(err, "No se pudo suscribir el calendario Moodle");
+    }
   };
 
   const handleClearTasks = async () => {
     setCleaningTasks(true);
     try {
       await onClearTasks();
-      setActionMessage("Tareas borradas correctamente");
-      setTimeout(() => setActionMessage(null), 3000);
+      showNotice("Tareas borradas correctamente");
+    } catch (err: unknown) {
+      showError(err, "No se pudieron borrar las tareas");
     } finally {
       setCleaningTasks(false);
     }
@@ -94,11 +113,44 @@ export function AjustesView({
     setCleaningCourses(true);
     try {
       await onClearCourses();
-      setActionMessage("Cursos borrados correctamente");
-      setTimeout(() => setActionMessage(null), 3000);
+      showNotice("Cursos borrados correctamente");
+    } catch (err: unknown) {
+      showError(err, "No se pudieron borrar los cursos");
     } finally {
       setCleaningCourses(false);
     }
+  };
+
+  const renderServiceStatus = (
+    healthy: boolean | null,
+    healthyLabel: string,
+    unhealthyLabel: string
+  ): React.JSX.Element => {
+    if (!isOnline) {
+      return (
+        <span className="text-[15px] text-urgent dark:text-urgent-dark">
+          Sin conexión
+        </span>
+      );
+    }
+    if (healthy === null) {
+      return (
+        <span className="text-[15px] text-black/60 dark:text-white/60">
+          Sin verificar
+        </span>
+      );
+    }
+    return (
+      <span
+        className={`text-[15px] ${
+          healthy
+            ? "text-black/60 dark:text-white/60"
+            : "text-urgent dark:text-urgent-dark"
+        }`}
+      >
+        {healthy ? healthyLabel : unhealthyLabel}
+      </span>
+    );
   };
 
   return (
@@ -107,9 +159,27 @@ export function AjustesView({
 
       {/* Action Notification Banner */}
       {actionMessage && (
-        <div className="mx-4 mt-2 mb-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
-          <CheckCircle size={18} weight="regular" />
+        <div
+          role="status"
+          className="mx-4 mt-2 mb-3 p-3 rounded-xl bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/15 text-[15px] text-black dark:text-white flex items-center gap-2"
+        >
+          <CheckCircle
+            size={18}
+            weight="regular"
+            className="text-primary dark:text-primary-dark shrink-0"
+          />
           <span>{actionMessage}</span>
+        </div>
+      )}
+
+      {/* Action Error Banner */}
+      {actionError && (
+        <div
+          role="alert"
+          className="mx-4 mt-2 mb-3 p-3 rounded-xl bg-white dark:bg-[#1C1C1E] border border-urgent/30 dark:border-urgent-dark/30 text-[15px] text-urgent dark:text-urgent-dark flex items-center gap-2"
+        >
+          <WarningCircle size={18} weight="regular" className="shrink-0" />
+          <span>{actionError}</span>
         </div>
       )}
 
@@ -118,10 +188,10 @@ export function AjustesView({
       <List strong inset className="my-0">
         {user ? (
           <ListItem
-            title={user.profile?.full_name || "Estudiante UNSA"}
+            title={displayName}
             subtitle={user.email}
             after={
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 font-medium">
+              <span className="text-[15px] text-black/60 dark:text-white/60">
                 Verificado
               </span>
             }
@@ -135,7 +205,7 @@ export function AjustesView({
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-primary-dark/20 text-primary dark:text-primary-dark flex items-center justify-center font-bold">
-                  {user.profile?.full_name?.[0] || "U"}
+                  {avatarInitial}
                 </div>
               )
             }
@@ -146,7 +216,13 @@ export function AjustesView({
             chevron
             title="Iniciar Sesión Institucional"
             subtitle="Acceso exclusivo con cuenta @unsa.edu.pe"
-            media={<User size={22} weight="regular" className="text-primary dark:text-primary-dark" />}
+            media={
+              <User
+                size={22}
+                weight="regular"
+                className="text-primary dark:text-primary-dark"
+              />
+            }
             onClick={onOpenLogin}
           />
         )}
@@ -161,49 +237,79 @@ export function AjustesView({
           title="Asistente de WhatsApp"
           subtitle="Recordatorios automáticos en tu chat"
           after={
-            <span className="text-[14px] text-black/50 dark:text-white/50">
+            <span className="text-[15px] text-black/60 dark:text-white/60">
               Vincular
             </span>
           }
-          media={<WhatsappLogo size={22} weight="regular" className="text-emerald-500" />}
+          media={
+            <WhatsappLogo
+              size={22}
+              weight="regular"
+              className="text-primary dark:text-primary-dark"
+            />
+          }
           onClick={() => setWhatsappSheetOpened(true)}
         />
         <ListItem
           link
           chevron
           title="Sincronizacion Google Classroom"
-          subtitle={classroomConnected ? "Conectado · Sincronización activa" : "Vincular Google Classroom (1 Clic)"}
+          subtitle={
+            classroomConnected
+              ? `Sincronización activa (${classroomSyncStatus})`
+              : "Vincular Google Classroom (1 Clic)"
+          }
           after={
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                classroomConnected
-                  ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300"
-                  : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-400"
-              }`}
-            >
+            <span className="inline-flex items-center gap-1.5 text-[15px] text-black/60 dark:text-white/60">
+              <span
+                aria-hidden="true"
+                className={`h-2 w-2 rounded-full ${
+                  classroomConnected
+                    ? "bg-primary dark:bg-primary-dark"
+                    : "bg-black/30 dark:bg-white/30"
+                }`}
+              />
               {classroomConnected ? "Conectado" : "No Vinculado"}
             </span>
           }
-          media={<GoogleLogo size={22} weight="regular" className="text-blue-500" />}
+          media={
+            <GoogleLogo
+              size={22}
+              weight="regular"
+              className="text-black/70 dark:text-white/70"
+            />
+          }
           onClick={onLinkClassroom}
         />
         <ListItem
           link
           chevron
           title="Sincronizacion DUTIC Moodle"
-          subtitle="Suscripcion de Calendario iCal Moodle (DUTIC)"
+          subtitle={
+            moodleIcalConnected
+              ? `Calendario iCal activo (${moodleIcalSyncStatus})`
+              : "Suscripcion de Calendario iCal Moodle (DUTIC)"
+          }
           after={
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                moodleIcalConnected
-                  ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300"
-                  : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-400"
-              }`}
-            >
+            <span className="inline-flex items-center gap-1.5 text-[15px] text-black/60 dark:text-white/60">
+              <span
+                aria-hidden="true"
+                className={`h-2 w-2 rounded-full ${
+                  moodleIcalConnected
+                    ? "bg-primary dark:bg-primary-dark"
+                    : "bg-black/30 dark:bg-white/30"
+                }`}
+              />
               {moodleIcalConnected ? "Suscrito" : "Configurar"}
             </span>
           }
-          media={<CalendarCheck size={22} weight="regular" className="text-red-500" />}
+          media={
+            <CalendarCheck
+              size={22}
+              weight="regular"
+              className="text-black/70 dark:text-white/70"
+            />
+          }
           onClick={() => setIcalDialogOpened(true)}
         />
       </List>
@@ -227,10 +333,18 @@ export function AjustesView({
           subtitle="Limpia la base de datos de actividades sincronizadas"
           after={
             cleaningTasks ? (
-              <span className="text-xs text-black/40">Borrando...</span>
+              <span className="text-[13px] text-black/60 dark:text-white/60">
+                Borrando...
+              </span>
             ) : undefined
           }
-          media={<Trash size={22} weight="regular" className="text-urgent dark:text-urgent-dark" />}
+          media={
+            <Trash
+              size={22}
+              weight="regular"
+              className="text-urgent dark:text-urgent-dark"
+            />
+          }
           onClick={handleClearTasks}
         />
         <ListItem
@@ -239,10 +353,18 @@ export function AjustesView({
           subtitle="Limpia la lista de cursos sincronizados"
           after={
             cleaningCourses ? (
-              <span className="text-xs text-black/40">Borrando...</span>
+              <span className="text-[13px] text-black/60 dark:text-white/60">
+                Borrando...
+              </span>
             ) : undefined
           }
-          media={<Trash size={22} weight="regular" className="text-urgent dark:text-urgent-dark" />}
+          media={
+            <Trash
+              size={22}
+              weight="regular"
+              className="text-urgent dark:text-urgent-dark"
+            />
+          }
           onClick={handleClearCourses}
         />
       </List>
@@ -253,49 +375,119 @@ export function AjustesView({
         <ListItem
           title="Campus Ingenierias"
           subtitle="Sistemas, Civil, Minas, Industrial"
-          after={<span className="text-xs text-black/40">Paucarpata</span>}
-          media={<Buildings size={22} weight="regular" className="text-black/60 dark:text-white/60" />}
+          after={
+            <span className="text-[13px] text-black/60 dark:text-white/60">
+              Paucarpata
+            </span>
+          }
+          media={
+            <Buildings
+              size={22}
+              weight="regular"
+              className="text-black/60 dark:text-white/60"
+            />
+          }
         />
         <ListItem
           title="Campus Biomedicas"
           subtitle="Medicina, Enfermería, Biología"
-          after={<span className="text-xs text-black/40">A. Carrión</span>}
-          media={<Buildings size={22} weight="regular" className="text-black/60 dark:text-white/60" />}
+          after={
+            <span className="text-[13px] text-black/60 dark:text-white/60">
+              A. Carrión
+            </span>
+          }
+          media={
+            <Buildings
+              size={22}
+              weight="regular"
+              className="text-black/60 dark:text-white/60"
+            />
+          }
         />
         <ListItem
           title="Campus Sociales"
           subtitle="Derecho, Economía, Administración"
-          after={<span className="text-xs text-black/40">Venezuela</span>}
-          media={<Buildings size={22} weight="regular" className="text-black/60 dark:text-white/60" />}
+          after={
+            <span className="text-[13px] text-black/60 dark:text-white/60">
+              Venezuela
+            </span>
+          }
+          media={
+            <Buildings
+              size={22}
+              weight="regular"
+              className="text-black/60 dark:text-white/60"
+            />
+          }
         />
       </List>
 
       {/* Core Infrastructure Health Section */}
-      <BlockTitle>Estado de Componentes Core (Infraestructura Docker)</BlockTitle>
+      <BlockTitle>Estado de Servicios</BlockTitle>
       <List strong inset className="my-0">
         <ListItem
           title="FastAPI Core"
-          subtitle="Puerto 8000"
-          after={<span className="text-xs text-emerald-600 font-semibold">Online</span>}
-          media={<Cpu size={22} weight="regular" className="text-black/60 dark:text-white/60" />}
+          subtitle="API REST /api/v1"
+          after={renderServiceStatus(
+            backendHealth ? backendHealth.healthy : null,
+            "Operativo",
+            backendHealth?.reachable ? "Degradado" : "Sin conexión"
+          )}
+          media={
+            <Cpu
+              size={22}
+              weight="regular"
+              className="text-black/60 dark:text-white/60"
+            />
+          }
         />
         <ListItem
           title="PostgreSQL 16"
-          subtitle="Puerto 5432"
-          after={<span className="text-xs text-emerald-600 font-semibold">Ready</span>}
-          media={<Cpu size={22} weight="regular" className="text-black/60 dark:text-white/60" />}
+          subtitle="Persistencia principal"
+          after={renderServiceStatus(
+            backendHealth ? backendHealth.database === "healthy" : null,
+            "Operativo",
+            "No disponible"
+          )}
+          media={
+            <Cpu
+              size={22}
+              weight="regular"
+              className="text-black/60 dark:text-white/60"
+            />
+          }
         />
         <ListItem
           title="Redis 7 Store"
-          subtitle="Puerto 6379"
-          after={<span className="text-xs text-emerald-600 font-semibold">Ready</span>}
-          media={<Cpu size={22} weight="regular" className="text-black/60 dark:text-white/60" />}
+          subtitle="Cache OTP y colas"
+          after={renderServiceStatus(
+            backendHealth ? backendHealth.redis === "healthy" : null,
+            "Operativo",
+            "No disponible"
+          )}
+          media={
+            <Cpu
+              size={22}
+              weight="regular"
+              className="text-black/60 dark:text-white/60"
+            />
+          }
         />
         <ListItem
           title="Evolution API"
-          subtitle="Puerto 8080"
-          after={<span className="text-xs text-slate-500 font-semibold">Standby</span>}
-          media={<Cpu size={22} weight="regular" className="text-black/60 dark:text-white/60" />}
+          subtitle="Pasarela WhatsApp"
+          after={renderServiceStatus(
+            backendHealth ? backendHealth.reachable : null,
+            "En espera",
+            "Sin conexión"
+          )}
+          media={
+            <Cpu
+              size={22}
+              weight="regular"
+              className="text-black/60 dark:text-white/60"
+            />
+          }
         />
       </List>
 
@@ -307,7 +499,13 @@ export function AjustesView({
             <ListItem
               link
               title="Cerrar Sesión"
-              media={<SignOut size={22} weight="regular" className="text-urgent dark:text-urgent-dark" />}
+              media={
+                <SignOut
+                  size={22}
+                  weight="regular"
+                  className="text-urgent dark:text-urgent-dark"
+                />
+              }
               onClick={onLogout}
               className="text-urgent dark:text-urgent-dark"
             />
@@ -317,7 +515,7 @@ export function AjustesView({
 
       {/* App Version Footnote */}
       <div className="pt-6 pb-4 text-center">
-        <p className="text-[13px] text-black/40 dark:text-white/40">
+        <p className="text-[13px] text-black/60 dark:text-white/60">
           CampusUNSA Mobile PWA · v1.0.0
         </p>
       </div>
@@ -346,7 +544,7 @@ export function AjustesView({
         }
       >
         <div className="py-2">
-          <p className="text-[13px] text-black/70 dark:text-white/70 mb-3">
+          <p className="text-[13px] text-black/60 dark:text-white/60 mb-3">
             Pega tu URL de exportación de calendario de Moodle DUTIC:
           </p>
           <input
@@ -354,7 +552,7 @@ export function AjustesView({
             placeholder="https://aulavirtual.unsa.edu.pe/..."
             value={icalUrl}
             onChange={(e) => setIcalUrl(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-black/15 dark:border-white/15 bg-white dark:bg-zinc-800 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-sm rounded-lg border border-black/15 dark:border-white/15 bg-white dark:bg-[#1C1C1E] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
           />
         </div>
       </Dialog>

@@ -75,8 +75,11 @@ Both light and dark themes are fully supported and adapt to system preferences a
 
 ## 7. Authentication and Pairing Sheets
 
+* **iOS 18 Onboarding and Authentication Flow:**
+  * **Screen 1 (Onboarding Carousel — 4 Steps):** Four-step illustrated progression starring the official CampusUNSA mascot (student penguin with headphones and backpack). Clean two-tone curved card header (`#E5E5EA` on `#000000` chassis), optimized local Retina WebP illustrations (`560x560px`, `<30KB`), interactive 4-dot indicator, and full-width crimson action button ("SIGUIENTE" for steps 1–3, "COMENZAR" on step 4).
+  * **Screen 2 (SignInScreen / SignUpScreen — Reference Card):** Native iOS navigation bar with back action ("Atrás"), top grabber pill, centered minimalist SVG mascot logo (`penguin-logo-minimal.svg`), dynamic greeting ("¡Bienvenido de nuevo!" / "Crea tu cuenta agustina"), rounded input fields (`rounded-[14px]`) for institutional email (`@unsa.edu.pe`) and password with visibility toggle, "Recordarme" checkbox, crimson primary submit button, subtle divider ("O continúa con"), official Google Identity button, and classic interactive footer toggle between Sign In and Sign Up.
 * **Google OAuth Button:** Compliant with Google Identity guidelines (neutral surface, subtle `#DADCE0` border, official colored Google logo, neutral text).
-* **Manual Login:** Presented as a secondary link ("Usar C.I. y contraseña UNSA") navigating to an input form.
+* **Institutional Domain Restriction:** Authentication credentials and Google OAuth tokens are strictly restricted to verified `@unsa.edu.pe` institutional accounts.
 * **WhatsApp Pairing Sheet:**
   * Top grabber and iOS navigation bar ("Cancelar" button, centered title).
   * 6-digit numeric input with `inputMode="numeric"`, `autoComplete="one-time-code"`, and auto-submission on the sixth digit.

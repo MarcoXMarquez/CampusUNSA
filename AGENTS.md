@@ -74,101 +74,48 @@ Every AI agent modifying or generating code in this repository MUST strictly fol
 4. **Mandatory Evidence in Pull Requests:**
    * Every Pull Request description must contain concrete proof of validation: terminal outputs from the verification oracle and before/after screenshots for any visual UI modification in Next.js.
 
-### 3.2 Frontend Presentation and UI/UX Directives
+### 3.2 Stitch-First Frontend Workflow and UI Engineering Directives
 
-Every AI agent that creates or modifies code under `frontend/` MUST apply the directives in this section. They define the iOS-native presentation standard of the PWA (primary reference: Apple Reminders; secondary references: Things 3 and Apple Health) and exist to prevent generic, template-looking interfaces. These directives govern presentation only. They never authorize changes to backend contracts, data models, or synchronization logic.
+Every AI agent that creates or modifies code under `frontend/` MUST follow the Stitch-First directives in this section. **Google Stitch (project `4575327637306768444`) and `DESIGN.md` are the authoritative visual source of truth.** Agents MUST NOT override or flatten Stitch visual tokens (colors, elevation shadows, card surfaces, radii, or layout geometry) in the name of generic templates.
 
-#### 3.2.1 Frontend Baseline
+#### 3.2.1 Stitch-First Visual Authority
 
-* **Framework:** Next.js 14 (App Router), React 18, TypeScript in strict mode.
-* **Component library:** Konsta UI v4 (`konsta/react`) with `theme="ios"`, wired through `konstaConfig` in `tailwind.config.js`. Do not re-implement components that Konsta already provides (navbar, tabbar, list, sheet, segmented control, dialog).
-* **Icons:** `@phosphor-icons/react`, regular weight, as the only icon family. Icons MUST NOT be wrapped in colored boxes.
-* **Dates:** `date-fns` with the `es` locale.
-* **Styling:** Tailwind CSS 3.4 using only the design tokens defined in 3.2.3 and 3.2.4.
+* **Design Source of Truth:** When implementing or updating any screen designed in Stitch, agents MUST inspect the Stitch design via the `stitch` MCP (`stitch_find`, `stitch_get`) or `DESIGN.md`, and reproduce its palette, surfaces, shadows, border radii, and visual hierarchy 1:1.
+* **Asset Optimization Strategy:** Raster illustrations exported from Stitch MUST be saved as optimized local Retina WebP files (`< 30 KB` per asset, e.g., `frontend/public/images/onboarding/`), and minimalist marks or icons MUST use SVG rather than heavy PNG bundles.
+* **Color Schemes:** Components SHOULD support both light and dark presentations consistent with the corresponding Stitch screen and system preferences.
 
-#### 3.2.2 Prohibited Patterns
+#### 3.2.2 Frontend Baseline & Architecture
 
-The following patterns are strictly prohibited:
+* **Framework:** Next.js 14 (App Router), React 18, TypeScript in strict mode (`no any`).
+* **UI Ecosystem:** Tailwind CSS 3.4, Konsta UI v4 (`konsta/react`) where structural iOS primitives apply, `@phosphor-icons/react` for UI icons, and `date-fns` (`es` locale).
+* **Centralized API & Config Access:** All HTTP requests, backend base URLs, and OAuth client IDs MUST pass through `frontend/src/lib/api-client.ts` using types generated from OpenAPI in `frontend/src/types/api.ts`.
 
-1. **Floating shadow cards:** Do not use `shadow-md`, `shadow-lg`, or larger shadows, and do not use colored left-border accents on rows. Grouped items MUST use inset lists (`<List strong inset>`).
-2. **Pill clutter:** Do not place multi-colored badges or pills on rows. Source attribution (Moodle versus Classroom) MUST use an 8px dot or subtle secondary text (for example, `Moodle · Grupo B`).
-3. **Dashboard metrics on task feeds:** Do not render summary metric rows (average, course count, completion percentage) on mobile task list screens. A single concise subtitle under the large title (for example, "2 entregas pendientes") is sufficient.
-4. **Fake status bars:** Never draw a custom status bar (time, battery, signal). Layout containers MUST use Konsta `safeAreas` and `viewportFit: "cover"`.
-5. **Per-row action buttons:** Each list row is a single tap target with a chevron that opens a dedicated detail sheet (`TaskDetailSheet`). Do not place separate action buttons on rows.
-6. **Unverifiable upload promises:** Assignment detail sheets MUST NOT offer file upload controls the platform cannot fulfil. Use verified deep links instead ("Abrir en Moodle", "Abrir en Classroom").
+#### 3.2.3 Prohibited Technical Anti-Patterns (Anti-AI-Slop)
 
-#### 3.2.3 Color Semantics and Design Tokens
+The following technical defects are strictly prohibited under `frontend/`:
 
-Colors MUST come from the tokens below, exposed through the Tailwind theme (`primary`, `urgent`) or the iOS surface palette. Off-palette hex literals in components are prohibited.
+1. **Direct environment reads in components (`Rule-3.2.3.1`):** Do not access `process.env.NEXT_PUBLIC_*` directly inside `frontend/src/components/`. Use helpers exported by `frontend/src/lib/api-client.ts` (such as `getApiBaseUrl()` and `getGoogleClientId()`).
+2. **Fake mobile status bars (`Rule-3.2.3.2`):** Never render synthetic mobile status bars (`9:41`, drawn battery/signal chrome). Use native `safeAreas` and `viewportFit: "cover"`.
+3. **External web-font imports (`Rule-3.2.3.3`):** Importing Google Fonts (`next/font/google`, `fonts.googleapis.com`) is prohibited so offline-first PWA rendering never degrades or stalls on missing external font requests.
+4. **Unverifiable upload controls:** Assignment detail sheets MUST NOT render simulated file upload inputs the platform cannot fulfill; provide verified deep links (`Abrir en Moodle`, `Abrir en Classroom`) instead.
 
-| Role | Light mode | Dark mode | Rule |
-| :--- | :--- | :--- | :--- |
-| Grouped background | `#F2F2F7` | `#000000` | Full-screen container background. |
-| Surfaces / inset cells | `#FFFFFF` | `#1C1C1E` | List item background. |
-| Hairline dividers | `rgba(60,60,67,0.29)` | `rgba(84,84,88,0.65)` | Inset list separators. |
-| Primary text | `#000000` | `#FFFFFF` | Titles, headlines, active labels. |
-| Secondary text | `rgba(60,60,67,0.6)` | `rgba(235,235,245,0.6)` | Subtitles, course metadata, relative timestamps. |
-| App tint (`primary`) | `#8B0000` | `#E5575B` | Interactive tint only: buttons, active tabs, focus rings. Never a solid background on large headers. |
-| Urgent (`urgent`) | `#FF3B30` | `#FF453A` | Reserved strictly for deadlines due in less than 24 hours. Never for branding or source markers. |
+#### 3.2.4 Mandatory Functional States, Localization (`es-PE`), Auth/WhatsApp Rules & Verification
 
-Light and dark mode MUST both be supported. The interface follows the system color scheme.
-
-#### 3.2.4 Typography
-
-* **Font stack:** `-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif`. Importing web fonts (Inter, Roboto, or any Google Font) is prohibited.
-* **Scale:**
-  * Large Title: 34px, bold.
-  * Section title (`BlockTitle`): 22px, semibold.
-  * Headline (row title): 17px, semibold.
-  * Body: 17px, regular.
-  * Subheadline (row subtitle): 15px, regular, secondary color.
-  * Footnote: 13px, regular, secondary color.
-
-#### 3.2.5 Navigation Architecture
-
-* **Tab limit:** Three to four tabs. The standard structure is `Hoy`, `Calendario`, `Ajustes`.
-* **Tab bar:** Translucent with background blur, Phosphor icons, and persistent text labels.
-* **Primary screens:** Use a large collapsing title.
-* **WhatsApp location:** WhatsApp MUST NOT be a top-level tab. It lives in `Ajustes` as a service row ("Asistente de WhatsApp") that presents the pairing sheet.
-
-#### 3.2.6 Authentication and Pairing Patterns
-
-* **Google sign-in button:** Follow the official Google Identity branding: neutral white or dark surface, subtle `#DADCE0` border, official colored "G" logo on the left, neutral text. No crimson borders or colored backgrounds.
-* **Manual credentials:** Presented as a text link ("Usar C.I. y contraseña UNSA") that navigates to an input list. Accordions are prohibited.
-* **WhatsApp pairing sheet (`Sheet`):**
-  * Top grabber and an iOS navigation bar ("Cancelar" on the left, centered title). No circular close button.
-  * Six-digit input with `inputMode="numeric"`, `autoComplete="one-time-code"`, `maxLength={6}`, and automatic submission on the sixth digit.
-  * The expiration time is displayed **once**, as footnote text. Circular progress rings and duplicated timers are prohibited. The countdown MUST derive from the server-issued expiry (the 300-second Redis TTL in rule 3), never from a hard-coded client constant.
-  * The bot number is shown formatted (`+51 954 123 456`) with a direct deep link.
-  * The sheet implements exactly one pairing direction, the one supported by the backend. Do not present both "send the code to the bot" and "enter the code here" at once.
-
-#### 3.2.7 Mandatory UI States
-
-Every data-driven view MUST implement and test these six states:
-
-1. **Loading:** Row-shaped skeletons. Never a full-screen blocking spinner.
-2. **Empty:** Centered secondary text (for example, "Nada pendiente. Disfruta tu día.").
-3. **Offline:** Non-blocking top banner ("Sin conexión · mostrando datos guardados") that preserves locally cached data.
-4. **Expired session:** Inline actionable banner ("Sesión de Moodle vencida · Reconectar") that does not disable Google Classroom content.
-5. **Sync error:** Concise banner with a "Reintentar" action. Previously loaded data MUST remain visible.
-6. **Long content:** Systematic truncation (`line-clamp-2` for headlines, ellipsis elsewhere).
-
-#### 3.2.8 Localization of User-Facing Copy
-
-User-facing interface text is Spanish (`es-PE`) product content and is the sole exception to the English-only policy in rule 2. Identifiers, comments, test names, commit messages, and documentation prose remain English. Interface strings SHOULD be centralized in a message catalog and referenced by key rather than scattered across components.
-
-#### 3.2.9 Accessibility Floor
-
-* Minimum touch target of 44px for interactive rows and controls.
-* Text and tint colors MUST meet WCAG AA contrast (4.5:1 for body text) in both color schemes.
-* Dark mode parity is mandatory: no screen ships with light-only styling.
-
-#### 3.2.10 Verification and Evidence
-
-* `node scripts/verify-ui-directives.mjs` MUST pass. It is invoked by `./scripts/verify.sh` and `./scripts/verify.ps1` and by CI.
-* Design contract tests (Vitest and React Testing Library) MUST cover the six states in 3.2.7, the pairing sheet input attributes, and the tab structure in 3.2.5.
-* Any Pull Request that changes rendered UI MUST include a completed `UI Directives Compliance` section and before/after screenshots in both light and dark mode, in addition to the evidence required by section 3.1 item 4.
-* A line may opt out of a static rule only with a trailing `// ui-gate-ignore: <reason>` comment. Unexplained opt-outs are rejected in review.
+* **Six Mandatory Data States:** Every data-driven view MUST handle and test:
+  1. **Loading:** Row-shaped skeletons (no blocking full-screen spinners).
+  2. **Empty:** Clear empty-state guidance (for example, "Nada pendiente. Disfruta tu día.").
+  3. **Offline:** Non-blocking top notice preserving cached data ("Sin conexión · mostrando datos guardados").
+  4. **Expired session:** Inline actionable notice ("Sesión de Moodle vencida · Reconectar") without disabling Google Classroom tasks.
+  5. **Sync error:** Non-destructive error banner with a "Reintentar" action keeping previously loaded items visible.
+  6. **Long content:** Deterministic text truncation (`line-clamp-2` / ellipsis).
+* **Auth & WhatsApp Functional Rules:**
+  * Institutional `@unsa.edu.pe` domain restriction applies equally to email/password auth and Google OAuth.
+  * WhatsApp OTP pairing MUST use numeric 6-digit input (`inputMode="numeric"`, `autoComplete="one-time-code"`, `maxLength={6}`) with countdown derived strictly from the server-issued Redis expiry (300-second TTL).
+* **Localization (`es-PE`):** User-facing UI copy MUST be centralized in message catalogs (for example, `frontend/src/lib/auth-messages.ts`) in `es-PE`, while code identifiers, comments, tests, commits, and documentation remain in English.
+* **Accessibility & Verification:**
+  * Provide accessible labels (`aria-label`, `aria-current`, semantic `role="alert"` / `role="status"`), keyboard focusability, and interactive targets >= 44px where applicable.
+  * `node scripts/verify-ui-directives.mjs` MUST pass (invoked by `./scripts/verify.sh`, `./scripts/verify.ps1`, and CI).
+  * A line may opt out of a static rule only with a trailing `// ui-gate-ignore: <reason>` comment containing a non-empty explanation (`Rule-3.2.10`).
 
 
 ---

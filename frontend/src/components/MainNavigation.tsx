@@ -10,28 +10,36 @@ import { AjustesView } from "./AjustesView";
 import { LoginModal } from "./LoginModal";
 import { QueryProvider } from "./QueryProvider";
 import { useAcademicBoard } from "../hooks/useAcademicBoard";
-
-interface GoogleAuthProfile {
-  id: string;
-  email: string;
-  role: string;
-  is_active: boolean;
-  profile?: {
-    full_name?: string | null;
-    avatar_url?: string | null;
-  } | null;
-}
+import {
+  ApiRequestError,
+  authenticateWithGoogleToken,
+  clearSyncedAssignments,
+  clearSyncedCourses,
+  exchangeClassroomCode,
+  fetchBackendHealth,
+  fetchCurrentUser,
+  fetchIntegrationStatuses,
+  getGoogleClientId,
+  subscribeMoodleIcal,
+  type BackendHealthStatus,
+  type UserProfile,
+} from "../lib/api-client";
 
 export function MainNavigation(): React.JSX.Element {
-  return <QueryProvider><NavigationContent /></QueryProvider>;
+  return (
+    <QueryProvider>
+      <NavigationContent />
+    </QueryProvider>
+  );
 }
 
 function NavigationContent(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<"hoy" | "calendario" | "ajustes">("hoy");
-  const [user, setUser] = useState<GoogleAuthProfile | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [loginModalOpened, setLoginModalOpened] = useState<boolean>(false);
+  const [backendHealth, setBackendHealth] = useState<BackendHealthStatus | null>(null);
 
   // Sync statuses
   const [classroomConnected, setClassroomConnected] = useState<boolean>(false);
@@ -39,10 +47,7 @@ function NavigationContent(): React.JSX.Element {
   const [moodleIcalConnected, setMoodleIcalConnected] = useState<boolean>(false);
   const [moodleIcalSyncStatus, setMoodleIcalSyncStatus] = useState<string>("NOT_CONNECTED");
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9000/api/v1";
-  const clientId =
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    "680574461584-5vjt8ge9ah4rr1eapphoenit5imvk6m8.apps.googleusercontent.com";
+  const clientId = getGoogleClientId();
 
   // Check online status
   useEffect(() => {
@@ -58,62 +63,72 @@ function NavigationContent(): React.JSX.Element {
     };
   }, []);
 
-  const fetchUserProfile = useCallback(
-    async (authToken: string) => {
-      try {
-        const res = await fetch(`${apiUrl}/auth/me`, {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data);
-        }
-      } catch {
-        // offline fallback
+  const hydrateSession = useCallback(async (authToken: string) => {
+    try {
+      const [profile, statuses] = await Promise.all([
+        fetchCurrentUser(authToken),
+        fetchIntegrationStatuses(authToken),
+      ]);
+      if (profile) {
+        setUser(profile);
       }
-    },
-    [apiUrl]
-  );
+      setClassroomConnected(statuses.classroomConnected);
+      setClassroomSyncStatus(statuses.classroomSyncStatus);
+      setMoodleIcalConnected(statuses.moodleSubscribed);
+      setMoodleIcalSyncStatus(statuses.moodleSyncStatus);
+    } catch (err: unknown) {
+      if (err instanceof ApiRequestError && err.status === 401) {
+        localStorage.removeItem("campusunsa_token");
+        setToken(null);
+        setUser(null);
+      }
+    }
+  }, []);
 
-  // Initialize stored token and user
+  // Initialize stored token, user profile, integration statuses and backend health
   useEffect(() => {
     const savedToken = localStorage.getItem("campusunsa_token");
     if (savedToken) {
       setToken(savedToken);
-      fetchUserProfile(savedToken);
+      void hydrateSession(savedToken);
     }
-  }, [fetchUserProfile]);
+    void fetchBackendHealth().then(setBackendHealth);
+  }, [hydrateSession]);
 
   const {
-    courses, assignments, loading, syncing, syncError, moodleSessionExpired,
-    setCourses, setAssignments, setCompletion, completionPending, completionError,
+    courses,
+    assignments,
+    loading,
+    syncing,
+    syncError,
+    moodleSessionExpired,
+    setCourses,
+    setAssignments,
+    setCompletion,
+    completionPending,
+    completionError,
     refresh,
   } = useAcademicBoard(token);
-  const fetchAcademicData = useCallback(async () => { await refresh(); }, [refresh]);
+  const fetchAcademicData = useCallback(async () => {
+    await refresh();
+  }, [refresh]);
 
   // Handle Google OAuth callback
   const handleGoogleSuccess = useCallback(
     async (credential: string) => {
       try {
-        const res = await fetch(`${apiUrl}/auth/google`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: credential }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-          setToken(data.access_token);
-          localStorage.setItem("campusunsa_token", data.access_token);
-          setLoginModalOpened(false);
-          fetchAcademicData();
-        }
+        const data = await authenticateWithGoogleToken(credential);
+        setUser(data.user);
+        setToken(data.access_token);
+        localStorage.setItem("campusunsa_token", data.access_token);
+        setLoginModalOpened(false);
+        await hydrateSession(data.access_token);
+        await fetchAcademicData();
       } catch {
         // error handling handled in modal
       }
     },
-    [apiUrl, fetchAcademicData]
+    [hydrateSession, fetchAcademicData]
   );
 
   // Setup Google Identity Services
@@ -123,7 +138,7 @@ function NavigationContent(): React.JSX.Element {
         client_id: clientId,
         callback: (resp: { credential?: string }) => {
           if (resp.credential) {
-            handleGoogleSuccess(resp.credential);
+            void handleGoogleSuccess(resp.credential);
           }
         },
       });
@@ -143,81 +158,60 @@ function NavigationContent(): React.JSX.Element {
         "https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly",
       ux_mode: "popup",
       callback: async (resp: GoogleCodeResponse) => {
-        if (resp.code) {
-          const headers: Record<string, string> = { "Content-Type": "application/json" };
-          if (token) headers["Authorization"] = `Bearer ${token}`;
-
+        if (resp.code && token) {
           try {
-            await fetch(`${apiUrl}/classroom/auth/token`, {
-              method: "POST",
-              headers,
-              body: JSON.stringify({ code: resp.code }),
-            });
+            await exchangeClassroomCode(token, resp.code, "postmessage");
             setClassroomConnected(true);
-            fetchAcademicData();
+            setClassroomSyncStatus("CONNECTED");
+            await fetchAcademicData();
           } catch {
-            // failed to exchange token
+            // keep disconnected state when code exchange fails
           }
         }
       },
     });
 
     client.requestCode();
-  }, [clientId, apiUrl, token, fetchAcademicData]);
+  }, [clientId, token, fetchAcademicData]);
 
   // Moodle iCal Subscribe
-  const handleSubscribeMoodleIcal = async (calendarUrl: string) => {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-
-    const res = await fetch(`${apiUrl}/dutic/ical/subscribe`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ calendar_url: calendarUrl }),
-    });
-
-    if (res.ok) {
-      setMoodleIcalConnected(true);
-      fetchAcademicData();
+  const handleSubscribeMoodleIcal = async (calendarUrl: string): Promise<void> => {
+    if (!token) {
+      throw new Error("Inicia sesión para suscribir tu calendario Moodle");
     }
+    await subscribeMoodleIcal(token, calendarUrl);
+    setMoodleIcalConnected(true);
+    setMoodleIcalSyncStatus("CONNECTED");
+    await fetchAcademicData();
   };
 
   // Clear Tasks
-  const handleClearTasks = async () => {
-    const headers: Record<string, string> = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-
-    await Promise.all([
-      fetch(`${apiUrl}/dutic/tasks/clear`, { method: "POST", headers }).catch(() => null),
-      fetch(`${apiUrl}/classroom/tasks/clear`, { method: "POST", headers }).catch(() => null),
-    ]);
-
-    setAssignments([]);
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("campusunsa_offline_tasks");
+  const handleClearTasks = async (): Promise<void> => {
+    if (!token) {
+      throw new Error("Inicia sesión para borrar tareas sincronizadas");
     }
+    await clearSyncedAssignments(token);
+    setAssignments([]);
   };
 
   // Clear Courses
-  const handleClearCourses = async () => {
-    const headers: Record<string, string> = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-
-    await Promise.all([
-      fetch(`${apiUrl}/dutic/courses/clear`, { method: "POST", headers }).catch(() => null),
-      fetch(`${apiUrl}/classroom/courses/clear`, { method: "POST", headers }).catch(() => null),
-    ]);
-
-    setCourses([]);
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("campusunsa_offline_courses");
+  const handleClearCourses = async (): Promise<void> => {
+    if (!token) {
+      throw new Error("Inicia sesión para borrar cursos sincronizados");
     }
+    await clearSyncedCourses(token);
+    setCourses([]);
+    setAssignments([]);
   };
 
   const handleLogout = () => {
     localStorage.removeItem("campusunsa_token");
     setUser(null);
     setToken(null);
+    setClassroomConnected(false);
+    setClassroomSyncStatus("NOT_CONNECTED");
+    setMoodleIcalConnected(false);
+    setMoodleIcalSyncStatus("NOT_CONNECTED");
   };
 
   return (
@@ -259,6 +253,8 @@ function NavigationContent(): React.JSX.Element {
           <AjustesView
             user={user}
             token={token}
+            isOnline={isOnline}
+            backendHealth={backendHealth}
             classroomConnected={classroomConnected}
             classroomSyncStatus={classroomSyncStatus}
             moodleIcalConnected={moodleIcalConnected}
@@ -282,20 +278,80 @@ function NavigationContent(): React.JSX.Element {
         <TabbarLink
           active={activeTab === "hoy"}
           onClick={() => setActiveTab("hoy")}
-          icon={<CalendarCheck size={24} weight={activeTab === "hoy" ? "fill" : "regular"} className={activeTab === "hoy" ? "text-primary dark:text-primary-dark" : "text-black/40 dark:text-white/40"} />}
-          label={<span className={activeTab === "hoy" ? "text-primary dark:text-primary-dark font-medium" : "text-black/40 dark:text-white/40"}>Hoy</span>}
+          icon={
+            <CalendarCheck
+              size={24}
+              weight={activeTab === "hoy" ? "fill" : "regular"}
+              className={
+                activeTab === "hoy"
+                  ? "text-primary dark:text-primary-dark"
+                  : "text-black/40 dark:text-white/40"
+              }
+            />
+          }
+          label={
+            <span
+              className={
+                activeTab === "hoy"
+                  ? "text-primary dark:text-primary-dark font-medium"
+                  : "text-black/40 dark:text-white/40"
+              }
+            >
+              Hoy
+            </span>
+          }
         />
         <TabbarLink
           active={activeTab === "calendario"}
           onClick={() => setActiveTab("calendario")}
-          icon={<Calendar size={24} weight={activeTab === "calendario" ? "fill" : "regular"} className={activeTab === "calendario" ? "text-primary dark:text-primary-dark" : "text-black/40 dark:text-white/40"} />}
-          label={<span className={activeTab === "calendario" ? "text-primary dark:text-primary-dark font-medium" : "text-black/40 dark:text-white/40"}>Calendario</span>}
+          icon={
+            <Calendar
+              size={24}
+              weight={activeTab === "calendario" ? "fill" : "regular"}
+              className={
+                activeTab === "calendario"
+                  ? "text-primary dark:text-primary-dark"
+                  : "text-black/40 dark:text-white/40"
+              }
+            />
+          }
+          label={
+            <span
+              className={
+                activeTab === "calendario"
+                  ? "text-primary dark:text-primary-dark font-medium"
+                  : "text-black/40 dark:text-white/40"
+              }
+            >
+              Calendario
+            </span>
+          }
         />
         <TabbarLink
           active={activeTab === "ajustes"}
           onClick={() => setActiveTab("ajustes")}
-          icon={<Gear size={24} weight={activeTab === "ajustes" ? "fill" : "regular"} className={activeTab === "ajustes" ? "text-primary dark:text-primary-dark" : "text-black/40 dark:text-white/40"} />}
-          label={<span className={activeTab === "ajustes" ? "text-primary dark:text-primary-dark font-medium" : "text-black/40 dark:text-white/40"}>Ajustes</span>}
+          icon={
+            <Gear
+              size={24}
+              weight={activeTab === "ajustes" ? "fill" : "regular"}
+              className={
+                activeTab === "ajustes"
+                  ? "text-primary dark:text-primary-dark"
+                  : "text-black/40 dark:text-white/40"
+              }
+            />
+          }
+          label={
+            <span
+              className={
+                activeTab === "ajustes"
+                  ? "text-primary dark:text-primary-dark font-medium"
+                  : "text-black/40 dark:text-white/40"
+              }
+            >
+              Ajustes
+            </span>
+          }
         />
       </Tabbar>
 
@@ -305,8 +361,15 @@ function NavigationContent(): React.JSX.Element {
         onClose={() => setLoginModalOpened(false)}
         onSuccess={(authToken, authUser) => {
           setToken(authToken);
-          setUser(authUser);
-          fetchAcademicData();
+          setUser({
+            id: authUser.id ?? null,
+            email: authUser.email,
+            role: authUser.role,
+            full_name: authUser.full_name ?? null,
+            is_active: authUser.is_active ?? true,
+          });
+          void hydrateSession(authToken);
+          void fetchAcademicData();
         }}
       />
     </Page>

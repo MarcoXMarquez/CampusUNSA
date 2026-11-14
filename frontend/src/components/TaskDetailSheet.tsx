@@ -68,7 +68,7 @@ export function TaskDetailSheet({
       className="rounded-t-2xl pb-safe"
     >
       {/* Top Grabber */}
-      <div className="w-10 h-1 bg-slate-300 dark:bg-zinc-600 rounded-full mx-auto my-3" />
+      <div className="w-10 h-1 bg-black/20 dark:bg-white/25 rounded-full mx-auto my-3" />
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 pb-3 border-b border-black/10 dark:border-white/10">

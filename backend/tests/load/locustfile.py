@@ -114,6 +114,11 @@ class StudentBrowser(FastHttpUser):
             payload = {"code": "perf-code-123"}
         elif case.path.endswith("/auth/google"):
             payload = {"token": self.account["identity"]}
+        elif case.path.endswith("/auth/login"):
+            payload = {
+                "email": f"{self.account['identity']}@unsa.edu.pe",
+                "password": "perfpassword123",
+            }
         elif case.path.endswith("/classroom/sync"):
             payload = {"refresh_token": self.account["identity"]}
         elif case.path.endswith("/dutic/sync"):

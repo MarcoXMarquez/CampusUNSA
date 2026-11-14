@@ -464,18 +464,102 @@ def test_sync_coursework_errors_handling(
     app.dependency_overrides.clear()
 
 
-def test_sync_classroom_demo_mode(
+@patch("app.services.classroom_sync.ClassroomApiClient.fetch_coursework")
+@patch("app.services.classroom_sync.ClassroomApiClient.fetch_courses")
+def test_sync_classroom_multi_course_with_mocked_client(
+    mock_fetch_courses: MagicMock,
+    mock_fetch_coursework: MagicMock,
     test_db_session: Session,
     auth_student_headers: Dict[str, str],
 ) -> None:
-    """Tests synchronization using demo mode without calling Google API."""
+    """Tests multi-course synchronization using mocked Classroom HTTP boundaries and confirms 'demo' is not bypassed."""
+    from app.services.classroom_sync import GoogleClassroomAuthError
+
+    mock_fetch_courses.return_value = [
+        {
+            "id": "gc-is3-101",
+            "name": "Ingenieria de Software 3 (Classroom)",
+            "section": "Grupo A",
+            "alternateLink": "https://classroom.google.com/c/gc-is3-101",
+            "courseState": "ACTIVE",
+        },
+        {
+            "id": "gc-arq-102",
+            "name": "Arquitectura de Software (Classroom)",
+            "section": "Grupo B",
+            "alternateLink": "https://classroom.google.com/c/gc-arq-102",
+            "courseState": "ACTIVE",
+        },
+        {
+            "id": "gc-sd-103",
+            "name": "Sistemas Distribuidos (Classroom)",
+            "section": "Grupo A",
+            "alternateLink": "https://classroom.google.com/c/gc-sd-103",
+            "courseState": "ACTIVE",
+        },
+    ]
+
+    coursework_by_course: Dict[str, List[Dict[str, Any]]] = {
+        "gc-is3-101": [
+            {
+                "id": "gc-assign-01",
+                "courseId": "gc-is3-101",
+                "title": "Entrega Sprint 3: Extraccion de Tareas Classroom",
+                "description": "Subir informe y enlace.",
+                "dueDate": {"year": 2026, "month": 11, "day": 5},
+                "dueTime": {"hours": 23, "minutes": 59},
+                "maxPoints": 20.0,
+                "state": "PUBLISHED",
+                "alternateLink": "https://classroom.google.com/c/gc-is3-101/a/gc-assign-01/details",
+            },
+            {
+                "id": "gc-assign-02",
+                "courseId": "gc-is3-101",
+                "title": "Laboratorio 05: Integracion de APIs Educativas",
+                "description": "Implementacion de adaptadores REST.",
+                "dueDate": {"year": 2026, "month": 11, "day": 8},
+                "dueTime": {"hours": 18, "minutes": 0},
+                "maxPoints": 20.0,
+                "state": "PUBLISHED",
+                "alternateLink": "https://classroom.google.com/c/gc-is3-101/a/gc-assign-02/details",
+            },
+        ],
+        "gc-arq-102": [
+            {
+                "id": "gc-assign-03",
+                "courseId": "gc-arq-102",
+                "title": "Fase 2: Arquitectura C4",
+                "description": "Documento SAD.",
+                "dueDate": {"year": 2026, "month": 11, "day": 10},
+                "dueTime": {"hours": 23, "minutes": 59},
+                "maxPoints": 20.0,
+                "state": "PUBLISHED",
+                "alternateLink": "https://classroom.google.com/c/gc-arq-102/a/gc-assign-03/details",
+            },
+        ],
+        "gc-sd-103": [
+            {
+                "id": "gc-assign-04",
+                "courseId": "gc-sd-103",
+                "title": "Practica: Consenso Raft",
+                "description": "Protocolo distribuido.",
+                "dueDate": {"year": 2026, "month": 11, "day": 12},
+                "dueTime": {"hours": 20, "minutes": 0},
+                "maxPoints": 20.0,
+                "state": "PUBLISHED",
+                "alternateLink": "https://classroom.google.com/c/gc-sd-103/a/gc-assign-04/details",
+            },
+        ],
+    }
+    mock_fetch_coursework.side_effect = lambda _tok, cid: coursework_by_course.get(cid, [])
+
     app.dependency_overrides[get_db] = lambda: test_db_session
 
     with TestClient(app) as test_client:
         res = test_client.post(
             "/api/v1/classroom/sync",
             headers=auth_student_headers,
-            json={"refresh_token": "demo"},
+            json={"refresh_token": "valid-oauth-token"},
         )
         assert res.status_code == 200
         data = res.json()
@@ -483,7 +567,6 @@ def test_sync_classroom_demo_mode(
         assert data["synced_courses_count"] == 3
         assert data["synced_assignments_count"] == 4
 
-        # Verify assignments retrieval
         assign_res = test_client.get(
             "/api/v1/classroom/assignments",
             headers=auth_student_headers,
@@ -492,6 +575,16 @@ def test_sync_classroom_demo_mode(
         assignments = assign_res.json()
         assert len(assignments) == 4
         assert any(a["origin"] == "classroom" for a in assignments)
+
+        # Literal "demo" must invoke the API client instead of returning hardcoded data.
+        mock_fetch_courses.side_effect = GoogleClassroomAuthError("Invalid token")
+        demo_res = test_client.post(
+            "/api/v1/classroom/sync",
+            headers=auth_student_headers,
+            json={"refresh_token": "demo"},
+        )
+        assert demo_res.status_code == 401
+        assert demo_res.json()["detail"]["code"] == "NEEDS_REAUTH"
 
     app.dependency_overrides.clear()
 

@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 import httpx
 
 from app.core.config import settings
-from app.services.classroom_sync import GoogleClassroomAuthError, GoogleClassroomError
+from app.core.exceptions import GoogleClassroomAuthError, GoogleClassroomError
 
 
 class GoogleOAuthService:
