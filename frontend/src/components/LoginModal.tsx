@@ -19,11 +19,8 @@ export function LoginModal({
     <Sheet
       opened={opened}
       onBackdropClick={onClose}
-      className="rounded-t-3xl pb-safe bg-[#F2F2F7] dark:bg-black max-h-[92vh] overflow-y-auto"
+      className="rounded-t-3xl pb-safe bg-black max-h-[92vh] overflow-y-auto"
     >
-      {/* Top Grabber */}
-      <div className="w-10 h-1 bg-black/20 dark:bg-white/25 rounded-full mx-auto my-3" />
-
       <AuthFlow
         initialStep="welcome"
         initialMode="signin"
