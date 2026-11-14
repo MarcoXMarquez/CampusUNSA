@@ -1,4 +1,7 @@
 from datetime import datetime, timedelta, timezone
+import hashlib
+import hmac
+import secrets
 from typing import Any, Dict, Optional
 import uuid
 
@@ -10,6 +13,44 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.user import User
+
+PBKDF2_ITERATIONS = 100_000
+
+
+def hash_password(password: str) -> str:
+    """Hashes a plaintext password with PBKDF2-HMAC-SHA256 and a random 16-byte salt."""
+    salt_hex = secrets.token_hex(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        bytes.fromhex(salt_hex),
+        PBKDF2_ITERATIONS,
+    )
+    return f"pbkdf2_sha256${PBKDF2_ITERATIONS}${salt_hex}${digest.hex()}"
+
+
+def verify_password(plain_password: str, stored_hash: Optional[str]) -> bool:
+    """Verifies a plaintext password against a stored PBKDF2-HMAC-SHA256 hash using constant-time comparison."""
+    if not plain_password or not stored_hash:
+        return False
+    parts = stored_hash.split("$")
+    if len(parts) != 4 or parts[0] != "pbkdf2_sha256":
+        return False
+    try:
+        iterations = int(parts[1])
+        salt = bytes.fromhex(parts[2])
+        expected_digest = bytes.fromhex(parts[3])
+    except ValueError:
+        return False
+    if iterations < 1 or not salt:
+        return False
+    computed_digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        plain_password.encode("utf-8"),
+        salt,
+        iterations,
+    )
+    return hmac.compare_digest(computed_digest, expected_digest)
 
 # OAuth2 scheme for Bearer token extraction
 oauth2_scheme = OAuth2PasswordBearer(

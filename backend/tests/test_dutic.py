@@ -469,18 +469,64 @@ def test_dutic_sync_rate_limited_handling(
     app.dependency_overrides.clear()
 
 
-def test_dutic_sync_demo_mode(
+@patch("app.services.dutic_sync.DuticApiClient.fetch_all_tasks")
+@patch("app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses")
+def test_dutic_sync_multi_course_with_mocked_client(
+    mock_fetch_courses: Any,
+    mock_fetch_tasks: Any,
     test_db_session: Session,
     auth_student_headers: Dict[str, str],
 ) -> None:
-    """Test demo/mock session mode populates realistic UNSA courses without external HTTP calls."""
+    """Tests multi-course DUTIC sync via mocked HTTP client and confirms 'demo' is not bypassed."""
+    from datetime import datetime, timezone
+    from app.services.dutic_sync import DuticSessionExpiredError
+
+    current_epoch = int(datetime.now(timezone.utc).timestamp())
+    mock_fetch_courses.return_value = [
+        {"id": 101, "fullname": "Ingenieria de Software 3 - Grupo A", "shortname": "IS3-A"},
+        {"id": 102, "fullname": "Sistemas Distribuidos - Grupo B", "shortname": "SD-B"},
+        {"id": 103, "fullname": "Arquitectura de Software - Grupo A", "shortname": "ARQ-A"},
+    ]
+    mock_fetch_tasks.return_value = [
+        {
+            "id": 201,
+            "courseId": 101,
+            "name": "Laboratorio 04: Orquestacion de Microservicios con Docker",
+            "dueDate": current_epoch + 86400,
+            "submission": "not-submitted",
+            "hidden": False,
+            "url": "https://dutic.unsa.edu.pe/mod/assign/view.php?id=201",
+            "grade": None,
+        },
+        {
+            "id": 202,
+            "courseId": 101,
+            "name": "Fase 2: Documento de Arquitectura de Sistemas (SAD)",
+            "dueDate": current_epoch + 86400 * 3,
+            "submission": "submitted",
+            "hidden": False,
+            "url": "https://dutic.unsa.edu.pe/mod/assign/view.php?id=202",
+            "grade": 18.0,
+        },
+        {
+            "id": 203,
+            "courseId": 102,
+            "name": "Practica Calificada: Consenso Raft en Sistemas Distribuidos",
+            "dueDate": current_epoch + 86400 * 5,
+            "submission": "not-submitted",
+            "hidden": True,
+            "url": "https://dutic.unsa.edu.pe/mod/assign/view.php?id=203",
+            "grade": None,
+        },
+    ]
+
     app.dependency_overrides[get_db] = lambda: test_db_session
 
     with TestClient(app) as test_client:
         res = test_client.post(
             "/api/v1/dutic/sync",
             headers=auth_student_headers,
-            json={"moodle_session": "demo", "sesskey": "demo"},
+            json={"moodle_session": "real-moodle-cookie", "sesskey": "real-sesskey"},
         )
         assert res.status_code == 200
         data = res.json()
@@ -488,7 +534,6 @@ def test_dutic_sync_demo_mode(
         assert data["synced_courses_count"] == 3
         assert data["synced_assignments_count"] == 3
 
-        # Verify courses retrieval
         courses_res = test_client.get("/api/v1/dutic/courses", headers=auth_student_headers)
         assert courses_res.status_code == 200
         courses = courses_res.json()
@@ -496,12 +541,21 @@ def test_dutic_sync_demo_mode(
         course_names = [c["name"] for c in courses]
         assert "Ingenieria de Software 3 - Grupo A" in course_names
 
-        # Verify assignments retrieval
         assign_res = test_client.get("/api/v1/dutic/assignments", headers=auth_student_headers)
         assert assign_res.status_code == 200
         assigns = assign_res.json()
         assert len(assigns) == 3
         assert any(a["origin"] == "moodle" for a in assigns)
+
+        # Literal "demo" must invoke the API client instead of returning synthetic data.
+        mock_fetch_courses.side_effect = DuticSessionExpiredError("Session expired")
+        demo_res = test_client.post(
+            "/api/v1/dutic/sync",
+            headers=auth_student_headers,
+            json={"moodle_session": "demo", "sesskey": "demo"},
+        )
+        assert demo_res.status_code == 401
+        assert demo_res.json()["detail"]["code"] == "NEEDS_REAUTH"
 
     app.dependency_overrides.clear()
 

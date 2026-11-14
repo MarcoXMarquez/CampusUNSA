@@ -3,16 +3,21 @@ from datetime import timedelta
 from unittest.mock import MagicMock, patch
 import pytest
 from fastapi import HTTPException
+from pydantic import ValidationError
 
+from app.core.config import Settings
 from app.core.security import (
     create_access_token,
     decode_access_token,
     get_current_user_from_db,
+    hash_password,
     validate_institutional_email,
     verify_google_id_token,
+    verify_password,
 )
 from app.models.user import User
 from app.api.v1.auth import get_or_create_user
+from app.services.token_encryption import decrypt_token, encrypt_token
 
 
 def test_validate_institutional_email_valid():
@@ -145,3 +150,68 @@ def test_get_or_create_user_new():
     assert user.email == "new@unsa.edu.pe"
     assert mock_db.add.called
     assert mock_db.commit.called
+
+
+def test_password_hash_and_verify_roundtrip():
+    hashed = hash_password("unsaSecret2026")
+    assert hashed.startswith("pbkdf2_sha256$100000$")
+    assert verify_password("unsaSecret2026", hashed) is True
+    assert verify_password("wrongPassword", hashed) is False
+    assert verify_password("unsaSecret2026", None) is False
+    assert verify_password("unsaSecret2026", "malformed") is False
+
+
+def test_settings_fail_closed_in_production():
+    with pytest.raises(ValidationError):
+        Settings(ENVIRONMENT="production")
+
+    with pytest.raises(ValidationError):
+        Settings(
+            ENVIRONMENT="production",
+            SECRET_KEY="prod_jwt_secret_strong_value_123456",
+            POSTGRES_PASSWORD="prod_db_password_strong_value",
+        )
+
+    with pytest.raises(ValidationError):
+        Settings(
+            ENVIRONMENT="staging",
+            SECRET_KEY="shared_secret_value_not_allowed",
+            ENCRYPTION_KEY="shared_secret_value_not_allowed",
+            POSTGRES_PASSWORD="prod_db_password_strong_value",
+        )
+
+    with pytest.raises(ValidationError):
+        Settings(
+            ENVIRONMENT="production",
+            SECRET_KEY="prod_jwt_secret_strong_value_123456",
+            ENCRYPTION_KEY="prod_enc_key_distinct_strong_value",
+            POSTGRES_PASSWORD="postgres_dev_password",
+        )
+
+    valid_prod = Settings(
+        ENVIRONMENT="production",
+        SECRET_KEY="prod_jwt_secret_strong_value_123456",
+        ENCRYPTION_KEY="prod_enc_key_distinct_strong_value",
+        POSTGRES_PASSWORD="prod_db_password_strong_value",
+    )
+    assert valid_prod.ENVIRONMENT == "production"
+
+
+def test_token_encryption_dedicated_key_and_empty_key_rejection(monkeypatch: pytest.MonkeyPatch):
+    import base64
+    import hashlib
+    from cryptography.fernet import Fernet
+    from app.core.config import settings
+
+    ciphertext = encrypt_token("refresh-token-abc")
+    assert ciphertext and ciphertext != "refresh-token-abc"
+    assert decrypt_token(ciphertext) == "refresh-token-abc"
+
+    # Legacy tokens encrypted with SECRET_KEY remain readable during rotation.
+    legacy_key = base64.urlsafe_b64encode(hashlib.sha256(settings.SECRET_KEY.encode("utf-8")).digest())
+    legacy_ciphertext = Fernet(legacy_key).encrypt(b"legacy-refresh-token").decode("utf-8")
+    assert decrypt_token(legacy_ciphertext) == "legacy-refresh-token"
+
+    monkeypatch.setattr(settings, "ENCRYPTION_KEY", "")
+    with pytest.raises(ValueError, match="ENCRYPTION_KEY"):
+        encrypt_token("refresh-token-abc")

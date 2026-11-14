@@ -183,67 +183,27 @@ class DuticSyncService:
         """
         Executes full course and assignment ingestion from DUTIC Moodle.
         """
-        if moodle_session in ("demo", "mock"):
-            courses_data = [
-                {"id": 101, "fullname": "Ingenieria de Software 3 - Grupo A", "shortname": "IS3-A"},
-                {"id": 102, "fullname": "Sistemas Distribuidos - Grupo B", "shortname": "SD-B"},
-                {"id": 103, "fullname": "Arquitectura de Software - Grupo A", "shortname": "ARQ-A"},
-            ]
-            current_epoch = int(datetime.now(timezone.utc).timestamp())
-            tasks_data = [
-                {
-                    "id": 201,
-                    "courseId": 101,
-                    "name": "Laboratorio 04: Orquestacion de Microservicios con Docker",
-                    "dueDate": current_epoch + 86400,
-                    "submission": "not-submitted",
-                    "hidden": False,
-                    "url": "https://dutic.unsa.edu.pe/mod/assign/view.php?id=201",
-                    "grade": None,
+        try:
+            courses_data = DuticApiClient.fetch_enrolled_courses(moodle_session, sesskey)
+            tasks_data = DuticApiClient.fetch_all_tasks(moodle_session, sesskey)
+        except DuticSessionExpiredError as exc:
+            user.classroom_sync_status = "NEEDS_REAUTH"
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={
+                    "code": "NEEDS_REAUTH",
+                    "message": "DUTIC Moodle session expired or invalid. Reauthentication required.",
                 },
-                {
-                    "id": 202,
-                    "courseId": 101,
-                    "name": "Fase 2: Documento de Arquitectura de Sistemas (SAD)",
-                    "dueDate": current_epoch + 86400 * 3,
-                    "submission": "submitted",
-                    "hidden": False,
-                    "url": "https://dutic.unsa.edu.pe/mod/assign/view.php?id=202",
-                    "grade": 18.0,
+            ) from exc
+        except DuticRateLimitError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "code": "RATE_LIMIT_EXCEEDED",
+                    "message": "DUTIC Moodle rate limit exceeded. Please retry later.",
                 },
-                {
-                    "id": 203,
-                    "courseId": 102,
-                    "name": "Practica Calificada: Consenso Raft en Sistemas Distribuidos",
-                    "dueDate": current_epoch + 86400 * 5,
-                    "submission": "not-submitted",
-                    "hidden": True,
-                    "url": "https://dutic.unsa.edu.pe/mod/assign/view.php?id=203",
-                    "grade": None,
-                },
-            ]
-        else:
-            try:
-                courses_data = DuticApiClient.fetch_enrolled_courses(moodle_session, sesskey)
-                tasks_data = DuticApiClient.fetch_all_tasks(moodle_session, sesskey)
-            except DuticSessionExpiredError as exc:
-                user.classroom_sync_status = "NEEDS_REAUTH"
-                db.commit()
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail={
-                        "code": "NEEDS_REAUTH",
-                        "message": "DUTIC Moodle session expired or invalid. Reauthentication required.",
-                    },
-                ) from exc
-            except DuticRateLimitError as exc:
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail={
-                        "code": "RATE_LIMIT_EXCEEDED",
-                        "message": "DUTIC Moodle rate limit exceeded. Please retry later.",
-                    },
-                ) from exc
+            ) from exc
 
         synced_courses_count = 0
         synced_assignments_count = 0

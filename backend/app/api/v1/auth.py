@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -7,9 +8,11 @@ from app.core.database import get_db
 from app.core.security import (
     create_access_token,
     get_current_user_from_db,
+    hash_password,
     oauth2_scheme,
     validate_institutional_email,
     verify_google_id_token,
+    verify_password,
 )
 from app.models.user import User, UserProfile
 from app.schemas.auth import EmailLoginRequest, GoogleAuthRequest, TokenResponse, UserResponse
@@ -34,23 +37,83 @@ def get_or_create_user(db: Session, google_payload: Dict[str, Any]) -> User:
 
     user = db.query(User).filter(User.email == email).first()
     if not user:
+        user_id = uuid.uuid4()
         user = User(
+            id=user_id,
             email=email,
             role="student",
             is_active=True,
         )
-        db.add(user)
-        db.flush()
-
         full_name = google_payload.get("name") or email.split("@")[0]
         profile = UserProfile(
-            user_id=user.id,
+            user_id=user_id,
             full_name=full_name,
             avatar_url=google_payload.get("picture"),
         )
+        user.profile = profile
+        db.add(user)
+        db.flush()
         db.add(profile)
         db.commit()
         db.refresh(user)
+
+    return user
+
+
+def authenticate_or_register_email_user(
+    db: Session,
+    email: str,
+    password: str,
+    full_name: Optional[str] = None,
+) -> User:
+    """
+    Authenticates an institutional user via stored PBKDF2 password hash,
+    or provisions a new student account when the email does not exist yet.
+    """
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        user_id = uuid.uuid4()
+        resolved_name = full_name.strip() if full_name and full_name.strip() else email.split("@")[0]
+        user = User(
+            id=user_id,
+            email=email,
+            role="student",
+            is_active=True,
+            password_hash=hash_password(password),
+        )
+        profile = UserProfile(
+            user_id=user_id,
+            full_name=resolved_name,
+        )
+        user.profile = profile
+        db.add(user)
+        db.flush()
+        db.add(profile)
+        db.commit()
+        db.refresh(user)
+        return user
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "USER_INACTIVE",
+                "message": "User account is deactivated.",
+            },
+        )
+
+    if (
+        not user.password_hash
+        or not isinstance(user.password_hash, str)
+        or not verify_password(password, user.password_hash)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_CREDENTIALS",
+                "message": "Invalid institutional email or password",
+            },
+        )
 
     return user
 
@@ -87,23 +150,16 @@ def login_with_google(
     Enforces institutional @unsa.edu.pe domain restriction, provisions user profile,
     and returns a signed JWT access token.
     """
-    if payload.token == "demo":
-        google_payload = {
-            "email": "mmarquezhe@unsa.edu.pe",
-            "name": "Marco Marquez (Demo Student)",
-            "picture": None,
-        }
-    else:
-        try:
-            google_payload = verify_google_id_token(payload.token)
-        except ValueError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={
-                    "code": "INVALID_CREDENTIALS",
-                    "message": "Invalid or expired Google token",
-                },
-            ) from exc
+    try:
+        google_payload = verify_google_id_token(payload.token)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_CREDENTIALS",
+                "message": "Invalid or expired Google token",
+            },
+        ) from exc
 
     email = google_payload.get("email", "")
     validate_institutional_email(email)
@@ -132,8 +188,8 @@ def login_with_email_password(
 ) -> TokenResponse:
     """
     Authenticates a user via institutional @unsa.edu.pe email and password.
-    Enforces institutional domain restrictions, provisions or retrieves the user profile,
-    and returns a signed JWT access token.
+    Enforces institutional domain restrictions, verifies PBKDF2 password hashes for existing accounts
+    or registers new institutional students, and returns a signed JWT access token.
     """
     cleaned_password = payload.password.strip()
     if not cleaned_password:
@@ -148,13 +204,12 @@ def login_with_email_password(
     cleaned_email = payload.email.strip().lower()
     validate_institutional_email(cleaned_email)
 
-    user_payload = {
-        "email": cleaned_email,
-        "name": payload.full_name or cleaned_email.split("@")[0],
-        "picture": None,
-    }
-
-    user = get_or_create_user(db=db, google_payload=user_payload)
+    user = authenticate_or_register_email_user(
+        db=db,
+        email=cleaned_email,
+        password=cleaned_password,
+        full_name=payload.full_name,
+    )
 
     access_token = create_access_token(
         data={

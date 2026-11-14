@@ -49,6 +49,11 @@ class User(Base):
         default=True,
         nullable=False,
     )
+    password_hash: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True,
+        default=None,
+    )
     classroom_sync_status: Mapped[str] = mapped_column(
         String(50),
         default="NOT_SYNCED",

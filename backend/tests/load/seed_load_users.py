@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.core.security import create_access_token
+from app.core.security import create_access_token, hash_password
 from app.models.classroom import ClassroomAssignment, ClassroomCourse
 from app.models.ticket import Ticket
 from app.models.user import User, UserProfile
@@ -33,6 +33,7 @@ def identity(index: int) -> str:
 
 def seed() -> None:
     require_isolation()
+    perf_password_hash = hash_password("perfpassword123")
     credentials: list[dict[str, str]] = []
     with SessionLocal() as db:
         if db.query(User).count():
@@ -40,7 +41,11 @@ def seed() -> None:
         for index in range(1000):
             name = identity(index)
             user = User(
-                id=uuid4(), email=f"{name}@unsa.edu.pe", role="student", is_active=True
+                id=uuid4(),
+                email=f"{name}@unsa.edu.pe",
+                role="student",
+                is_active=True,
+                password_hash=perf_password_hash,
             )
             db.add(user)
             # Ticket has a foreign key but no ORM relationship to order its insert.
