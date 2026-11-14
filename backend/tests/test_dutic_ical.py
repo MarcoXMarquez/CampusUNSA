@@ -582,3 +582,116 @@ def test_dutic_ical_rejects_ssrf_when_dns_resolves_to_private_ip(
     app.dependency_overrides.clear()
 
 
+def test_course_origin_column_filters_moodle_without_id_prefix_hack(
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+    auth_student: User,
+) -> None:
+    """Courses must filter by explicit origin column instead of fragile 'moodle-' ID prefixes."""
+    moodle_course = ClassroomCourse(
+        id=uuid.uuid4(),
+        user_id=auth_student.id,
+        classroom_course_id="unsa-2026-sis",
+        name="Arquitectura de Software",
+        origin="moodle",
+    )
+    classroom_course = ClassroomCourse(
+        id=uuid.uuid4(),
+        user_id=auth_student.id,
+        classroom_course_id="gclass-99",
+        name="Base de Datos",
+        origin="classroom",
+    )
+    test_db_session.add_all([moodle_course, classroom_course])
+    test_db_session.commit()
+
+    app.dependency_overrides[get_db] = lambda: test_db_session
+    try:
+        with TestClient(app) as client:
+            res = client.get("/api/v1/dutic/courses", headers=auth_headers)
+            assert res.status_code == 200
+            courses = res.json()
+            assert len(courses) == 1
+            assert courses[0]["classroom_course_id"] == "unsa-2026-sis"
+            assert courses[0]["origin"] == "moodle"
+
+            del_res = client.delete("/api/v1/classroom/courses?origin=moodle", headers=auth_headers)
+            assert del_res.status_code == 200
+            assert del_res.json()["deleted_count"] == 1
+    finally:
+        app.dependency_overrides.clear()
+
+    remaining = (
+        test_db_session.query(ClassroomCourse)
+        .filter(ClassroomCourse.user_id == auth_student.id)
+        .all()
+    )
+    assert len(remaining) == 1
+    assert remaining[0].classroom_course_id == "gclass-99"
+
+
+def test_moodle_sync_does_not_overwrite_google_classroom_sync_state(
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+    auth_student: User,
+) -> None:
+    """DUTIC sync errors must update Moodle state without clobbering Google Classroom fields."""
+    from app.core.exceptions import DuticSessionExpiredError
+
+    auth_student.classroom_sync_status = "SYNCED"
+    auth_student.google_classroom_sync_status = "CONNECTED"
+    test_db_session.commit()
+
+    app.dependency_overrides[get_db] = lambda: test_db_session
+    try:
+        with patch(
+            "app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses",
+            side_effect=DuticSessionExpiredError("Moodle session expired"),
+        ):
+            with TestClient(app) as client:
+                res = client.post(
+                    "/api/v1/dutic/sync",
+                    headers=auth_headers,
+                    json={"moodle_session": "expired", "sesskey": "bad"},
+                )
+                assert res.status_code == 401
+    finally:
+        app.dependency_overrides.clear()
+
+    test_db_session.expire_all()
+    refreshed = test_db_session.query(User).filter(User.id == auth_student.id).first()
+    assert refreshed is not None
+    assert refreshed.classroom_sync_status == "SYNCED"
+    assert refreshed.google_classroom_sync_status == "CONNECTED"
+    assert refreshed.moodle_calendar_sync_status == "NEEDS_REAUTH"
+
+
+def test_parse_ical_content_generates_deterministic_uid_when_uid_missing() -> None:
+    """Missing iCal UIDs must hash event content rather than array index position."""
+    from app.services.dutic_ical import DuticIcalService
+
+    event_alpha = (
+        "BEGIN:VEVENT\n"
+        "SUMMARY:Practica Calificada 1\n"
+        "DTEND:20261120T235900Z\n"
+        "CATEGORIES:26B_IS_101\n"
+        "END:VEVENT\n"
+    )
+    event_beta = (
+        "BEGIN:VEVENT\n"
+        "SUMMARY:Examen Parcial\n"
+        "DTEND:20261125T180000Z\n"
+        "CATEGORIES:26B_IS_102\n"
+        "END:VEVENT\n"
+    )
+    feed_ab = f"BEGIN:VCALENDAR\nVERSION:2.0\n{event_alpha}{event_beta}END:VCALENDAR\n"
+    feed_ba = f"BEGIN:VCALENDAR\nVERSION:2.0\n{event_beta}{event_alpha}END:VCALENDAR\n"
+
+    parsed_ab = {item["title"]: item["uid"] for item in DuticIcalService.parse_ical_content(feed_ab)}
+    parsed_ba = {item["title"]: item["uid"] for item in DuticIcalService.parse_ical_content(feed_ba)}
+
+    assert parsed_ab["Practica Calificada 1"] == parsed_ba["Practica Calificada 1"]
+    assert parsed_ab["Examen Parcial"] == parsed_ba["Examen Parcial"]
+    assert parsed_ab["Practica Calificada 1"] != parsed_ab["Examen Parcial"]
+
+

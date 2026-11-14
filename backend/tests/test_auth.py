@@ -89,17 +89,23 @@ def test_get_current_user_me_authenticated(client: TestClient):
     REQ-02 / Session Validation:
     Protected route GET /api/v1/auth/me returns the profile when provided a valid JWT.
     """
+    from app.api.dependencies import _resolve_authenticated_user
+    from app.main import app
+
     mock_user = MagicMock()
     mock_user.id = "b4f2c001-0000-0000-0000-000000000001"
     mock_user.email = "mromero@unsa.edu.pe"
     mock_user.role = "student"
     mock_user.full_name = "Marco Romero"
 
-    with patch("app.api.v1.auth.get_current_user", return_value=mock_user):
+    app.dependency_overrides[_resolve_authenticated_user] = lambda: mock_user
+    try:
         response = client.get(
             "/api/v1/auth/me",
             headers={"Authorization": "Bearer mock-valid-jwt"},
         )
+    finally:
+        app.dependency_overrides.pop(_resolve_authenticated_user, None)
 
     assert response.status_code == 200
     data = response.json()

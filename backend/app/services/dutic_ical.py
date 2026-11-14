@@ -9,6 +9,7 @@ Handles:
 """
 
 from datetime import datetime, timezone
+import hashlib
 import ipaddress
 import posixpath
 import socket
@@ -18,8 +19,9 @@ import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.models.classroom import ClassroomAssignment, ClassroomCourse
+from app.models.classroom import ClassroomCourse
 from app.models.user import User
+from app.repositories.academic_repo import AcademicSyncRepository
 from app.schemas.dutic import SyncDuticResponse
 from app.services.token_encryption import decrypt_token
 
@@ -225,12 +227,15 @@ class DuticIcalService:
                 url = current_event.get("URL", "").strip()
 
                 due_dt = cls._parse_ics_datetime(raw_due)
+                resolved_category = category or "UNSA Moodle"
+                fallback_seed = f"{resolved_category}|{summary}|{raw_due}|{url}".encode("utf-8")
+                fallback_uid = f"moodle-ical-{hashlib.sha256(fallback_seed).hexdigest()[:24]}"
 
                 events.append({
-                    "uid": uid or f"moodle-ical-{len(events)}",
+                    "uid": uid or fallback_uid,
                     "title": summary,
                     "description": description or None,
-                    "category": category or "UNSA Moodle",
+                    "category": resolved_category,
                     "due_date": due_dt,
                     "url": url or None,
                 })
@@ -342,63 +347,34 @@ class DuticIcalService:
 
             # Idempotently upsert course
             if category not in courses_by_category:
-                course = (
-                    db.query(ClassroomCourse)
-                    .filter(
-                        ClassroomCourse.user_id == user.id,
-                        ClassroomCourse.classroom_course_id == course_code,
-                    )
-                    .first()
+                courses_by_category[category] = AcademicSyncRepository.upsert_course(
+                    db,
+                    user_id=user.id,
+                    course_ref_id=course_code,
+                    name=f"Curso {category}",
+                    section=category,
+                    origin="moodle",
                 )
-                if not course:
-                    course = ClassroomCourse(
-                        user_id=user.id,
-                        classroom_course_id=course_code,
-                        name=f"Curso {category}",
-                        section=category,
-                    )
-                    db.add(course)
-                    db.flush()
-                courses_by_category[category] = course
-            else:
-                course = courses_by_category[category]
+            course = courses_by_category[category]
 
             # Idempotently upsert assignment
-            uid = item["uid"]
-            assignment = (
-                db.query(ClassroomAssignment)
-                .filter(
-                    ClassroomAssignment.user_id == user.id,
-                    ClassroomAssignment.classroom_assignment_id == uid,
-                )
-                .first()
+            AcademicSyncRepository.upsert_assignment(
+                db,
+                user_id=user.id,
+                course_id=course.id,
+                assignment_ref_id=item["uid"],
+                title=item["title"],
+                description=item["description"],
+                due_date=item["due_date"],
+                origin="moodle",
+                state="PUBLISHED",
+                alternate_link=item["url"],
             )
-            if not assignment:
-                assignment = ClassroomAssignment(
-                    user_id=user.id,
-                    course_id=course.id,
-                    classroom_assignment_id=uid,
-                    title=item["title"],
-                    description=item["description"],
-                    due_date=item["due_date"],
-                    origin="moodle",
-                    state="PUBLISHED",
-                    alternate_link=item["url"],
-                )
-                db.add(assignment)
-            else:
-                assignment.course_id = course.id
-                assignment.title = item["title"]
-                assignment.description = item["description"]
-                assignment.due_date = item["due_date"]
-                assignment.alternate_link = item["url"]
-                assignment.updated_at = datetime.now(timezone.utc)
 
             synced_assignments_count += 1
 
         sync_timestamp = datetime.now(timezone.utc)
         user.moodle_calendar_sync_status = "SYNCED"
-        user.last_classroom_sync_at = sync_timestamp
         db.commit()
 
         return SyncDuticResponse(

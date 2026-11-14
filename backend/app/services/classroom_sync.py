@@ -13,25 +13,15 @@ import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.models.classroom import ClassroomAssignment, ClassroomCourse
+from app.core.exceptions import (  # noqa: F401
+    GoogleClassroomAuthError,
+    GoogleClassroomError,
+    GoogleClassroomRateLimitError,
+)
 from app.models.user import User
+from app.repositories.academic_repo import AcademicSyncRepository
 from app.schemas.classroom import SyncClassroomResponse
 from app.services.token_encryption import decrypt_token
-
-
-class GoogleClassroomError(Exception):
-    """Base exception for Google Classroom API errors."""
-    pass
-
-
-class GoogleClassroomAuthError(GoogleClassroomError):
-    """Raised when Google Classroom OAuth token is expired or revoked (HTTP 401)."""
-    pass
-
-
-class GoogleClassroomRateLimitError(GoogleClassroomError):
-    """Raised when Google Classroom API quota is exceeded (HTTP 429)."""
-    pass
 
 
 class ClassroomApiClient:
@@ -195,31 +185,15 @@ class ClassroomSyncService:
             section = course_item.get("section")
             alternate_link = course_item.get("alternateLink")
 
-            # Upsert course
-            course = (
-                db.query(ClassroomCourse)
-                .filter(
-                    ClassroomCourse.user_id == user.id,
-                    ClassroomCourse.classroom_course_id == course_id_str,
-                )
-                .first()
+            course = AcademicSyncRepository.upsert_course(
+                db,
+                user_id=user.id,
+                course_ref_id=course_id_str,
+                name=course_name,
+                section=section,
+                alternate_link=alternate_link,
+                origin="classroom",
             )
-            if not course:
-                course = ClassroomCourse(
-                    user_id=user.id,
-                    classroom_course_id=course_id_str,
-                    name=course_name,
-                    section=section,
-                    alternate_link=alternate_link,
-                )
-                db.add(course)
-                db.flush()
-            else:
-                course.name = course_name
-                course.section = section
-                course.alternate_link = alternate_link
-                course.updated_at = datetime.now(timezone.utc)
-
             synced_courses_count += 1
 
             # Fetch and upsert assignments for this course
@@ -265,39 +239,19 @@ class ClassroomSyncService:
                     assignment_item.get("dueTime"),
                 )
 
-                # Upsert assignment
-                assignment = (
-                    db.query(ClassroomAssignment)
-                    .filter(
-                        ClassroomAssignment.user_id == user.id,
-                        ClassroomAssignment.classroom_assignment_id == assignment_id_str,
-                    )
-                    .first()
+                AcademicSyncRepository.upsert_assignment(
+                    db,
+                    user_id=user.id,
+                    course_id=course.id,
+                    assignment_ref_id=assignment_id_str,
+                    title=title,
+                    description=description,
+                    due_date=due_dt,
+                    max_points=max_points,
+                    state=state,
+                    alternate_link=assign_link,
+                    origin="classroom",
                 )
-                if not assignment:
-                    assignment = ClassroomAssignment(
-                        user_id=user.id,
-                        course_id=course.id,
-                        classroom_assignment_id=assignment_id_str,
-                        title=title,
-                        description=description,
-                        due_date=due_dt,
-                        max_points=max_points,
-                        state=state,
-                        alternate_link=assign_link,
-                        origin="classroom",
-                    )
-                    db.add(assignment)
-                else:
-                    assignment.course_id = course.id
-                    assignment.title = title
-                    assignment.description = description
-                    assignment.due_date = due_dt
-                    assignment.max_points = max_points
-                    assignment.state = state
-                    assignment.alternate_link = assign_link
-                    assignment.updated_at = datetime.now(timezone.utc)
-
                 synced_assignments_count += 1
 
         # Mark user synchronization state as successful

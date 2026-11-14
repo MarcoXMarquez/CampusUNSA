@@ -4,12 +4,11 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import _resolve_authenticated_user, get_current_user  # noqa: F401
 from app.core.database import get_db
 from app.core.security import (
     create_access_token,
-    get_current_user_from_db,
     hash_password,
-    oauth2_scheme,
     validate_institutional_email,
     verify_google_id_token,
     verify_password,
@@ -116,28 +115,6 @@ def authenticate_or_register_email_user(
         )
 
     return user
-
-
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-) -> User:
-    """
-    Extracts the authenticated User entity from the provided Bearer token.
-    Can be patched in test suites or delegates directly to get_current_user_from_db.
-    """
-    return get_current_user_from_db(token=token, db=db)
-
-
-def _resolve_authenticated_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-) -> User:
-    """
-    Dynamic dependency indirection that allows get_current_user to be patched in unit tests
-    while strictly enforcing oauth2_scheme authentication checks when headers are missing.
-    """
-    return get_current_user(token=token, db=db)
 
 
 @router.post("/google", response_model=TokenResponse)

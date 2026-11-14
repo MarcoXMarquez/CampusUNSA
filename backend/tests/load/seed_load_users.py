@@ -58,6 +58,7 @@ def seed() -> None:
                 course = ClassroomCourse(
                     id=uuid4(),
                     user_id=user.id,
+                    origin=origin,
                     classroom_course_id=course_ref,
                     name=f"Performance {origin.title()}",
                 )

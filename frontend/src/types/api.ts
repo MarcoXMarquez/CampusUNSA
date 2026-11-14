@@ -60,8 +60,8 @@ export interface paths {
         /**
          * Login With Email Password
          * @description Authenticates a user via institutional @unsa.edu.pe email and password.
-         *     Enforces institutional domain restrictions, provisions or retrieves the user profile,
-         *     and returns a signed JWT access token.
+         *     Enforces institutional domain restrictions, verifies PBKDF2 password hashes for existing accounts
+         *     or registers new institutional students, and returns a signed JWT access token.
          */
         post: operations["login_with_email_password_api_v1_auth_login_post"];
         delete?: never;
@@ -201,7 +201,7 @@ export interface paths {
         };
         /**
          * Get Student Courses
-         * @description Retrieves all synced Google Classroom courses for the authenticated student.
+         * @description Retrieves all synced courses for the authenticated student.
          */
         get: operations["get_student_courses_api_v1_classroom_courses_get"];
         put?: never;
@@ -516,6 +516,11 @@ export interface components {
             /** Alternate Link */
             alternate_link?: string | null;
             /**
+             * Origin
+             * @default classroom
+             */
+            origin: string;
+            /**
              * Created At
              * Format: date-time
              */
@@ -591,6 +596,11 @@ export interface components {
             section?: string | null;
             /** Alternate Link */
             alternate_link?: string | null;
+            /**
+             * Origin
+             * @default classroom
+             */
+            origin: string;
             /**
              * Created At
              * Format: date-time

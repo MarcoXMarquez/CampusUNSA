@@ -7,13 +7,14 @@ DUTIC Moodle API endpoints:
 
 from datetime import datetime, timezone
 from typing import List
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.v1.auth import _resolve_authenticated_user
+from app.api.dependencies import _resolve_authenticated_user
 from app.core.database import get_db
-from app.models.classroom import ClassroomAssignment, ClassroomCourse
 from app.models.user import User
+from app.repositories.academic_repo import AcademicSyncRepository
 from app.schemas.dutic import (
     DuticAssignmentResponse,
     DuticCourseResponse,
@@ -57,16 +58,7 @@ def get_dutic_courses(
     """
     Retrieves all synced Moodle courses for the authenticated student.
     """
-    courses = (
-        db.query(ClassroomCourse)
-        .filter(
-            ClassroomCourse.user_id == current_user.id,
-            ClassroomCourse.classroom_course_id.startswith("moodle-"),
-        )
-        .order_by(ClassroomCourse.name.asc())
-        .all()
-    )
-    return courses
+    return AcademicSyncRepository.list_courses(db, current_user.id, origin="moodle")
 
 
 @router.get("/assignments", response_model=List[DuticAssignmentResponse])
@@ -77,16 +69,7 @@ def get_dutic_assignments(
     """
     Retrieves all synced Moodle coursework assignments for the authenticated student.
     """
-    assignments = (
-        db.query(ClassroomAssignment)
-        .filter(
-            ClassroomAssignment.user_id == current_user.id,
-            ClassroomAssignment.origin == "moodle",
-        )
-        .order_by(ClassroomAssignment.due_date.asc().nullslast())
-        .all()
-    )
-    return assignments
+    return AcademicSyncRepository.list_assignments(db, current_user.id, origin="moodle")
 
 
 @router.get("/ical/status", response_model=MoodleIcalStatusResponse)

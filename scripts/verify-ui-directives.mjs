@@ -48,37 +48,86 @@ const FONT_IMPORT_REGEX = /(from\s+['"]next\/font\/google['"]|@import\s+url\(['"
 // Rule 3.2.2.4: Prohibited Fake Status Bar (hardcoded 9:41 clock or fake mobile status drawings)
 const FAKE_STATUS_REGEX = /\b(9:41|status-bar-battery|fake-status-bar)\b/i;
 
+// Rule 3.2.3: Prohibited off-palette Tailwind color scale classes and arbitrary hex classes
+const OFF_PALETTE_SCALE_REGEX =
+  /\b(bg|text|border)-(emerald|red|blue|amber|green|yellow|purple|pink|indigo|teal|cyan|orange|slate|zinc|gray|neutral)-\d+/;
+const ARBITRARY_HEX_CLASS_REGEX =
+  /(?:bg|text|border|ring|placeholder)-\[(#[0-9A-Fa-f]{3,8})\]/g;
+const APPROVED_HEX_TOKENS = new Set([
+  "#F2F2F7",
+  "#000000",
+  "#FFFFFF",
+  "#1C1C1E",
+  "#8B0000",
+  "#E5575B",
+  "#FF3B30",
+  "#FF453A",
+  "#FFCC00",
+  "#FFD60A",
+  "#34C759",
+  "#30D158",
+  "#E5E5EA",
+  "#DADCE0",
+]);
+
 scanDirectory(
   frontendSrc,
   (name) => /\.(tsx|jsx|css)$/.test(name) && !name.includes(".test."),
   (filePath) => {
     const content = fs.readFileSync(filePath, "utf-8");
     const lines = content.split("\n");
+    const isComponent = filePath.includes("/components/");
 
     lines.forEach((line, idx) => {
       const lineNum = idx + 1;
 
-      // Check opt-out
+      // Check opt-out (must carry a non-empty trailing reason per Section 3.2.10)
       if (line.includes("// ui-gate-ignore:")) {
-        return;
-      }
-
-      // 1. Check prohibited shadows in components
-      if (filePath.includes("/components/") && SHADOW_REGEX.test(line)) {
-        // Exclude LoginModal and AuthFlow official Google button and card styles matching Stitch design
-        const isAuthFlowExempt =
-          filePath.endsWith("LoginModal.tsx") || filePath.endsWith("AuthFlow.tsx");
-        if (!isAuthFlowExempt) {
+        if (!/\/\/\s*ui-gate-ignore:\s*\S+/.test(line)) {
           reportViolation(
             filePath,
             lineNum,
-            "Rule-3.2.2.1",
-            "Prohibited floating shadow class detected. Use inset lists with hairline borders instead."
+            "Rule-3.2.10",
+            "Unexplained ui-gate-ignore opt-out detected. Provide a trailing reason."
           );
+        }
+        return;
+      }
+
+      // 1. Check prohibited shadows in components (no broad component exemptions)
+      if (isComponent && SHADOW_REGEX.test(line)) {
+        reportViolation(
+          filePath,
+          lineNum,
+          "Rule-3.2.2.1",
+          "Prohibited floating shadow class detected. Use inset lists with hairline borders instead."
+        );
+      }
+
+      // 2. Check prohibited off-palette color classes and arbitrary hex literals in components
+      if (isComponent) {
+        if (OFF_PALETTE_SCALE_REGEX.test(line)) {
+          reportViolation(
+            filePath,
+            lineNum,
+            "Rule-3.2.3",
+            "Off-palette Tailwind color scale class detected. Use Section 3.2.3 design tokens."
+          );
+        }
+        for (const match of line.matchAll(ARBITRARY_HEX_CLASS_REGEX)) {
+          const hex = match[1].toUpperCase();
+          if (!APPROVED_HEX_TOKENS.has(hex)) {
+            reportViolation(
+              filePath,
+              lineNum,
+              "Rule-3.2.3",
+              `Off-palette arbitrary hex token ${hex} detected. Use Section 3.2.3 design tokens.`
+            );
+          }
         }
       }
 
-      // 2. Check prohibited web fonts
+      // 3. Check prohibited web fonts
       if (FONT_IMPORT_REGEX.test(line)) {
         reportViolation(
           filePath,
@@ -88,7 +137,7 @@ scanDirectory(
         );
       }
 
-      // 3. Check fake status bars
+      // 4. Check fake status bars
       if (FAKE_STATUS_REGEX.test(line)) {
         reportViolation(
           filePath,

@@ -1,12 +1,25 @@
-"""Reusable authorization dependencies built on persisted user identity."""
+"""Reusable authentication and authorization dependencies built on persisted user identity."""
 
 from collections.abc import Callable, Sequence
 
 from fastapi import Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
-from app.api.v1.auth import _resolve_authenticated_user
+from app.core.database import get_db
 from app.core.permissions import ALL_PERMISSIONS, ROLE_PERMISSIONS, Permission
+from app.core.security import get_current_user_from_db, oauth2_scheme
 from app.models.user import User
+
+
+def _resolve_authenticated_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    """Resolve and validate the active database User from the Bearer JWT."""
+    return get_current_user_from_db(token=token, db=db)
+
+
+get_current_user = _resolve_authenticated_user
 
 
 def has_role(
