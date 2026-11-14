@@ -13,7 +13,7 @@ test.describe("PWA Offline & Reconnection Resilience (US-07)", () => {
       window.localStorage.setItem("campusunsa_token", jwt);
     }, TEST_JWT);
 
-    await page.route("**/api/v1/**", async (route) => {
+    await context.route("**/api/v1/**", async (route) => {
       const url = route.request().url();
       if (url.endsWith("/auth/me")) {
         return route.fulfill({
