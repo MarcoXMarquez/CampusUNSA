@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { onlineManager } from "@tanstack/react-query";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import HomePage from "./page";
 
@@ -14,12 +15,22 @@ function jsonResponse(data: unknown, status = 200): Response {
 describe("HomePage Component", () => {
   beforeEach(() => {
     localStorage.clear();
+    onlineManager.setOnline(true);
+    Object.defineProperty(navigator, "onLine", {
+      value: true,
+      configurable: true,
+    });
   });
 
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
     localStorage.clear();
+    onlineManager.setOnline(true);
+    Object.defineProperty(navigator, "onLine", {
+      value: true,
+      configurable: true,
+    });
   });
 
   it("renders 5-item bottom navigation and first-time TareasSyncView when platforms are disconnected", () => {
@@ -363,5 +374,241 @@ describe("HomePage Component", () => {
     // Tapping + Tarea opens Pendiente de implementacion modal
     fireEvent.click(screen.getByRole("button", { name: "+ Tarea" }));
     expect(screen.getByText(/Pendiente de implementación/i)).toBeDefined();
+  });
+
+  it("renders HoyView and HorarioView from offline snapshot without flashing TareasSyncView when reloaded offline", async () => {
+    Object.defineProperty(navigator, "onLine", {
+      value: false,
+      configurable: true,
+    });
+
+    localStorage.setItem("campusunsa_token", testToken);
+    localStorage.setItem(
+      "campusunsa_session:42",
+      JSON.stringify({
+        user: {
+          id: "42",
+          email: "marco@unsa.edu.pe",
+          full_name: "Marco Student",
+          role: "student",
+        },
+        classroomConnected: true,
+        classroomSyncStatus: "CONNECTED",
+        moodleIcalConnected: true,
+        moodleIcalSyncStatus: "CONNECTED",
+      })
+    );
+    localStorage.setItem(
+      "campusunsa_board:42",
+      JSON.stringify({
+        courses: [
+          {
+            id: "c-off-1",
+            course_code: "1705275",
+            name: "DESARROLLO DE SOFTWARE PARA JUEGOS",
+            theory_group: "A",
+            lab_group: null,
+            mapping_status: "LINKED",
+            sources: [],
+            schedule_blocks: [
+              {
+                id: "blk-off-1",
+                course_code: "1705275",
+                term: "2026B",
+                component_type: "TEORIA",
+                group_code: "A",
+                day_of_week: 1,
+                start_time: "08:40",
+                end_time: "10:20",
+                room: "Pabellón Sistemas",
+              },
+            ],
+          },
+        ],
+        assignments: [
+          {
+            id: "task-off-1",
+            title: "Practica Offline Cacheada",
+            course_id: "c-off-1",
+            course_name: "DESARROLLO DE SOFTWARE PARA JUEGOS",
+            source_platform: "CLASSROOM",
+            due_at: "2026-11-18T23:59:00Z",
+            is_completed: false,
+          },
+        ],
+        moodleSessionExpired: false,
+      })
+    );
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new TypeError("Failed to fetch"))
+    );
+
+    render(<HomePage />);
+
+    // Renders cached view immediately instead of TareasSyncView
+    expect(screen.queryByText("Sincroniza tus plataformas")).toBeNull();
+    expect(screen.getByText("Practica Offline Cacheada")).toBeDefined();
+    expect(
+      screen.getByText(/Sin conexión · mostrando datos guardados/i)
+    ).toBeDefined();
+
+    // HorarioView also works offline
+    fireEvent.click(screen.getByRole("button", { name: "Horario" }));
+    await waitFor(() => {
+      expect(screen.getAllByText(/Pabellón Sistemas/).length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  it("automatically re-syncs session and academic board when connection returns online", async () => {
+    Object.defineProperty(navigator, "onLine", {
+      value: false,
+      configurable: true,
+    });
+
+    localStorage.setItem("campusunsa_token", testToken);
+    localStorage.setItem(
+      "campusunsa_session:42",
+      JSON.stringify({
+        user: {
+          id: "42",
+          email: "marco@unsa.edu.pe",
+          full_name: "Marco Student",
+          role: "student",
+        },
+        classroomConnected: true,
+        classroomSyncStatus: "CONNECTED",
+        moodleIcalConnected: true,
+        moodleIcalSyncStatus: "CONNECTED",
+      })
+    );
+    localStorage.setItem(
+      "campusunsa_board:42",
+      JSON.stringify({
+        courses: [],
+        assignments: [
+          {
+            id: "task-stale",
+            title: "Tarea Cacheada Previa",
+            course_id: "c-1",
+            course_name: "Curso Demo",
+            source_platform: "CLASSROOM",
+            due_at: "2026-11-18T23:59:00Z",
+            is_completed: false,
+          },
+        ],
+        moodleSessionExpired: false,
+      })
+    );
+
+    let onlineMode = false;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        if (!onlineMode) {
+          throw new TypeError("Network offline");
+        }
+        const url = String(input);
+        if (url.endsWith("/auth/me")) {
+          return jsonResponse({ id: "42", email: "marco@unsa.edu.pe", full_name: "Marco Student" });
+        }
+        if (url.endsWith("/auth/google/classroom/status")) {
+          return jsonResponse({ connected: true, sync_status: "CONNECTED" });
+        }
+        if (url.endsWith("/dutic/ical/status")) {
+          return jsonResponse({ connected: true, sync_status: "CONNECTED" });
+        }
+        if (url.endsWith("/courses/assignments")) {
+          return jsonResponse([
+            {
+              id: "task-fresh",
+              title: "Tarea Sincronizada Online",
+              course_id: "c-1",
+              course_name: "Curso Demo",
+              source_platform: "MOODLE",
+              due_at: "2026-11-19T23:59:00Z",
+              is_completed: false,
+            },
+          ]);
+        }
+        if (url.endsWith("/health")) {
+          return jsonResponse({ status: "healthy" });
+        }
+        return jsonResponse([]);
+      })
+    );
+
+    render(<HomePage />);
+    expect(screen.getByText("Tarea Cacheada Previa")).toBeDefined();
+
+    // Simulate network recovery
+    onlineMode = true;
+    Object.defineProperty(navigator, "onLine", {
+      value: true,
+      configurable: true,
+    });
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Tarea Sincronizada Online")).toBeDefined();
+    });
+  });
+
+  it("clears cached student session and academic board data on logout", async () => {
+    localStorage.setItem("campusunsa_token", testToken);
+    localStorage.setItem(
+      "campusunsa_session:42",
+      JSON.stringify({
+        user: {
+          id: "42",
+          email: "marco@unsa.edu.pe",
+          full_name: "Marco Student",
+          role: "student",
+        },
+        classroomConnected: true,
+        classroomSyncStatus: "CONNECTED",
+        moodleIcalConnected: true,
+        moodleIcalSyncStatus: "CONNECTED",
+      })
+    );
+    localStorage.setItem(
+      "campusunsa_board:42",
+      JSON.stringify({ courses: [], assignments: [], moodleSessionExpired: false })
+    );
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.endsWith("/auth/me")) {
+          return jsonResponse({ id: "42", email: "marco@unsa.edu.pe", full_name: "Marco Student" });
+        }
+        if (url.endsWith("/auth/google/classroom/status") || url.endsWith("/dutic/ical/status")) {
+          return jsonResponse({ connected: true, sync_status: "CONNECTED" });
+        }
+        if (url.endsWith("/health")) {
+          return jsonResponse({ status: "healthy" });
+        }
+        return jsonResponse([]);
+      })
+    );
+
+    render(<HomePage />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Ajustes" })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Cerrar Sesión/i)).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByText(/Cerrar Sesión/i));
+
+    await waitFor(() => {
+      expect(localStorage.getItem("campusunsa_token")).toBeNull();
+      expect(localStorage.getItem("campusunsa_session:42")).toBeNull();
+      expect(localStorage.getItem("campusunsa_board:42")).toBeNull();
+    });
   });
 });

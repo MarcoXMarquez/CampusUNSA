@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { onlineManager } from "@tanstack/react-query";
 import { Page } from "konsta/react";
 import { WhatsappLogo } from "@phosphor-icons/react";
 import Script from "next/script";
@@ -12,6 +13,18 @@ import { LoginModal } from "./LoginModal";
 import { WhatsAppSheet } from "./WhatsAppSheet";
 import { QueryProvider } from "./QueryProvider";
 import { useAcademicBoard } from "../hooks/useAcademicBoard";
+import {
+  clearOfflineAccountData,
+  readSessionFromIndexedDb,
+  readSessionSnapshotSync,
+  writeSessionSnapshot,
+  type OfflineSessionSnapshot,
+} from "../lib/offline-db";
+import {
+  clearSwApiCache,
+  registerServiceWorker,
+  requestBackgroundSync,
+} from "../lib/pwa-sw";
 import { taskSyncMessages as syncMessages } from "../lib/task-board-messages";
 import {
   ApiRequestError,
@@ -63,52 +76,81 @@ function NavigationContent(): React.JSX.Element {
   const [moodleIcalSyncStatus, setMoodleIcalSyncStatus] = useState<string>("NOT_CONNECTED");
 
   const clientId = getGoogleClientId();
+  const tokenRef = useRef<string | null>(null);
+  tokenRef.current = token;
 
-  // Check online status
-  useEffect(() => {
-    setIsOnline(typeof navigator !== "undefined" ? navigator.onLine : true);
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
+  const applySessionSnapshot = useCallback((snapshot: OfflineSessionSnapshot) => {
+    if (snapshot.user) {
+      setUser(snapshot.user);
+    }
+    setClassroomConnected(snapshot.classroomConnected);
+    setClassroomSyncStatus(snapshot.classroomSyncStatus);
+    setMoodleIcalConnected(snapshot.moodleIcalConnected);
+    setMoodleIcalSyncStatus(snapshot.moodleIcalSyncStatus);
   }, []);
 
   const hydrateSession = useCallback(async (authToken: string) => {
+    const cachedSnapshot =
+      readSessionSnapshotSync(authToken) ??
+      (await readSessionFromIndexedDb(authToken));
+    if (cachedSnapshot) {
+      applySessionSnapshot(cachedSnapshot);
+    }
+
     try {
       const [profile, statuses] = await Promise.all([
         fetchCurrentUser(authToken),
         fetchIntegrationStatuses(authToken),
       ]);
-      if (profile) {
-        setUser(profile);
+
+      const nextSnapshot: OfflineSessionSnapshot = {
+        user: profile ?? cachedSnapshot?.user ?? null,
+        classroomConnected: statuses.classroomReachable
+          ? statuses.classroomConnected
+          : cachedSnapshot?.classroomConnected ?? false,
+        classroomSyncStatus: statuses.classroomReachable
+          ? statuses.classroomSyncStatus
+          : cachedSnapshot?.classroomSyncStatus ?? "NOT_CONNECTED",
+        moodleIcalConnected: statuses.moodleReachable
+          ? statuses.moodleSubscribed
+          : cachedSnapshot?.moodleIcalConnected ?? false,
+        moodleIcalSyncStatus: statuses.moodleReachable
+          ? statuses.moodleSyncStatus
+          : cachedSnapshot?.moodleIcalSyncStatus ?? "NOT_CONNECTED",
+      };
+
+      applySessionSnapshot(nextSnapshot);
+      if (profile || statuses.classroomReachable || statuses.moodleReachable) {
+        await writeSessionSnapshot(authToken, nextSnapshot);
       }
-      setClassroomConnected(statuses.classroomConnected);
-      setClassroomSyncStatus(statuses.classroomSyncStatus);
-      setMoodleIcalConnected(statuses.moodleSubscribed);
-      setMoodleIcalSyncStatus(statuses.moodleSyncStatus);
     } catch (err: unknown) {
       if (err instanceof ApiRequestError && err.status === 401) {
         localStorage.removeItem("campusunsa_token");
+        void clearOfflineAccountData(authToken);
+        void clearSwApiCache();
         setToken(null);
         setUser(null);
+        setClassroomConnected(false);
+        setClassroomSyncStatus("NOT_CONNECTED");
+        setMoodleIcalConnected(false);
+        setMoodleIcalSyncStatus("NOT_CONNECTED");
       }
     }
-  }, []);
+  }, [applySessionSnapshot]);
 
   // Initialize stored token, user profile, integration statuses and backend health
   useEffect(() => {
     const savedToken = localStorage.getItem("campusunsa_token");
     if (savedToken) {
       setToken(savedToken);
+      const syncSnapshot = readSessionSnapshotSync(savedToken);
+      if (syncSnapshot) {
+        applySessionSnapshot(syncSnapshot);
+      }
       void hydrateSession(savedToken);
     }
     void fetchBackendHealth().then(setBackendHealth);
-  }, [hydrateSession]);
+  }, [applySessionSnapshot, hydrateSession]);
 
   const {
     courses,
@@ -124,6 +166,59 @@ function NavigationContent(): React.JSX.Element {
     completionError,
     refresh,
   } = useAcademicBoard(token);
+
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
+
+  // Sync browser online/offline state, background reconnection, and Service Worker
+  useEffect(() => {
+    const initialOnline =
+      typeof navigator !== "undefined" ? navigator.onLine : true;
+    setIsOnline(initialOnline);
+    onlineManager.setOnline(initialOnline);
+
+    const triggerReconnectSync = () => {
+      const currentToken = tokenRef.current;
+      if (currentToken) {
+        void hydrateSession(currentToken);
+        void refreshRef.current();
+      }
+      void fetchBackendHealth().then(setBackendHealth);
+    };
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      onlineManager.setOnline(true);
+      triggerReconnectSync();
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      onlineManager.setOnline(false);
+      void requestBackgroundSync();
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    let cleanupSw: () => void = () => undefined;
+    let disposed = false;
+    void registerServiceWorker({ onSyncRequested: triggerReconnectSync }).then(
+      (cleanup) => {
+        if (disposed) {
+          cleanup();
+        } else {
+          cleanupSw = cleanup;
+        }
+      }
+    );
+
+    return () => {
+      disposed = true;
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      cleanupSw();
+    };
+  }, [hydrateSession]);
   const fetchAcademicData = useCallback(async () => {
     await refresh();
   }, [refresh]);
@@ -182,6 +277,13 @@ function NavigationContent(): React.JSX.Element {
             await exchangeClassroomCode(token, resp.code, "postmessage");
             setClassroomConnected(true);
             setClassroomSyncStatus("CONNECTED");
+            void writeSessionSnapshot(token, {
+              user,
+              classroomConnected: true,
+              classroomSyncStatus: "CONNECTED",
+              moodleIcalConnected,
+              moodleIcalSyncStatus,
+            });
             await fetchAcademicData();
           } catch {
             // keep disconnected state when code exchange fails
@@ -191,7 +293,14 @@ function NavigationContent(): React.JSX.Element {
     });
 
     client.requestCode();
-  }, [clientId, token, fetchAcademicData]);
+  }, [
+    clientId,
+    token,
+    user,
+    moodleIcalConnected,
+    moodleIcalSyncStatus,
+    fetchAcademicData,
+  ]);
 
   // Moodle iCal Subscribe
   const handleSubscribeMoodleIcal = async (calendarUrl: string): Promise<void> => {
@@ -201,6 +310,13 @@ function NavigationContent(): React.JSX.Element {
     await subscribeMoodleIcal(token, calendarUrl);
     setMoodleIcalConnected(true);
     setMoodleIcalSyncStatus("CONNECTED");
+    void writeSessionSnapshot(token, {
+      user,
+      classroomConnected,
+      classroomSyncStatus,
+      moodleIcalConnected: true,
+      moodleIcalSyncStatus: "CONNECTED",
+    });
     await fetchAcademicData();
   };
 
@@ -293,7 +409,10 @@ function NavigationContent(): React.JSX.Element {
   );
 
   const handleLogout = () => {
+    const previousToken = token;
     localStorage.removeItem("campusunsa_token");
+    void clearOfflineAccountData(previousToken);
+    void clearSwApiCache();
     setUser(null);
     setToken(null);
     setClassroomConnected(false);

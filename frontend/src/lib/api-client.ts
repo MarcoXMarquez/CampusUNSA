@@ -28,6 +28,8 @@ export interface IntegrationStatuses {
   classroomSyncStatus: string;
   moodleSubscribed: boolean;
   moodleSyncStatus: string;
+  classroomReachable: boolean;
+  moodleReachable: boolean;
 }
 
 export interface BackendHealthStatus {
@@ -143,11 +145,16 @@ export async function fetchIntegrationStatuses(
     ? ((await moodleRes.json().catch(() => null)) as Partial<MoodleIcalStatusResponse> | null)
     : null;
 
+  const classroomReachable = Boolean(classroomRes?.ok);
+  const moodleReachable = Boolean(moodleRes?.ok);
+
   return {
     classroomConnected: Boolean(classroomData?.connected),
     classroomSyncStatus: classroomData?.sync_status ?? "NOT_CONNECTED",
     moodleSubscribed: Boolean(moodleData?.connected),
     moodleSyncStatus: moodleData?.sync_status ?? "NOT_CONNECTED",
+    classroomReachable,
+    moodleReachable,
   };
 }
 
