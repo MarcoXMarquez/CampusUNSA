@@ -119,7 +119,9 @@ export function CalendarioView({
                     media={
                       <span
                         className={`w-2 h-2 rounded-full ${
-                          isDutic ? "bg-red-500" : "bg-emerald-500"
+                          isDutic
+                            ? "bg-urgent dark:bg-urgent-dark"
+                            : "bg-primary dark:bg-primary-dark"
                         }`}
                       />
                     }
