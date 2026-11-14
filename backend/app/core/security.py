@@ -17,16 +17,16 @@ from app.models.user import User
 PBKDF2_ITERATIONS = 100_000
 
 
-def hash_password(password: str) -> str:
+def hash_password(password: str, iterations: int = PBKDF2_ITERATIONS) -> str:
     """Hashes a plaintext password with PBKDF2-HMAC-SHA256 and a random 16-byte salt."""
     salt_hex = secrets.token_hex(16)
     digest = hashlib.pbkdf2_hmac(
         "sha256",
         password.encode("utf-8"),
         bytes.fromhex(salt_hex),
-        PBKDF2_ITERATIONS,
+        iterations,
     )
-    return f"pbkdf2_sha256${PBKDF2_ITERATIONS}${salt_hex}${digest.hex()}"
+    return f"pbkdf2_sha256${iterations}${salt_hex}${digest.hex()}"
 
 
 def verify_password(plain_password: str, stored_hash: Optional[str]) -> bool:

@@ -33,7 +33,7 @@ def identity(index: int) -> str:
 
 def seed() -> None:
     require_isolation()
-    perf_password_hash = hash_password("perfpassword123")
+    perf_password_hash = hash_password("perfpassword123", iterations=1000)
     credentials: list[dict[str, str]] = []
     with SessionLocal() as db:
         if db.query(User).count():
