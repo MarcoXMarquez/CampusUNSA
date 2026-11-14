@@ -35,3 +35,55 @@ export const taskBoardMessages = {
     completed: "Tarea completada",
   },
 } as const;
+
+export const taskSyncMessages = {
+  headerTitle: "Tareas",
+  bannerTitle: "Sincroniza tus plataformas",
+  bannerDescription:
+    "Conecta tus cuentas para ver tus pendientes de clase automáticamente.",
+  bannerMascotAlt: "Mascota Pingüino CampusUNSA",
+  connectionStatusLabel: "Estado de conexión",
+  connectionProgress: (count: number): string =>
+    `${count} de 2 sincronizadas`,
+  statusDisconnected: "No conectado",
+  statusConnected: "Conectado",
+  classroomTitle: "Google Classroom",
+  classroomDescription:
+    "Importa tareas y anuncios de tus asignaturas activas de pregrado.",
+  classroomConnectButton: "Conectar cuenta",
+  classroomConnectedButton: "Cuenta conectada",
+  duticTitle: "DUTIC (Aula Virtual)",
+  duticDescription:
+    "Conecta tu calendario iCal para ver entregas de exámenes y foros.",
+  duticConnectButton: "Vincular enlace iCal",
+  duticConnectedButton: "Calendario iCal vinculado",
+  duticHelpAriaLabel: "Ayuda para sincronización",
+  icalModalTitle: "Suscribir Moodle iCal",
+  icalModalDescription:
+    "Pega el enlace de exportación de tu calendario Moodle (URL iCal con authtoken) para sincronizar tus tareas automáticamente.",
+  icalInputLabel: "URL de calendario iCal de Moodle",
+  icalInputPlaceholder:
+    "https://aulavirtual.unsa.edu.pe/.../export_execute.php?...",
+  icalCancelButton: "Cancelar",
+  icalSubmitButton: "Suscribir",
+  icalSubmittingButton: "Suscribiendo...",
+  icalErrorFallback: "No se pudo suscribir el calendario Moodle",
+  tutorialModalTitle: "Guía de sincronización",
+  tutorialModalPlaceholder: "Acá irá el tutorial para extraer el enlace",
+  tutorialCloseButton: "Entendido",
+  hugoTitle: "Hugo",
+  hugoDescription:
+    "Asistente conversacional de CampusUNSA por WhatsApp para recordar tus entregas.",
+  hugoActionButton: "Vincular con WhatsApp",
+  newTaskTitle: "Nueva tarea",
+  newTaskPlaceholder:
+    "Próximamente podrás registrar entregas personales desde aquí.",
+  newTaskCloseButton: "Cerrar",
+  nav: {
+    tareas: "Tareas",
+    horario: "Horario",
+    newTaskAria: "Crear nueva tarea",
+    hugo: "Hugo",
+    ajustes: "Ajustes",
+  },
+} as const;

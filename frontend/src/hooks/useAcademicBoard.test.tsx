@@ -50,6 +50,14 @@ describe("academic board query and completion mutations", () => {
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     const { result } = renderHook(() => useAcademicBoard(token), { wrapper });
     await waitFor(() => expect(result.current.assignments.length).toBe(1));
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/courses/enrolled"),
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${token}` }) }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/courses/assignments"),
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${token}` }) }),
+    );
     act(() => result.current.setCompletion(assignment.id, true));
     await waitFor(() => expect(result.current.assignments[0].is_completed).toBe(true));
     expect(result.current.completionPending).toBe(true);

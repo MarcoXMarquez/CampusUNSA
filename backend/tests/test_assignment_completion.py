@@ -15,7 +15,11 @@ from sqlalchemy.pool import StaticPool
 from app.core.database import Base, get_db
 from app.core.security import create_access_token
 from app.main import app
-from app.models.classroom import ClassroomAssignment, ClassroomCourse
+from app.models.classroom import (
+    ClassroomAssignment,
+    CourseExternalSource,
+    UserExternalCourse,
+)
 from app.models.user import User
 
 
@@ -59,13 +63,17 @@ def seed_assignment(db: Session, origin: str = "classroom") -> ClassroomAssignme
     user = User(email=f"{uuid4()}@unsa.edu.pe", role="student", is_active=True)
     db.add(user)
     db.flush()
-    course = ClassroomCourse(
-        user_id=user.id, classroom_course_id=f"{origin}-{uuid4()}", name="Software Engineering"
+    source = CourseExternalSource(
+        term="2026B",
+        origin=origin,
+        external_course_id=f"{origin}-{uuid4()}",
+        raw_name="Software Engineering",
     )
-    db.add(course)
+    db.add(source)
     db.flush()
+    db.add(UserExternalCourse(user_id=user.id, source_id=source.id))
     assignment = ClassroomAssignment(
-        user_id=user.id, course_id=course.id, classroom_assignment_id=str(uuid4()),
+        user_id=user.id, source_id=source.id, classroom_assignment_id=str(uuid4()),
         title="Sprint report", origin=origin, state="PUBLISHED",
         due_date=datetime(2026, 11, 4, 12, tzinfo=timezone.utc),
     )
@@ -163,11 +171,11 @@ def test_classroom_resynchronization_preserves_completion(
     assignment = seed_assignment(completion_db)
     assignment.is_completed = True
     completion_db.commit()
-    course = completion_db.get(ClassroomCourse, assignment.course_id)
-    assert course is not None
+    source = completion_db.get(CourseExternalSource, assignment.source_id)
+    assert source is not None
     with patch(
         "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
-        return_value=[{"id": course.classroom_course_id, "name": course.name}],
+        return_value=[{"id": source.external_course_id, "name": source.raw_name}],
     ), patch(
         "app.services.classroom_sync.ClassroomApiClient.fetch_coursework",
         return_value=[{"id": assignment.classroom_assignment_id, "title": "Updated LMS title"}],

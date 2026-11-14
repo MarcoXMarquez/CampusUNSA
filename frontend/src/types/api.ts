@@ -243,6 +243,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/courses/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Curriculum Catalog
+         * @description List official UNSA curriculum courses filtered by year, study year, semester, or search query.
+         */
+        get: operations["get_curriculum_catalog_api_v1_courses_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/enrolled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Enrolled Courses
+         * @description Retrieve deduplicated academic courses for the authenticated student.
+         */
+        get: operations["get_enrolled_courses_api_v1_courses_enrolled_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/pending-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Pending Course Links
+         * @description Retrieve unmapped Classroom/DUTIC external sources for the authenticated student.
+         */
+        get: operations["get_pending_course_links_api_v1_courses_pending_links_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/sources/{source_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Link External Course Source
+         * @description Link a shared external LMS source to an official curriculum code.
+         */
+        post: operations["link_external_course_source_api_v1_courses_sources__source_id__link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/enrolled/{course_code}/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Enrolled Course Groups
+         * @description Update the caller's personal theory and/or laboratory group (A-F).
+         */
+        patch: operations["update_enrolled_course_groups_api_v1_courses_enrolled__course_code__groups_patch"];
+        trace?: never;
+    };
+    "/api/v1/courses/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Unified Assignments
+         * @description Retrieve normalized coursework assignments across Classroom and DUTIC.
+         */
+        get: operations["get_unified_assignments_api_v1_courses_assignments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dutic/sync": {
         parameters: {
             query?: never;
@@ -406,6 +526,114 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AcademicAssignmentResponse
+         * @description Normalized academic coursework assignment entity across LMS origins.
+         */
+        AcademicAssignmentResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /** Course Code */
+            course_code?: string | null;
+            /** Enrollment Id */
+            enrollment_id?: string | null;
+            /** Classroom Assignment Id */
+            classroom_assignment_id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Max Points */
+            max_points?: number | null;
+            /** State */
+            state: string;
+            /**
+             * Is Completed
+             * @default false
+             */
+            is_completed: boolean;
+            /** Alternate Link */
+            alternate_link?: string | null;
+            /** Origin */
+            origin: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * AcademicCourseResponse
+         * @description Unified academic course item compatible with existing LMS consumers and HoyView.
+         */
+        AcademicCourseResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Classroom Course Id */
+            classroom_course_id: string;
+            /** Name */
+            name: string;
+            /** Section */
+            section?: string | null;
+            /** Alternate Link */
+            alternate_link?: string | null;
+            /**
+             * Origin
+             * @default classroom
+             */
+            origin: string;
+            /** Course Code */
+            course_code?: string | null;
+            /** Curriculum Year */
+            curriculum_year?: number | null;
+            /** Theory Group */
+            theory_group?: string | null;
+            /** Lab Group */
+            lab_group?: string | null;
+            /**
+             * Mapping Status
+             * @default LINKED
+             */
+            mapping_status: string;
+            /**
+             * Sources
+             * @default []
+             */
+            sources: components["schemas"]["ExternalSourceSummaryResponse"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
          * AssignmentCompletionRequest
          * @description Set a student's local completion flag without changing LMS publication state.
          */
@@ -428,6 +656,15 @@ export interface components {
              * Format: uuid
              */
             course_id: string;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /** Course Code */
+            course_code?: string | null;
+            /** Enrollment Id */
+            enrollment_id?: string | null;
             /** Classroom Assignment Id */
             classroom_assignment_id: string;
             /** Title */
@@ -498,6 +735,40 @@ export interface components {
             sync_status: string;
         };
         /**
+         * CourseCatalogResponse
+         * @description Official UNSA curriculum catalog entry (2017 or 2025).
+         */
+        CourseCatalogResponse: {
+            /** Code */
+            code: string;
+            /** Curriculum Year */
+            curriculum_year: number;
+            /** Official Name */
+            official_name: string;
+            /** Normalized Name */
+            normalized_name: string;
+            /** Category */
+            category: string;
+            /** Study Year */
+            study_year: number;
+            /** Semester */
+            semester: number;
+            /** Department */
+            department: string;
+            /** Credits */
+            credits: number;
+            /** Prerequisites */
+            prerequisites: string[];
+            /** Min Credits Required */
+            min_credits_required: number;
+            /** Theory Hours */
+            theory_hours: number;
+            /** Practice Hours */
+            practice_hours: number;
+            /** Lab Hours */
+            lab_hours: number;
+        };
+        /**
          * CourseResponse
          * @description Serialized course entity.
          */
@@ -520,6 +791,24 @@ export interface components {
              * @default classroom
              */
             origin: string;
+            /** Course Code */
+            course_code?: string | null;
+            /** Curriculum Year */
+            curriculum_year?: number | null;
+            /** Theory Group */
+            theory_group?: string | null;
+            /** Lab Group */
+            lab_group?: string | null;
+            /**
+             * Mapping Status
+             * @default LINKED
+             */
+            mapping_status: string;
+            /**
+             * Sources
+             * @default []
+             */
+            sources: components["schemas"]["ExternalSourceSummaryResponse"][];
             /**
              * Created At
              * Format: date-time
@@ -546,6 +835,15 @@ export interface components {
              * Format: uuid
              */
             course_id: string;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /** Course Code */
+            course_code?: string | null;
+            /** Enrollment Id */
+            enrollment_id?: string | null;
             /** Classroom Assignment Id */
             classroom_assignment_id: string;
             /** Title */
@@ -601,6 +899,24 @@ export interface components {
              * @default classroom
              */
             origin: string;
+            /** Course Code */
+            course_code?: string | null;
+            /** Curriculum Year */
+            curriculum_year?: number | null;
+            /** Theory Group */
+            theory_group?: string | null;
+            /** Lab Group */
+            lab_group?: string | null;
+            /**
+             * Mapping Status
+             * @default LINKED
+             */
+            mapping_status: string;
+            /**
+             * Sources
+             * @default []
+             */
+            sources: components["schemas"]["ExternalSourceSummaryResponse"][];
             /**
              * Created At
              * Format: date-time
@@ -625,6 +941,47 @@ export interface components {
             full_name?: string | null;
         };
         /**
+         * EnrollmentGroupUpdateRequest
+         * @description Payload to update a student's personal theory and/or lab groups (A-F).
+         */
+        EnrollmentGroupUpdateRequest: {
+            /** Theory Group */
+            theory_group?: string | null;
+            /** Lab Group */
+            lab_group?: string | null;
+        };
+        /**
+         * ExternalSourceSummaryResponse
+         * @description External Classroom or DUTIC source attached to an enrolled course.
+         */
+        ExternalSourceSummaryResponse: {
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /** Origin */
+            origin: string;
+            /** External Course Id */
+            external_course_id: string;
+            /** Raw Name */
+            raw_name: string;
+            /** Raw Section */
+            raw_section?: string | null;
+            /**
+             * Component Type
+             * @default UNICO
+             */
+            component_type: string;
+            /** Alternate Link */
+            alternate_link?: string | null;
+            /**
+             * Mapping Status
+             * @default LINKED
+             */
+            mapping_status: string;
+        };
+        /**
          * GoogleAuthRequest
          * @description Payload sent from client containing the Google OAuth ID token.
          */
@@ -636,6 +993,22 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * ManualCourseLinkRequest
+         * @description Payload to manually link a shared external source to an official catalog course.
+         */
+        ManualCourseLinkRequest: {
+            /** Course Code */
+            course_code: string;
+            /**
+             * Component Type
+             * @default UNICO
+             * @enum {string}
+             */
+            component_type: "TEORIA" | "LABORATORIO" | "UNICO";
+            /** Group Code */
+            group_code?: string | null;
         };
         /**
          * MoodleIcalStatusResponse
@@ -709,6 +1082,38 @@ export interface components {
              * @enum {string}
              */
             source: "ollama" | "gemini" | "fallback";
+        };
+        /**
+         * PendingLinkSourceResponse
+         * @description External Classroom/DUTIC course awaiting canonical catalog mapping.
+         */
+        PendingLinkSourceResponse: {
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /** Term */
+            term: string;
+            /** Origin */
+            origin: string;
+            /** External Course Id */
+            external_course_id: string;
+            /** Raw Name */
+            raw_name: string;
+            /** Raw Section */
+            raw_section?: string | null;
+            /** Alternate Link */
+            alternate_link?: string | null;
+            /** Component Type */
+            component_type: string;
+            /** Detected Group */
+            detected_group?: string | null;
+            /**
+             * Task Count
+             * @default 0
+             */
+            task_count: number;
         };
         /**
          * SyncClassroomRequest
@@ -1192,6 +1597,194 @@ export interface operations {
                 };
                 content: {
                     "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_curriculum_catalog_api_v1_courses_catalog_get: {
+        parameters: {
+            query?: {
+                curriculum_year?: number | null;
+                study_year?: number | null;
+                semester?: number | null;
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseCatalogResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_enrolled_courses_api_v1_courses_enrolled_get: {
+        parameters: {
+            query?: {
+                include_pending?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicCourseResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_pending_course_links_api_v1_courses_pending_links_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingLinkSourceResponse"][];
+                };
+            };
+        };
+    };
+    link_external_course_source_api_v1_courses_sources__source_id__link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManualCourseLinkRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExternalSourceSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_enrolled_course_groups_api_v1_courses_enrolled__course_code__groups_patch: {
+        parameters: {
+            query?: {
+                term?: string;
+            };
+            header?: never;
+            path: {
+                course_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnrollmentGroupUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicCourseResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_unified_assignments_api_v1_courses_assignments_get: {
+        parameters: {
+            query?: {
+                origin?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicAssignmentResponse"][];
                 };
             };
             /** @description Validation Error */

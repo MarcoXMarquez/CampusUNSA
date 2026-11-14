@@ -1,13 +1,12 @@
 """
-SQLAlchemy 2.0 models for Google Classroom courses and coursework assignments.
-Implements deduplication via composite unique constraints:
-- (user_id, classroom_course_id)
-- (user_id, classroom_assignment_id)
+SQLAlchemy 2.0 models for unified curriculum courses, shared external sources,
+per-student enrollments, and coursework assignments.
 """
 
+import json
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import (
     Boolean,
@@ -15,6 +14,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Index,
+    Integer,
     String,
     Text,
     UniqueConstraint,
@@ -28,45 +28,111 @@ if TYPE_CHECKING:
     from app.models.user import User
 
 
-class ClassroomCourse(Base):
+class CourseCatalog(Base):
     """
-    Represents an active course enrolled by a student in Google Classroom.
+    Canonical UNSA curriculum course master catalog (2017 and 2025 plans).
+    Shared across all students and academic periods.
     """
-    __tablename__ = "classroom_courses"
+
+    __tablename__ = "course_catalog"
+
+    code: Mapped[str] = mapped_column(String(20), primary_key=True, index=True)
+    curriculum_year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    official_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    normalized_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    category: Mapped[str] = mapped_column(String(10), nullable=False)
+    study_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    semester: Mapped[int] = mapped_column(Integer, nullable=False)
+    department: Mapped[str] = mapped_column(String(120), nullable=False)
+    credits: Mapped[int] = mapped_column(Integer, nullable=False)
+    prerequisites_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    min_credits_required: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    theory_hours: Mapped[float] = mapped_column(Float, default=0.0, server_default="0", nullable=False)
+    practice_hours: Mapped[float] = mapped_column(Float, default=0.0, server_default="0", nullable=False)
+    lab_hours: Mapped[float] = mapped_column(Float, default=0.0, server_default="0", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    external_sources: Mapped[List["CourseExternalSource"]] = relationship(
+        "CourseExternalSource",
+        back_populates="catalog_course",
+    )
+    enrollments: Mapped[List["UserCourseEnrollment"]] = relationship(
+        "UserCourseEnrollment",
+        back_populates="catalog_course",
+    )
+
+    @property
+    def prerequisites(self) -> List[str]:
+        if not self.prerequisites_json:
+            return []
+        try:
+            parsed = json.loads(self.prerequisites_json)
+            return [str(item) for item in parsed] if isinstance(parsed, list) else []
+        except ValueError:
+            return []
+
+
+class CourseExternalSource(Base):
+    """
+    Shared external virtual classroom or DUTIC course space for an academic term.
+    Multiple external sources (e.g., DUTIC + Classroom Theory + Classroom Lab) can
+    resolve to the same canonical course_catalog entry.
+    """
+
+    __tablename__ = "course_external_sources"
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True,
         default=uuid.uuid4,
         index=True,
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
+    term: Mapped[str] = mapped_column(
+        String(20),
+        default="2026B",
+        server_default="2026B",
         nullable=False,
         index=True,
-    )
-    classroom_course_id: Mapped[str] = mapped_column(
-        String(100),
-        nullable=False,
-        index=True,
-    )
-    name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-    )
-    section: Mapped[Optional[str]] = mapped_column(
-        String(255),
-        nullable=True,
-    )
-    alternate_link: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
     )
     origin: Mapped[str] = mapped_column(
         String(50),
-        default="classroom",
-        server_default="classroom",
         nullable=False,
         index=True,
+    )
+    external_course_id: Mapped[str] = mapped_column(
+        String(120),
+        nullable=False,
+        index=True,
+    )
+    raw_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    raw_section: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    alternate_link: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    course_code: Mapped[Optional[str]] = mapped_column(
+        ForeignKey("course_catalog.code", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    component_type: Mapped[str] = mapped_column(
+        String(20),
+        default="UNICO",
+        server_default="UNICO",
+        nullable=False,
+    )
+    default_group_code: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    mapping_status: Mapped[str] = mapped_column(
+        String(30),
+        default="PENDING_LINK",
+        server_default="PENDING_LINK",
+        nullable=False,
+        index=True,
+    )
+    mapping_source: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    linked_by_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -80,38 +146,164 @@ class ClassroomCourse(Base):
         nullable=False,
     )
 
-    # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="courses")
+    catalog_course: Mapped[Optional["CourseCatalog"]] = relationship(
+        "CourseCatalog",
+        back_populates="external_sources",
+    )
+    user_links: Mapped[List["UserExternalCourse"]] = relationship(
+        "UserExternalCourse",
+        back_populates="source",
+        cascade="all, delete-orphan",
+    )
     assignments: Mapped[List["ClassroomAssignment"]] = relationship(
         "ClassroomAssignment",
-        back_populates="course",
+        back_populates="source",
         cascade="all, delete-orphan",
     )
 
     __table_args__ = (
         UniqueConstraint(
-            "user_id",
-            "classroom_course_id",
-            name="uq_user_classroom_course",
+            "term",
+            "origin",
+            "external_course_id",
+            name="uq_external_source_term_origin_id",
         ),
-        Index("idx_classroom_courses_user_id", "user_id"),
     )
 
-    def __init__(self, **kwargs: Any) -> None:
-        if "origin" not in kwargs or kwargs["origin"] is None:
-            course_ref = str(kwargs.get("classroom_course_id", ""))
-            kwargs["origin"] = "moodle" if course_ref.startswith("moodle-") else "classroom"
-        super().__init__(**kwargs)
 
-    def __repr__(self) -> str:
-        return f"<ClassroomCourse(id={self.id}, name='{self.name}', google_id='{self.classroom_course_id}')>"
+class UserCourseEnrollment(Base):
+    """
+    Unified per-student enrollment for a canonical curriculum course and term.
+    Stores student-specific theory and lab groups (A-F).
+    """
+
+    __tablename__ = "user_course_enrollments"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    course_code: Mapped[str] = mapped_column(
+        ForeignKey("course_catalog.code", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    term: Mapped[str] = mapped_column(
+        String(20),
+        default="2026B",
+        server_default="2026B",
+        nullable=False,
+        index=True,
+    )
+    theory_group: Mapped[Optional[str]] = mapped_column(String(5), nullable=True)
+    lab_group: Mapped[Optional[str]] = mapped_column(String(5), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship("User", back_populates="enrollments")
+    catalog_course: Mapped["CourseCatalog"] = relationship(
+        "CourseCatalog",
+        back_populates="enrollments",
+    )
+    user_sources: Mapped[List["UserExternalCourse"]] = relationship(
+        "UserExternalCourse",
+        back_populates="enrollment",
+    )
+    assignments: Mapped[List["ClassroomAssignment"]] = relationship(
+        "ClassroomAssignment",
+        back_populates="enrollment",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "course_code",
+            "term",
+            name="uq_user_course_enrollment",
+        ),
+        Index("idx_user_course_enrollments_user_id", "user_id"),
+    )
+
+
+class UserExternalCourse(Base):
+    """
+    Records a student's membership in a shared external source so courses with zero
+    assignments or pending catalog links are never lost.
+    """
+
+    __tablename__ = "user_external_courses"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("course_external_sources.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    enrollment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("user_course_enrollments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    detected_group: Mapped[Optional[str]] = mapped_column(String(5), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship("User", back_populates="external_courses")
+    source: Mapped["CourseExternalSource"] = relationship(
+        "CourseExternalSource",
+        back_populates="user_links",
+    )
+    enrollment: Mapped[Optional["UserCourseEnrollment"]] = relationship(
+        "UserCourseEnrollment",
+        back_populates="user_sources",
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "source_id", name="uq_user_external_course"),
+        Index("idx_user_external_courses_user_id", "user_id"),
+    )
 
 
 class ClassroomAssignment(Base):
     """
-    Represents coursework / assignments pulled from Google Classroom (or other LMS origins).
-    Deduplicated via unique constraint on (user_id, classroom_assignment_id).
+    Coursework assignments pulled from Google Classroom or DUTIC Moodle.
+    Linked to the originating CourseExternalSource and, once mapped, to the canonical
+    CourseCatalog code and the student's unified UserCourseEnrollment.
     """
+
     __tablename__ = "classroom_assignments"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -124,9 +316,19 @@ class ClassroomAssignment(Base):
         nullable=False,
         index=True,
     )
-    course_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("classroom_courses.id", ondelete="CASCADE"),
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("course_external_sources.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
+    )
+    course_code: Mapped[Optional[str]] = mapped_column(
+        ForeignKey("course_catalog.code", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    enrollment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("user_course_enrollments.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
     classroom_assignment_id: Mapped[str] = mapped_column(
@@ -134,40 +336,23 @@ class ClassroomAssignment(Base):
         nullable=False,
         index=True,
     )
-    title: Mapped[str] = mapped_column(
-        String(500),
-        nullable=False,
-    )
-    description: Mapped[Optional[str]] = mapped_column(
-        Text,
-        nullable=True,
-    )
+    title: Mapped[str] = mapped_column(String(500), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     due_date: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
         index=True,
     )
-    max_points: Mapped[Optional[float]] = mapped_column(
-        Float,
-        nullable=True,
-    )
-    state: Mapped[str] = mapped_column(
-        String(50),
-        default="PUBLISHED",
-        nullable=False,
-    )
+    max_points: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    state: Mapped[str] = mapped_column(String(50), default="PUBLISHED", nullable=False)
     is_completed: Mapped[bool] = mapped_column(
-        Boolean, default=False, server_default="false", nullable=False,
-    )
-    alternate_link: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-    )
-    origin: Mapped[str] = mapped_column(
-        String(50),
-        default="classroom",
+        Boolean,
+        default=False,
+        server_default="false",
         nullable=False,
     )
+    alternate_link: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    origin: Mapped[str] = mapped_column(String(50), default="classroom", nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -180,9 +365,15 @@ class ClassroomAssignment(Base):
         nullable=False,
     )
 
-    # Relationships
     user: Mapped["User"] = relationship("User", back_populates="assignments")
-    course: Mapped["ClassroomCourse"] = relationship("ClassroomCourse", back_populates="assignments")
+    source: Mapped["CourseExternalSource"] = relationship(
+        "CourseExternalSource",
+        back_populates="assignments",
+    )
+    enrollment: Mapped[Optional["UserCourseEnrollment"]] = relationship(
+        "UserCourseEnrollment",
+        back_populates="assignments",
+    )
 
     __table_args__ = (
         UniqueConstraint(
@@ -193,6 +384,11 @@ class ClassroomAssignment(Base):
         Index("idx_classroom_assignments_user_assignment", "user_id", "classroom_assignment_id"),
         Index("idx_classroom_assignments_due_date", "due_date"),
     )
+
+    @property
+    def course_id(self) -> uuid.UUID:
+        """Return unified enrollment ID when linked, or fallback to external source ID."""
+        return self.enrollment_id or self.source_id
 
     def __repr__(self) -> str:
         return f"<ClassroomAssignment(id={self.id}, title='{self.title}', due_date='{self.due_date}')>"

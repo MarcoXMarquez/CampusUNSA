@@ -34,7 +34,7 @@ test("groups deadlines, saves completion optimistically, and restores persisted 
     } else if (path.endsWith("/auth/me")) {
       await route.fulfill({ json: { id: "visual-student", email: "student@unsa.edu.pe", role: "student", is_active: true } });
     } else if (path.endsWith("/assignments")) await route.fulfill({ json: assignments });
-    else if (path.endsWith("/courses")) await route.fulfill({ json: [course] });
+    else if (path.endsWith("/courses/enrolled") || path.endsWith("/courses")) await route.fulfill({ json: [course] });
     else await route.fulfill({ json: { connected: true, sync_status: "SYNCED" } });
   });
   await page.goto("/");

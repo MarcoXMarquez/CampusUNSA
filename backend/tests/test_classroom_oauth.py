@@ -21,8 +21,13 @@ from sqlalchemy.pool import StaticPool
 from app.core.database import Base, get_db
 from app.core.security import create_access_token
 from app.main import app
+from app.models.classroom import (
+    ClassroomAssignment,
+    CourseExternalSource,
+    UserExternalCourse,
+)
 from app.models.user import User
-from app.services.classroom_sync import GoogleClassroomAuthError
+from app.services.classroom_sync import GoogleClassroomAuthError, GoogleClassroomError
 
 
 @pytest.fixture
@@ -81,14 +86,99 @@ def test_classroom_status_disconnected_by_default(
     app.dependency_overrides.clear()
 
 
+@patch("app.services.classroom_sync.ClassroomApiClient.fetch_coursework")
+@patch("app.services.classroom_sync.ClassroomApiClient.fetch_courses")
 @patch("app.services.google_oauth.GoogleOAuthService.exchange_code_for_tokens")
 def test_classroom_oauth_callback_success(
     mock_exchange: MagicMock,
+    mock_fetch_courses: MagicMock,
+    mock_fetch_coursework: MagicMock,
     test_db_session: Session,
     auth_headers: Dict[str, str],
     auth_student: User,
 ) -> None:
-    """Tests successful code exchange, encrypted token persistence, and status update."""
+    """Tests code exchange, encrypted token persistence, and automatic initial sync."""
+    mock_exchange.return_value = {
+        "access_token": "mock_google_access_token_123",
+        "refresh_token": "mock_google_refresh_token_456",
+        "expires_in": 3600,
+        "token_type": "Bearer",
+    }
+    mock_fetch_courses.return_value = [
+        {"id": "gclass-init-1", "name": "Ingenieria de Software II", "section": "A"}
+    ]
+    mock_fetch_coursework.return_value = [
+        {
+            "id": "cw-init-1",
+            "title": "Taller Arquitectura",
+            "description": "Entregar diagrama C4",
+            "alternateLink": "https://classroom.google.com/c/1/a/1",
+        }
+    ]
+    app.dependency_overrides[get_db] = lambda: test_db_session
+
+    with TestClient(app) as client:
+        res = client.post(
+            "/api/v1/auth/google/classroom/callback",
+            headers=auth_headers,
+            json={"code": "valid_oauth_authorization_code"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["status"] == "CONNECTED"
+        assert data["connected_at"] is not None
+
+        # Verify database record and initial sync persistence
+        test_db_session.expire_all()
+        updated_user = test_db_session.query(User).filter(User.id == auth_student.id).first()
+        assert updated_user is not None
+        assert updated_user.google_refresh_token is not None
+        # Must be encrypted, not stored in plaintext
+        assert updated_user.google_refresh_token != "mock_google_refresh_token_456"
+        assert updated_user.google_classroom_sync_status == "SYNCED"
+        assert updated_user.classroom_sync_status == "SYNCED"
+        assert updated_user.google_classroom_connected_at is not None
+
+        synced_courses = (
+            test_db_session.query(UserExternalCourse)
+            .join(UserExternalCourse.source)
+            .filter(UserExternalCourse.user_id == auth_student.id)
+            .all()
+        )
+        assert len(synced_courses) == 1
+        assert synced_courses[0].source.raw_name == "Ingenieria de Software II"
+        assert synced_courses[0].source.id is not None
+        assert test_db_session.query(CourseExternalSource).count() == 1
+
+        synced_assignments = (
+            test_db_session.query(ClassroomAssignment)
+            .filter(ClassroomAssignment.user_id == auth_student.id)
+            .all()
+        )
+        assert len(synced_assignments) == 1
+        assert synced_assignments[0].title == "Taller Arquitectura"
+
+        # Status endpoint should now report connected
+        status_res = client.get("/api/v1/auth/google/classroom/status", headers=auth_headers)
+        assert status_res.status_code == 200
+        assert status_res.json()["connected"] is True
+
+    app.dependency_overrides.clear()
+
+
+@patch(
+    "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+    side_effect=GoogleClassroomError("Temporary Classroom API outage"),
+)
+@patch("app.services.google_oauth.GoogleOAuthService.exchange_code_for_tokens")
+def test_classroom_oauth_callback_preserves_connection_if_initial_sync_fails(
+    mock_exchange: MagicMock,
+    _mock_fetch_courses: MagicMock,
+    test_db_session: Session,
+    auth_headers: Dict[str, str],
+    auth_student: User,
+) -> None:
+    """Tests that transient Classroom API failures during callback do not discard OAuth tokens."""
     mock_exchange.return_value = {
         "access_token": "mock_google_access_token_123",
         "refresh_token": "mock_google_refresh_token_456",
@@ -104,24 +194,13 @@ def test_classroom_oauth_callback_success(
             json={"code": "valid_oauth_authorization_code"},
         )
         assert res.status_code == 200
-        data = res.json()
-        assert data["status"] == "CONNECTED"
-        assert data["connected_at"] is not None
+        assert res.json()["status"] == "CONNECTED"
 
-        # Verify database record
         test_db_session.expire_all()
         updated_user = test_db_session.query(User).filter(User.id == auth_student.id).first()
         assert updated_user is not None
         assert updated_user.google_refresh_token is not None
-        # Must be encrypted, not stored in plaintext
-        assert updated_user.google_refresh_token != "mock_google_refresh_token_456"
         assert updated_user.google_classroom_sync_status == "CONNECTED"
-        assert updated_user.google_classroom_connected_at is not None
-
-        # Status endpoint should now report connected
-        status_res = client.get("/api/v1/auth/google/classroom/status", headers=auth_headers)
-        assert status_res.status_code == 200
-        assert status_res.json()["connected"] is True
 
     app.dependency_overrides.clear()
 

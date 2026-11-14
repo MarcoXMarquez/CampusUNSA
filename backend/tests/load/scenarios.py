@@ -39,6 +39,12 @@ BASE_SCENARIOS = (
     Scenario("GET", "/api/v1/dutic/ical/status"),
     Scenario("POST", "/api/v1/dutic/ical/subscribe"),
     Scenario("POST", "/api/v1/dutic/ical/sync"),
+    Scenario("GET", "/api/v1/courses/catalog"),
+    Scenario("GET", "/api/v1/courses/enrolled"),
+    Scenario("GET", "/api/v1/courses/pending-links"),
+    Scenario("POST", "/api/v1/courses/sources/{source_id}/link", role="completion"),
+    Scenario("PATCH", "/api/v1/courses/enrolled/{course_code}/groups", role="completion"),
+    Scenario("GET", "/api/v1/courses/assignments"),
 )
 
 
