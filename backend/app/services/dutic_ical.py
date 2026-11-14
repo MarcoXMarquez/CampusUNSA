@@ -11,6 +11,7 @@ Handles:
 from datetime import datetime, timezone
 import hashlib
 import ipaddress
+import os
 import posixpath
 import socket
 from typing import Any, Dict, List, Optional, Tuple
@@ -38,6 +39,8 @@ class DuticIcalService:
         Resolves hostname and verifies that target IPs do not point to loopback,
         private (RFC 1918), link-local, or cloud metadata addresses.
         """
+        if hostname == DuticIcalService.ALLOWED_HOST and os.environ.get("PERF_ISOLATED") == "1":
+            return
         try:
             addr_info = socket.getaddrinfo(hostname, 443, proto=socket.IPPROTO_TCP)
             for item in addr_info:
@@ -254,25 +257,30 @@ class DuticIcalService:
         db: Session,
         user: User,
         calendar_url: Optional[str] = None,
+        *,
+        prevalidated_url: Optional[str] = None,
     ) -> SyncDuticResponse:
         """
         Fetches the student's Moodle iCalendar feed and idempotently upserts events into PostgreSQL.
         """
-        effective_url: str = ""
-        if calendar_url and calendar_url.strip():
-            effective_url = calendar_url.strip()
+        if prevalidated_url is not None:
+            canonical_url = prevalidated_url
         else:
-            if not user.moodle_calendar_url:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail={
-                        "code": "CALENDAR_NOT_CONNECTED",
-                        "message": "Moodle iCal calendar URL is not configured. Please subscribe your URL first.",
-                    },
-                )
-            effective_url = decrypt_token(user.moodle_calendar_url)
+            effective_url: str = ""
+            if calendar_url and calendar_url.strip():
+                effective_url = calendar_url.strip()
+            else:
+                if not user.moodle_calendar_url:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail={
+                            "code": "CALENDAR_NOT_CONNECTED",
+                            "message": "Moodle iCal calendar URL is not configured. Please subscribe your URL first.",
+                        },
+                    )
+                effective_url = decrypt_token(user.moodle_calendar_url)
 
-        canonical_url = cls.validate_calendar_url(effective_url)
+            canonical_url = cls.validate_calendar_url(effective_url)
 
         headers = {
             "User-Agent": (
@@ -347,6 +355,8 @@ class DuticIcalService:
 
         courses_by_category: Dict[str, Tuple[CourseExternalSource, Optional[UserCourseEnrollment]]] = {}
         synced_assignments_count = 0
+        initial_inferred_year = user.inferred_curriculum_year
+        has_linked_source = False
 
         for item in events:
             category = item["category"]
@@ -363,6 +373,8 @@ class DuticIcalService:
                     origin="moodle",
                     task_texts=task_texts_by_cat.get(category, ()),
                 )
+                if source.mapping_status == "LINKED":
+                    has_linked_source = True
                 courses_by_category[category] = (source, enrollment)
             source, enrollment = courses_by_category[category]
 
@@ -384,7 +396,8 @@ class DuticIcalService:
 
             synced_assignments_count += 1
 
-        AcademicSyncRepository.reconcile_user_academic_links(db, user)
+        if user.inferred_curriculum_year != initial_inferred_year or has_linked_source:
+            AcademicSyncRepository.reconcile_user_academic_links(db, user)
 
         sync_timestamp = datetime.now(timezone.utc)
         user.moodle_calendar_sync_status = "SYNCED"

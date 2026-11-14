@@ -42,14 +42,13 @@ def get_curriculum_catalog(
     db: Session = Depends(get_db),
 ) -> List[CourseCatalogResponse]:
     """List official UNSA curriculum courses filtered by year, study year, semester, or search query."""
-    entries = AcademicSyncRepository.list_catalog(
+    return AcademicSyncRepository.list_catalog_responses(
         db,
         curriculum_year=curriculum_year,
         study_year=study_year,
         semester=semester,
         q=q,
     )
-    return [CourseCatalogResponse.model_validate(entry) for entry in entries]
 
 
 @router.get("/enrolled", response_model=List[AcademicCourseResponse])
@@ -115,7 +114,7 @@ def update_enrolled_course_groups(
     db: Session = Depends(get_db),
 ) -> AcademicCourseResponse:
     """Update the caller's personal theory and/or laboratory group (A-F)."""
-    enrollment = AcademicSyncRepository.update_enrollment_groups(
+    updated_course = AcademicSyncRepository.update_enrollment_groups_response(
         db,
         user_id=current_user.id,
         course_code=course_code,
@@ -124,7 +123,7 @@ def update_enrolled_course_groups(
         fields_to_update=set(payload.model_fields_set),
         term=term,
     )
-    if enrollment is None:
+    if updated_course is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
@@ -132,7 +131,7 @@ def update_enrolled_course_groups(
                 "message": f"Student is not enrolled in course {course_code} for term {term}.",
             },
         )
-    return AcademicSyncRepository.enrollment_to_response(enrollment)
+    return updated_course
 
 
 @router.get("/assignments", response_model=List[AcademicAssignmentResponse])

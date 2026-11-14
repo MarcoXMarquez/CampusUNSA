@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.curriculum_catalog_data import CURRICULUM_CATALOG_ENTRIES
 from app.models.classroom import (
     ClassroomAssignment,
     CourseCatalog,
@@ -17,6 +18,7 @@ from app.models.classroom import (
 from app.models.user import User
 from app.schemas.academic import (
     AcademicCourseResponse,
+    CourseCatalogResponse,
     ExternalSourceSummaryResponse,
     PendingLinkSourceResponse,
 )
@@ -24,6 +26,50 @@ from app.services.curriculum_resolver import (
     CurriculumResolverService,
     DEFAULT_TERM,
 )
+
+
+_CATALOG_RESPONSES_CACHE: Optional[Tuple[CourseCatalogResponse, ...]] = None
+
+
+def _get_catalog_responses() -> Tuple[CourseCatalogResponse, ...]:
+    """Lazily materialize cached catalog responses on first catalog endpoint read."""
+    global _CATALOG_RESPONSES_CACHE
+    if _CATALOG_RESPONSES_CACHE is None:
+        _CATALOG_RESPONSES_CACHE = tuple(
+            CourseCatalogResponse(
+                code=entry["code"],
+                curriculum_year=entry["curriculum_year"],
+                official_name=entry["official_name"],
+                normalized_name=entry["normalized_name"],
+                category=entry["category"],
+                study_year=entry["study_year"],
+                semester=entry["semester"],
+                department=entry["department"],
+                credits=entry["credits"],
+                prerequisites=list(entry["prerequisites"]),
+                min_credits_required=entry["min_credits_required"],
+                theory_hours=entry["theory_hours"],
+                practice_hours=entry["practice_hours"],
+                lab_hours=entry["lab_hours"],
+            )
+            for entry in sorted(
+                CURRICULUM_CATALOG_ENTRIES,
+                key=lambda item: (item["curriculum_year"], item["code"]),
+            )
+        )
+    return _CATALOG_RESPONSES_CACHE
+
+
+def _normalize_dt_for_compare(value: Optional[datetime]) -> Optional[datetime]:
+    if value is None:
+        return None
+    if value.tzinfo is not None:
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
+
+
+def _datetimes_differ(left: Optional[datetime], right: Optional[datetime]) -> bool:
+    return _normalize_dt_for_compare(left) != _normalize_dt_for_compare(right)
 
 
 def _apply_detected_group(
@@ -84,13 +130,13 @@ class AcademicSyncRepository:
     """Centralizes idempotent upserts, unification queries, and batch cleanup."""
 
     @staticmethod
-    def _ensure_enrollment(
+    def _ensure_enrollment_with_status(
         db: Session,
         *,
         user_id: UUID,
         course_code: str,
         term: str,
-    ) -> UserCourseEnrollment:
+    ) -> Tuple[UserCourseEnrollment, bool]:
         enrollment = (
             db.query(UserCourseEnrollment)
             .filter(
@@ -108,6 +154,24 @@ class AcademicSyncRepository:
             )
             db.add(enrollment)
             db.flush()
+            return enrollment, True
+        return enrollment, False
+
+    @classmethod
+    def _ensure_enrollment(
+        cls,
+        db: Session,
+        *,
+        user_id: UUID,
+        course_code: str,
+        term: str,
+    ) -> UserCourseEnrollment:
+        enrollment, _ = cls._ensure_enrollment_with_status(
+            db,
+            user_id=user_id,
+            course_code=course_code,
+            term=term,
+        )
         return enrollment
 
     @staticmethod
@@ -119,7 +183,7 @@ class AcademicSyncRepository:
             .all()
         ]
         inferred = CurriculumResolverService.infer_curriculum_year(linked_codes)
-        if inferred is not None:
+        if inferred is not None and user.inferred_curriculum_year != inferred:
             user.inferred_curriculum_year = inferred
         return user.inferred_curriculum_year
 
@@ -184,12 +248,21 @@ class AcademicSyncRepository:
             if detected_group is None:
                 detected_group = resolved.detected_group
         else:
-            source.raw_name = name
-            if section is not None:
+            # Skip redundant writes on shared CourseExternalSource rows to avoid
+            # PostgreSQL exclusive row-lock contention under concurrent syncs.
+            source_dirty = False
+            if source.raw_name != name:
+                source.raw_name = name
+                source_dirty = True
+            if section is not None and source.raw_section != section:
                 source.raw_section = section
-            if alternate_link is not None:
+                source_dirty = True
+            if alternate_link is not None and source.alternate_link != alternate_link:
                 source.alternate_link = alternate_link
-            if source.mapping_status != "LINKED":
+                source_dirty = True
+            if source.mapping_status != "LINKED" and (
+                source_dirty or bool(task_texts) or user.inferred_curriculum_year is not None
+            ):
                 resolved = CurriculumResolverService.resolve_course(
                     external_course_id=external_course_id,
                     raw_name=name,
@@ -204,11 +277,13 @@ class AcademicSyncRepository:
                     source.mapping_source = resolved.mapping_source
                     if resolved.detected_group and not source.default_group_code:
                         source.default_group_code = resolved.detected_group
-            source.updated_at = datetime.now(timezone.utc)
+                    source_dirty = True
+            if source_dirty:
+                source.updated_at = datetime.now(timezone.utc)
 
         enrollment: Optional[UserCourseEnrollment] = None
         if source.mapping_status == "LINKED" and source.course_code:
-            enrollment = cls._ensure_enrollment(
+            enrollment, enrollment_created = cls._ensure_enrollment_with_status(
                 db,
                 user_id=user.id,
                 course_code=source.course_code,
@@ -220,7 +295,8 @@ class AcademicSyncRepository:
                 detected_group,
                 overwrite=False,
             )
-            cls._refresh_inferred_curriculum_year(db, user)
+            if enrollment_created or user.inferred_curriculum_year is None:
+                cls._refresh_inferred_curriculum_year(db, user)
 
         user_ext = (
             db.query(UserExternalCourse)
@@ -240,10 +316,16 @@ class AcademicSyncRepository:
             db.add(user_ext)
             db.flush()
         else:
-            user_ext.enrollment_id = enrollment.id if enrollment else user_ext.enrollment_id
-            if detected_group is not None:
+            target_enrollment_id = enrollment.id if enrollment else user_ext.enrollment_id
+            ext_dirty = False
+            if user_ext.enrollment_id != target_enrollment_id:
+                user_ext.enrollment_id = target_enrollment_id
+                ext_dirty = True
+            if detected_group is not None and user_ext.detected_group != detected_group:
                 user_ext.detected_group = detected_group
-            user_ext.updated_at = datetime.now(timezone.utc)
+                ext_dirty = True
+            if ext_dirty:
+                user_ext.updated_at = datetime.now(timezone.utc)
 
         return source, user_ext, enrollment
 
@@ -292,19 +374,39 @@ class AcademicSyncRepository:
             db.add(assignment)
             return assignment
 
-        assignment.source_id = source_id
-        assignment.course_code = course_code
-        assignment.enrollment_id = enrollment_id
-        assignment.title = title
-        if description is not None:
+        assignment_dirty = False
+        if assignment.source_id != source_id:
+            assignment.source_id = source_id
+            assignment_dirty = True
+        if assignment.course_code != course_code:
+            assignment.course_code = course_code
+            assignment_dirty = True
+        if assignment.enrollment_id != enrollment_id:
+            assignment.enrollment_id = enrollment_id
+            assignment_dirty = True
+        if assignment.title != title:
+            assignment.title = title
+            assignment_dirty = True
+        if description is not None and assignment.description != description:
             assignment.description = description
-        assignment.due_date = due_date
-        if max_points is not None:
+            assignment_dirty = True
+        if _datetimes_differ(assignment.due_date, due_date):
+            assignment.due_date = due_date
+            assignment_dirty = True
+        if max_points is not None and assignment.max_points != max_points:
             assignment.max_points = max_points
-        assignment.state = state
-        assignment.alternate_link = alternate_link
-        assignment.origin = origin
-        assignment.updated_at = datetime.now(timezone.utc)
+            assignment_dirty = True
+        if assignment.state != state:
+            assignment.state = state
+            assignment_dirty = True
+        if assignment.alternate_link != alternate_link:
+            assignment.alternate_link = alternate_link
+            assignment_dirty = True
+        if assignment.origin != origin:
+            assignment.origin = origin
+            assignment_dirty = True
+        if assignment_dirty:
+            assignment.updated_at = datetime.now(timezone.utc)
         return assignment
 
     @classmethod
@@ -406,6 +508,10 @@ class AcademicSyncRepository:
 
         caller_link = (
             db.query(UserExternalCourse)
+            .options(
+                selectinload(UserExternalCourse.source),
+                selectinload(UserExternalCourse.enrollment),
+            )
             .filter(
                 UserExternalCourse.user_id == user.id,
                 UserExternalCourse.source_id == source_id,
@@ -415,11 +521,29 @@ class AcademicSyncRepository:
         if caller_link is None:
             raise LookupError("External course source not found for student")
 
-        catalog_entry = db.query(CourseCatalog).filter(CourseCatalog.code == course_code).first()
-        if catalog_entry is None:
-            raise ValueError(f"Unknown curriculum course code: {course_code}")
+        if CurriculumResolverService.get_catalog_entry(course_code) is None:
+            catalog_entry = db.query(CourseCatalog.code).filter(CourseCatalog.code == course_code).first()
+            if catalog_entry is None:
+                raise ValueError(f"Unknown curriculum course code: {course_code}")
 
-        source = db.query(CourseExternalSource).filter(CourseExternalSource.id == source_id).one()
+        source = caller_link.source
+        if (
+            source.mapping_status == "LINKED"
+            and source.course_code == course_code
+            and source.component_type == component_type
+            and source.mapping_source == "MANUAL"
+            and caller_link.enrollment is not None
+            and caller_link.enrollment_id == caller_link.enrollment.id
+        ):
+            caller_enrollment = caller_link.enrollment
+            current_group = (
+                caller_enrollment.lab_group
+                if component_type == "LABORATORIO"
+                else caller_enrollment.theory_group
+            )
+            if group_code is None or current_group == group_code:
+                return source
+
         source.course_code = course_code
         source.component_type = component_type
         source.mapping_status = "LINKED"
@@ -455,8 +579,9 @@ class AcademicSyncRepository:
                     link.detected_group,
                     overwrite=False,
                 )
-            link.enrollment_id = enrollment.id
-            link.updated_at = datetime.now(timezone.utc)
+            if link.enrollment_id != enrollment.id:
+                link.enrollment_id = enrollment.id
+                link.updated_at = datetime.now(timezone.utc)
 
             db.query(ClassroomAssignment).filter(
                 ClassroomAssignment.user_id == link.user_id,
@@ -472,7 +597,6 @@ class AcademicSyncRepository:
                 cls._refresh_inferred_curriculum_year(db, link.user)
 
         db.commit()
-        db.refresh(source)
         return source
 
     @staticmethod
@@ -504,14 +628,89 @@ class AcademicSyncRepository:
             return None
 
         update_set = fields_to_update if fields_to_update is not None else {"theory_group", "lab_group"}
-        if "theory_group" in update_set:
+        changed = False
+        if "theory_group" in update_set and enrollment.theory_group != theory_group:
             enrollment.theory_group = theory_group
-        if "lab_group" in update_set:
+            changed = True
+        if "lab_group" in update_set and enrollment.lab_group != lab_group:
             enrollment.lab_group = lab_group
-        enrollment.updated_at = datetime.now(timezone.utc)
-        db.commit()
-        db.refresh(enrollment)
+            changed = True
+        if changed:
+            enrollment.updated_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(enrollment)
         return enrollment
+
+    @staticmethod
+    def update_enrollment_groups_response(
+        db: Session,
+        *,
+        user_id: UUID,
+        course_code: str,
+        theory_group: Optional[str] = None,
+        lab_group: Optional[str] = None,
+        fields_to_update: Optional[set[str]] = None,
+        term: str = DEFAULT_TERM,
+    ) -> Optional[AcademicCourseResponse]:
+        """
+        Update caller's personal theory/lab group (A-F) and build response
+        from eager-loaded relationships before committing to avoid post-commit lazy loads.
+        """
+        enrollment = (
+            db.query(UserCourseEnrollment)
+            .options(
+                selectinload(UserCourseEnrollment.catalog_course),
+                selectinload(UserCourseEnrollment.user_sources).selectinload(UserExternalCourse.source),
+            )
+            .filter(
+                UserCourseEnrollment.user_id == user_id,
+                UserCourseEnrollment.course_code == course_code,
+                UserCourseEnrollment.term == term,
+            )
+            .first()
+        )
+        if enrollment is None:
+            return None
+
+        update_set = fields_to_update if fields_to_update is not None else {"theory_group", "lab_group"}
+        changed = False
+        if "theory_group" in update_set and enrollment.theory_group != theory_group:
+            enrollment.theory_group = theory_group
+            changed = True
+        if "lab_group" in update_set and enrollment.lab_group != lab_group:
+            enrollment.lab_group = lab_group
+            changed = True
+        if changed:
+            enrollment.updated_at = datetime.now(timezone.utc)
+        response = _build_enrollment_response(enrollment)
+        if changed:
+            db.commit()
+        return response
+
+    @staticmethod
+    def list_catalog_responses(
+        db: Session,
+        *,
+        curriculum_year: Optional[int] = None,
+        study_year: Optional[int] = None,
+        semester: Optional[int] = None,
+        q: Optional[str] = None,
+    ) -> List[CourseCatalogResponse]:
+        """Return pre-validated curriculum catalog responses without repeated ORM/JSON parsing."""
+        CurriculumResolverService.ensure_catalog_seeded(db)
+        q_upper = q.strip().upper() if q and q.strip() else None
+        return [
+            item
+            for item in _get_catalog_responses()
+            if (curriculum_year is None or item.curriculum_year == curriculum_year)
+            and (study_year is None or item.study_year == study_year)
+            and (semester is None or item.semester == semester)
+            and (
+                q_upper is None
+                or q_upper in item.code.upper()
+                or q_upper in item.normalized_name.upper()
+            )
+        ]
 
     @staticmethod
     def enrollment_to_response(enrollment: UserCourseEnrollment) -> AcademicCourseResponse:

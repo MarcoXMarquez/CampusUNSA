@@ -198,6 +198,8 @@ class DuticSyncService:
 
         synced_courses_count = 0
         synced_assignments_count = 0
+        initial_inferred_year = user.inferred_curriculum_year
+        has_linked_source = False
 
         task_texts_by_course: Dict[str, List[str]] = {}
         for t_item in tasks_data:
@@ -226,6 +228,8 @@ class DuticSyncService:
                 task_texts=task_texts_by_course.get(moodle_course_id, ()),
             )
 
+            if source.mapping_status == "LINKED":
+                has_linked_source = True
             courses_map[moodle_course_id] = (source, enrollment)
             courses_map[course_ref_id] = (source, enrollment)
             synced_courses_count += 1
@@ -279,7 +283,8 @@ class DuticSyncService:
             )
             synced_assignments_count += 1
 
-        AcademicSyncRepository.reconcile_user_academic_links(db, user)
+        if user.inferred_curriculum_year != initial_inferred_year or has_linked_source:
+            AcademicSyncRepository.reconcile_user_academic_links(db, user)
 
         sync_timestamp = datetime.now(timezone.utc)
         user.moodle_calendar_sync_status = "SYNCED"

@@ -103,16 +103,16 @@ def subscribe_moodle_ical(
     current_user.moodle_calendar_url = encrypt_token(canonical_url)
     current_user.moodle_calendar_connected_at = now
     current_user.moodle_calendar_sync_status = "CONNECTED"
-    db.commit()
-    db.refresh(current_user)
+    db.flush()
 
     try:
         DuticIcalService.sync_student_moodle_ical(
             db=db,
             user=current_user,
-            calendar_url=canonical_url,
+            prevalidated_url=canonical_url,
         )
     except HTTPException as exc:
+        db.commit()
         logger.warning(
             "Initial Moodle iCal sync deferred after subscribe for user %s: %s",
             current_user.id,

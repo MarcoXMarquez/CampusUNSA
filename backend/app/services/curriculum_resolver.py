@@ -92,20 +92,31 @@ _CATALOG_BY_NORMALIZED_NAME: Dict[str, List[CurriculumCatalogEntry]] = {}
 for _entry in CURRICULUM_CATALOG_ENTRIES:
     _CATALOG_BY_NORMALIZED_NAME.setdefault(_entry["normalized_name"], []).append(_entry)
 
-# Precompile whole-phrase patterns for deterministic task-hint matching (longest names first).
-_TASK_HINT_PHRASES: Tuple[Tuple[str, re.Pattern[str], List[CurriculumCatalogEntry]], ...] = tuple(
-    (
-        norm_name,
-        re.compile(rf"(?:^|\s){re.escape(norm_name)}(?:\s|$)"),
-        group_entries,
-    )
-    for norm_name, group_entries in sorted(
-        _CATALOG_BY_NORMALIZED_NAME.items(),
-        key=lambda item: len(item[0]),
-        reverse=True,
-    )
-    if len(norm_name) >= 10
-)
+_TASK_HINT_PHRASES_CACHE: Optional[
+    Tuple[Tuple[str, re.Pattern[str], List[CurriculumCatalogEntry]], ...]
+] = None
+
+
+def _get_task_hint_phrases() -> (
+    Tuple[Tuple[str, re.Pattern[str], List[CurriculumCatalogEntry]], ...]
+):
+    """Build and cache whole-phrase regexes lazily so lightweight workers avoid startup RAM."""
+    global _TASK_HINT_PHRASES_CACHE
+    if _TASK_HINT_PHRASES_CACHE is None:
+        _TASK_HINT_PHRASES_CACHE = tuple(
+            (
+                norm_name,
+                re.compile(rf"(?:^|\s){re.escape(norm_name)}(?:\s|$)"),
+                group_entries,
+            )
+            for norm_name, group_entries in sorted(
+                _CATALOG_BY_NORMALIZED_NAME.items(),
+                key=lambda item: len(item[0]),
+                reverse=True,
+            )
+            if len(norm_name) >= 10
+        )
+    return _TASK_HINT_PHRASES_CACHE
 
 
 class CurriculumResolverService:
@@ -114,7 +125,19 @@ class CurriculumResolverService:
     @staticmethod
     def ensure_catalog_seeded(db: Session) -> None:
         """Idempotently populate course_catalog when running on a clean database (e.g. SQLite tests)."""
+        bind = None
+        try:
+            bind = db.get_bind()
+            if getattr(bind, "_curriculum_catalog_seeded", False):
+                return
+        except Exception:
+            bind = None
         if db.query(CourseCatalog.code).limit(1).first() is not None:
+            if bind is not None:
+                try:
+                    setattr(bind, "_curriculum_catalog_seeded", True)
+                except Exception:
+                    pass
             return
         db.bulk_save_objects(
             [
@@ -138,6 +161,11 @@ class CurriculumResolverService:
             ]
         )
         db.flush()
+        if bind is not None:
+            try:
+                setattr(bind, "_curriculum_catalog_seeded", True)
+            except Exception:
+                pass
 
     @staticmethod
     def get_catalog_entry(code: str) -> Optional[CurriculumCatalogEntry]:
@@ -310,8 +338,8 @@ class CurriculumResolverService:
                 norm_task = normalize_course_text(raw_task)
                 if not norm_task:
                     continue
-                for norm_name, pattern, entries in _TASK_HINT_PHRASES:
-                    if pattern.search(norm_task):
+                for norm_name, pattern, entries in _get_task_hint_phrases():
+                    if norm_name in norm_task and pattern.search(norm_task):
                         matched_norm_names.add(norm_name)
                         matched_entries_by_norm[norm_name] = entries
                         break

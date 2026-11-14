@@ -178,6 +178,8 @@ class ClassroomSyncService:
 
         synced_courses_count = 0
         synced_assignments_count = 0
+        initial_inferred_year = user.inferred_curriculum_year
+        needs_reconcile = False
 
         for course_item in courses_data:
             course_id_str = str(course_item.get("id"))
@@ -194,6 +196,10 @@ class ClassroomSyncService:
                 alternate_link=alternate_link,
                 origin="classroom",
             )
+            if source.mapping_status == "LINKED":
+                needs_reconcile = needs_reconcile or (
+                    user.inferred_curriculum_year != initial_inferred_year
+                )
             synced_courses_count += 1
 
             # Fetch and upsert assignments for this course
@@ -255,8 +261,11 @@ class ClassroomSyncService:
                     origin="classroom",
                 )
                 synced_assignments_count += 1
+                if source.mapping_status != "LINKED" and title:
+                    needs_reconcile = True
 
-        AcademicSyncRepository.reconcile_user_academic_links(db, user)
+        if needs_reconcile or user.inferred_curriculum_year != initial_inferred_year:
+            AcademicSyncRepository.reconcile_user_academic_links(db, user)
 
         # Mark user synchronization state as successful
         sync_timestamp = datetime.now(timezone.utc)
