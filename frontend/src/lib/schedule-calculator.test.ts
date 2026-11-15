@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { AcademicCourse } from "../../hooks/useAcademicBoard";
-import type { CourseScheduleBlock } from "../api-client";
-import { buildWeeklySchedule, resolveNextClass } from "../schedule-calculator";
+import type { AcademicCourse } from "@/hooks/useAcademicBoard";
+import type { CourseScheduleBlock } from "@/lib/api-client";
+import { buildWeeklySchedule, resolveNextClass } from "./schedule-calculator";
 
 function makeBlock(
   overrides: Partial<CourseScheduleBlock> & {
