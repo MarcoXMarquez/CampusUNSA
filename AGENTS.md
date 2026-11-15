@@ -214,8 +214,8 @@ node scripts/verify-ui-directives.mjs
    * **UI Evidence Gate:** Pull Requests that change rendered UI under `frontend/` must contain a fully checked `UI Directives Compliance` section and at least one screenshot, covering light and dark mode.
 
 4. **Continuous Documentation Directive (Oppia-Caliber Wiki Gate):**
-   * Whenever an issue or user story is resolved and closed (`Closes #X`), the AI agent or developer MUST execute the `campusunsa-wiki-orchestrator` skill (`python scripts/wiki_engine.py --issue X`).
-   * The skill analyzes the code delta, updates or creates the assigned Oppia-caliber wiki page with Mermaid sequence diagrams, refreshes `_Sidebar.md`, and validates quality gates (`python scripts/wiki_validator.py`).
+   * Whenever an issue or user story is resolved and closed (`Closes #X`), the AI agent or developer MUST execute the `campusunsa-wiki-orchestrator` skill (`python scripts/wiki/wiki_engine.py --issue X`).
+   * The skill analyzes the code delta, updates or creates the assigned Oppia-caliber wiki page with Mermaid sequence diagrams, refreshes `_Sidebar.md`, and validates quality gates (`python scripts/wiki/wiki_validator.py`).
    * For newly introduced agile user stories, the skill's dynamic inference engine automatically maps the feature into the appropriate architectural category.
    * Pull Requests must include evidence that the wiki documentation was synchronized and validated.
 
