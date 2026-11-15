@@ -31,7 +31,7 @@ services:
     networks: [perf]
 
   backend:
-    build: ./backend
+    build: ../../backend
     image: campusunsa-perf-backend
     environment: &perf-environment
       PERF_ISOLATED: "1"
@@ -69,7 +69,7 @@ services:
     image: nginx:1.28-alpine
     ulimits: *perf-ulimits
     volumes:
-      - ./backend/tests/load/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../backend/tests/load/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       backend:
         condition: service_healthy
@@ -99,9 +99,9 @@ services:
     environment:
       PYTHONPATH: /app
     volumes:
-      - ./backend:/app:ro
+      - ../../backend:/app:ro
       - load-identities:/load-data:ro
-      - ${PERF_OUTPUT_DIR:-./perf-results}:/results
+      - ${PERF_OUTPUT_DIR:-../../perf-results}:/results
     command: ["-f", "tests/load/locustfile.py", "--headless", "--host", "http://gateway:8080", "--users", "1000", "--spawn-rate", "50", "--run-time", "150s", "--reset-stats", "--stop-timeout", "10", "--csv", "/results/load", "--csv-full-history", "--html", "/results/report.html"]
     networks: [perf]
 

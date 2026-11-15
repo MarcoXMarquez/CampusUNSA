@@ -64,8 +64,8 @@ The default is `TASK_PARSER_PROVIDER=disabled`: deterministic fallback only, wit
 From the repository root, start the optional Compose service and pull a model:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.llm.yml --profile llm up -d ollama
-docker compose -f docker-compose.yml -f docker-compose.llm.yml --profile llm exec ollama ollama pull qwen2.5:3b
+docker compose -f docker-compose.yml -f deploy/compose/docker-compose.llm.yml --profile llm up -d ollama
+docker compose -f docker-compose.yml -f deploy/compose/docker-compose.llm.yml --profile llm exec ollama ollama pull qwen2.5:3b
 ```
 
 Set these values in the untracked `.env`, then recreate the backend:

@@ -114,7 +114,7 @@ flowchart TD
 
 ### 4.2 File System and Code Artifacts to Deliver in Sprint 3
 1. **Load Scenario Definition:** `backend/tests/load/locustfile.py` defining student browsing patterns (Healthcheck, Google OAuth verification, Profile retrieval, Ticket queue querying).
-2. **Container Service Descriptor:** Optional profiling override in `docker-compose.perf.yml` orchestrating `locustio/locust`.
+2. **Container Service Descriptor:** Optional profiling override in `deploy/compose/docker-compose.perf.yml` orchestrating `locustio/locust`.
 3. **Synthetic Identity Generator:** `backend/tests/load/seed_load_users.py` generating 1,000 transient database identities in an isolated schema or rollback transaction.
 4. **Oracle Integration:** New verification stage `[6/6] Checking Concurrent Load Performance (1,000 Users)...` added to `scripts/verify.ps1` and `scripts/verify.sh`.
 5. **CI Workflow Step:** Headless performance benchmark step integrated into `.github/workflows/ci.yml`.

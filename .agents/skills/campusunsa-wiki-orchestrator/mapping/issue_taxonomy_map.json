@@ -250,7 +250,7 @@
         "target_page_fallback": "Backend-Tests-Guide.md"
       },
       {
-        "pattern": "docker-compose.*|Dockerfile.*|backend/alembic/.*",
+        "pattern": "docker-compose.*|deploy/compose/.*|Dockerfile.*|backend/alembic/.*",
         "category": "operations_and_devops",
         "target_page_fallback": "Docker-Environment-and-Tooling.md"
       }
