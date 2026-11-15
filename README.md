@@ -193,17 +193,17 @@ docker compose exec backend alembic upgrade head
 
 CampusUNSA is developed under an Agile Scrum methodology across 9 one-week sprints concluding in December 2026. Peer reviews, sprint milestones, and release gates are audited every Wednesday at 18:00 UTC-5.
 
-| Sprint | Timeline | Focus Area | Deliverable Milestone |
-| :---: | :---: | :--- | :--- |
-| **Sprint 1** | Oct 07 - Oct 14 | Architecture Foundation & DevOps | Docker Compose stack, FastAPI + Next.js base, test runners, CI pipeline. |
-| **Sprint 2** | Oct 14 - Oct 21 | Identity, Auth & Access Control | Google OAuth `@unsa.edu.pe`, profile schemas, JWT security & RBAC gates. |
-| **Sprint 3** | Oct 21 - Oct 28 | Academic Ingestion (Classroom) | Classroom API connector, course and coursework sync engine, background worker. |
-| **Sprint 4** | Oct 28 - Nov 04 | Academic Hub & PWA Offline | Urgency task board, dynamic schedule, "Next Class" widget, offline Service Worker. |
-| **Sprint 5** | Nov 04 - Nov 11 | Messaging Gateway & OTP Auth | Evolution API webhook, Redis-backed 5-minute OTP phone pairing lifecycle. |
-| **Sprint 6** | Nov 11 - Nov 18 | NLP Task Parser & Scheduling | TDD-driven LLM parser for informal text, automated task creation in database. |
-| **Sprint 7** | Nov 18 - Nov 25 | Student Guidance & Secretary Desk | Interactive procedure flowcharts, secretarial handoff and ticket console. |
-| **Sprint 8** | Nov 25 - Dec 02 | Candidate Extensions & Load Tests | Regulations RAG query engine / Lost & Found board, Locust load testing (1,000 users). |
-| **Sprint 9** | Dec 02 - Dec 09 | System Hardening & Release v1.0 | Closed pilot with 30 UNSA students, test coverage audit, production release v1.0. |
+| Sprint | Timeline | Focus Area | Deliverable Milestone | Status |
+| :---: | :---: | :--- | :--- | :---: |
+| **Sprint 1** | Oct 07 - Oct 14 | Architecture Foundation & DevOps | Docker Compose stack, FastAPI + Next.js base, test runners, CI pipeline. | Closed |
+| **Sprint 2** | Oct 14 - Oct 21 | Identity, Auth & Access Control | Google OAuth `@unsa.edu.pe`, profile schemas, JWT security & RBAC gates. | Closed |
+| **Sprint 3** | Oct 21 - Oct 28 | Academic Ingestion (Classroom) | Classroom API connector, course and coursework sync engine, background worker. | Closed |
+| **Sprint 4** | Oct 28 - Nov 04 | Academic Hub & PWA Offline | Urgency task board, dynamic schedule, "Next Class" widget, offline Service Worker. | Closed |
+| **Sprint 5** | Nov 04 - Nov 11 | Messaging Gateway & OTP Auth | Evolution API webhook, Redis-backed 5-minute OTP phone pairing lifecycle. | Active |
+| **Sprint 6** | Nov 11 - Nov 18 | NLP Task Parser & Scheduling | TDD-driven LLM parser for informal text, automated task creation in database. | Planned |
+| **Sprint 7** | Nov 18 - Nov 25 | Student Guidance & Secretary Desk | Interactive procedure flowcharts, secretarial handoff and ticket console. | Planned |
+| **Sprint 8** | Nov 25 - Dec 02 | Candidate Extensions & Load Tests | Regulations RAG query engine / Lost & Found board, Locust load testing (1,000 users). | Planned |
+| **Sprint 9** | Dec 02 - Dec 09 | System Hardening & Release v1.0 | Closed pilot with 30 UNSA students, test coverage audit, production release v1.0. | Planned |
 
 ---
 
