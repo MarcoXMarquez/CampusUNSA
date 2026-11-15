@@ -63,33 +63,39 @@ flowchart LR
 
 ### Complete Backlog Matrix
 
-| Issue # | Story Code | Issue Title | Sprint | Review Date | Lead Developer | Peer Reviewer | MoSCoW Priority |
-| :---: | :---: | :--- | :---: | :---: | :--- | :--- | :---: |
-| **#1** | `US-01` | Fully Reproducible Containerized Development Environment | Sprint 1 | Wed Oct 14 | `@MarcoXMarquez` | `@rikich3` | Must Have |
-| **#2** | `US-02` | Institutional Google OAuth Login & Profile Provisioning | Sprint 2 | Wed Oct 21 | `@MarcoXMarquez` | `@iccoscco` | Must Have |
-| **#3** | `US-03` | Role-Based Access Control (RBAC) Security Middleware | Sprint 2 | Wed Oct 21 | `@rikich3` | `@Sebastianzzzin` | Must Have |
-| **#4** | `US-04` | Google Classroom Course & Assignment Sync Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@Sebastianzzzin` | Must Have |
-| **#43** | `US-23` | UNSA Moodle (DUTIC) Course & Assignment Sync Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@rikich3` | Should Have |
-| **#84** | `US-24` | Seamless Google Classroom OAuth Consent & Automated Background Sync Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@Sebastianzzzin` | Must Have |
-| **#86** | `US-25` | UNSA Moodle iCal Calendar URL Subscription & Automated Task Ingestion Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@rikich3` | Should Have |
-| **#42** | `TECH-02` | Continuous Load Testing Harness & Concurrency Gate (1,000 Users) [CR-01] | Sprint 3 | Wed Oct 28 | `@Sebastianzzzin` | `@rikich3` | Must Have |
-| **#5** | `US-05` | Visual Academic Task Board with Urgency Traffic Lights | Sprint 4 | Wed Nov 04 | `@Sebastianzzzin` | `@iccoscco` | Must Have |
-| **#6** | `US-06` | Dynamic Weekly Class Schedule & Next Class Widget | Sprint 4 | Wed Nov 04 | `@rikich3` | `@MarcoXMarquez` | Must Have |
-| **#7** | `US-07` | PWA Service Worker Caching & 100% Offline Mode | Sprint 4 | Wed Nov 04 | `@Sebastianzzzin` | `@iccoscco` | Must Have |
-| **#8** | `US-08` | Secure 5-Minute OTP WhatsApp Phone Binding Lifecycle | Sprint 5 | Wed Nov 11 | `@rikich3` | `@MarcoXMarquez` | Must Have |
-| **#9** | `US-09` | Evolution API Inbound Webhook Ingestion Gateway | Sprint 5 | Wed Nov 11 | `@Sebastianzzzin` | `@rikich3` | Must Have |
-| **#10** | `US-10` | NLP Task Extraction via Structured LLM Parsing | Sprint 6 | Wed Nov 18 | `@rikich3` | `@MarcoXMarquez` | Must Have |
-| **#11** | `US-11` | Automated Task Insertion with WhatsApp Confirmation | Sprint 6 | Wed Nov 18 | `@iccoscco` | `@Sebastianzzzin` | Must Have |
-| **#12** | `US-12` | Interactive University Procedures and Bureaucracy Flowcharts | Sprint 7 | Wed Nov 25 | `@iccoscco` | `@Sebastianzzzin` | Must Have |
-| **#13** | `US-13` | Human Secretarial Escalation & Ticket Management Console | Sprint 7 | Wed Nov 25 | `@MarcoXMarquez` | `@iccoscco` | Must Have |
-| **#14** | `US-14` | Official Regulations Knowledge Base & RAG Query Engine | Sprint 8 | Wed Dec 02 | `@rikich3` | `@MarcoXMarquez` | Should Have |
-| **#15** | `US-15` | Automated Load and Stress Verification (1,000 Users) | Sprint 8 | Wed Dec 02 | `@Sebastianzzzin` | `@iccoscco` | Should Have |
-| **#16** | `US-16` | System Hardening, 30-Student Live Pilot & Release v1.0 | Sprint 9 | Wed Dec 09 | `@MarcoXMarquez` | All Team Members | Must Have |
-| **#17** | `Candidate` | Campus GIS Navigation & Classroom Locator | Sprint 8 | Wed Dec 02 | `@Sebastianzzzin` | `@iccoscco` | Should Have |
-| **#18** | `Candidate` | Community Lost & Found Hub with Verified Claims | Sprint 8 | Wed Dec 02 | `@rikich3` | `@iccoscco` | Should Have |
-| **#19** | `Candidate` | Study Session Pomodoro Focus Timer & iCal Export | Sprint 8 | Wed Dec 02 | `@MarcoXMarquez` | `@Sebastianzzzin` | Should Have |
-| **#20** | `Future` | Digital Student ID Barcode & Turnstile Integration | Posterior | Post-v1.0 | `@MarcoXMarquez` | `@rikich3` | Won't Have |
-| **#21** | `Future` | Dining Hall Occupancy Geofencing & SISUNSA Scraping | Posterior | Post-v1.0 | `@Sebastianzzzin` | `@iccoscco` | Won't Have |
+| Issue # | Story Code | Issue Title | Sprint | Review Date | Lead Developer | Peer Reviewer | MoSCoW Priority | Status |
+| :---: | :---: | :--- | :---: | :---: | :--- | :--- | :---: | :---: |
+| **#1** | `US-01` | Fully Reproducible Containerized Development Environment | Sprint 1 | Wed Oct 14 | `@MarcoXMarquez` | `@rikich3` | Must Have | Closed |
+| **#2** | `US-02` | Institutional Google OAuth Login & Profile Provisioning | Sprint 2 | Wed Oct 21 | `@MarcoXMarquez` | `@iccoscco` | Must Have | Closed |
+| **#3** | `US-03` | Role-Based Access Control (RBAC) Security Middleware | Sprint 2 | Wed Oct 21 | `@rikich3` | `@Sebastianzzzin` | Must Have | Closed |
+| **#4** | `US-04` | Google Classroom Course & Assignment Sync Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@Sebastianzzzin` | Must Have | Closed |
+| **#43** | `US-23` | UNSA Moodle (DUTIC) Course & Assignment Sync Engine | Sprint 3 | Wed Oct 28 | `@MarcoXMarquez` | `@rikich3` | Should Have | Closed |
+| **#42** | `TECH-02` | Continuous Load Testing Harness & Concurrency Gate (1,000 Users) [CR-01] | Sprint 3 | Wed Oct 28 | `@Sebastianzzzin` | `@rikich3` | Must Have | Closed |
+| **#84** | `US-24` | Seamless Google Classroom OAuth Consent & Automated Background Sync Engine | Sprint 4 | Wed Nov 04 | `@MarcoXMarquez` | `@Sebastianzzzin` | Must Have | Closed |
+| **#86** | `US-25` | UNSA Moodle iCal Calendar URL Subscription & Automated Task Ingestion Engine | Sprint 4 | Wed Nov 04 | `@MarcoXMarquez` | `@rikich3` | Should Have | Closed |
+| **#88** | `FEAT` | iOS-Native Frontend Redesign with Konsta UI | Sprint 4 | Wed Nov 04 | `@Sebastianzzzin` | `@MarcoXMarquez` | Must Have | Closed |
+| **#91** | `FIX` | Resolve Full SSRF Vulnerability in Moodle iCal Synchronization | Sprint 4 | Wed Nov 04 | `@MarcoXMarquez` | `@rikich3` | Must Have | Closed |
+| **#98** | `US-26` | First-Time Tasks Synchronization Onboarding UI (Stitch Tareas Sincronizacion) | Sprint 4 | Wed Nov 04 | `@MarcoXMarquez` | `@Sebastianzzzin` | Must Have | Closed |
+| **#99** | `US-27` | Unified Course Catalog (2017/2025), Shared External Sources & Per-Student Group Enrollments | Sprint 4 | Wed Nov 04 | `@MarcoXMarquez` | `@rikich3` | Must Have | Closed |
+| **#101** | `FEAT` | Stitch Horario View & Shared Course Schedule Blocks | Sprint 4 | Wed Nov 04 | `@MarcoXMarquez` | `@Sebastianzzzin` | Must Have | Closed |
+| **#5** | `US-05` | Visual Academic Task Board with Urgency Traffic Lights | Sprint 4 | Wed Nov 04 | `@Sebastianzzzin` | `@iccoscco` | Must Have | Closed |
+| **#6** | `US-06` | Dynamic Weekly Class Schedule & Next Class Widget | Sprint 4 | Wed Nov 04 | `@rikich3` | `@MarcoXMarquez` | Must Have | Closed |
+| **#7** | `US-07` | PWA Service Worker Caching & 100% Offline Mode | Sprint 4 | Wed Nov 04 | `@Sebastianzzzin` | `@iccoscco` | Must Have | Closed |
+| **#106** | `CHORE` | Repository Folder Structure Reorganization | Sprint 4 | Wed Nov 04 | `@MarcoXMarquez` | `@Sebastianzzzin` | Maintenance | Closed |
+| **#8** | `US-08` | Secure 5-Minute OTP WhatsApp Phone Binding Lifecycle | Sprint 5 | Wed Nov 11 | `@rikich3` | `@MarcoXMarquez` | Must Have | Open |
+| **#9** | `US-09` | Evolution API Inbound Webhook Ingestion Gateway | Sprint 5 | Wed Nov 11 | `@Sebastianzzzin` | `@rikich3` | Must Have | Open |
+| **#10** | `US-10` | NLP Task Extraction via Structured LLM Parsing | Sprint 6 | Wed Nov 18 | `@rikich3` | `@MarcoXMarquez` | Must Have | Closed |
+| **#11** | `US-11` | Automated Task Insertion with WhatsApp Confirmation | Sprint 6 | Wed Nov 18 | `@iccoscco` | `@Sebastianzzzin` | Must Have | Open |
+| **#12** | `US-12` | Interactive University Procedures and Bureaucracy Flowcharts | Sprint 7 | Wed Nov 25 | `@iccoscco` | `@Sebastianzzzin` | Must Have | Open |
+| **#13** | `US-13` | Human Secretarial Escalation & Ticket Management Console | Sprint 7 | Wed Nov 25 | `@MarcoXMarquez` | `@iccoscco` | Must Have | Open |
+| **#14** | `US-14` | Official Regulations Knowledge Base & RAG Query Engine | Sprint 8 | Wed Dec 02 | `@rikich3` | `@MarcoXMarquez` | Should Have | Open |
+| **#15** | `US-15` | Automated Load and Stress Verification (1,000 Users) | Sprint 8 | Wed Dec 02 | `@Sebastianzzzin` | `@iccoscco` | Should Have | Open |
+| **#16** | `US-16` | System Hardening, 30-Student Live Pilot & Release v1.0 | Sprint 9 | Wed Dec 09 | `@MarcoXMarquez` | All Team Members | Must Have | Open |
+| **#17** | `Candidate` | Campus GIS Navigation & Classroom Locator | Sprint 8 | Wed Dec 02 | `@Sebastianzzzin` | `@iccoscco` | Should Have | Open |
+| **#18** | `Candidate` | Community Lost & Found Hub with Verified Claims | Sprint 8 | Wed Dec 02 | `@rikich3` | `@iccoscco` | Should Have | Open |
+| **#19** | `Candidate` | Study Session Pomodoro Focus Timer & iCal Export | Sprint 8 | Wed Dec 02 | `@MarcoXMarquez` | `@Sebastianzzzin` | Should Have | Open |
+| **#20** | `Future` | Digital Student ID Barcode & Turnstile Integration | Posterior | Post-v1.0 | `@MarcoXMarquez` | `@rikich3` | Won't Have | Open |
+| **#21** | `Future` | Dining Hall Occupancy Geofencing & SISUNSA Scraping | Posterior | Post-v1.0 | `@Sebastianzzzin` | `@iccoscco` | Won't Have | Open |
 
 ---
 
