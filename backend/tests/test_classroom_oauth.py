@@ -260,7 +260,7 @@ def test_sync_automatic_with_stored_refresh_token(
     auth_student: User,
 ) -> None:
     """Tests automatic sync without passing tokens in payload when user has connected Classroom."""
-    from app.services.token_encryption import encrypt_token
+    from app.core.token_encryption import encrypt_token
 
     # Setup student with stored encrypted token
     auth_student.google_refresh_token = encrypt_token("sample_stored_refresh_token")
@@ -319,7 +319,7 @@ def test_sync_revoked_stored_token_sets_needs_reauth(
     auth_student: User,
 ) -> None:
     """Tests that expired or revoked stored refresh tokens flag user as NEEDS_REAUTH."""
-    from app.services.token_encryption import encrypt_token
+    from app.core.token_encryption import encrypt_token
 
     auth_student.google_refresh_token = encrypt_token("revoked_refresh_token")
     auth_student.google_classroom_sync_status = "CONNECTED"
@@ -349,7 +349,7 @@ def test_sync_revoked_stored_token_sets_needs_reauth(
 
 def test_token_encryption_empty_strings() -> None:
     """Tests encryption service edge cases with empty strings."""
-    from app.services.token_encryption import decrypt_token, encrypt_token
+    from app.core.token_encryption import decrypt_token, encrypt_token
 
     assert encrypt_token("") == ""
     assert decrypt_token("") == ""

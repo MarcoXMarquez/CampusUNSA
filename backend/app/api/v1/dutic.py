@@ -28,7 +28,7 @@ from app.schemas.dutic import (
 )
 from app.services.dutic.dutic_ical import DuticIcalService
 from app.services.dutic.dutic_sync import DuticSyncService
-from app.services.token_encryption import encrypt_token
+from app.core.token_encryption import encrypt_token
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

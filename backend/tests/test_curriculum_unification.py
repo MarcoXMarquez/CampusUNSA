@@ -23,7 +23,7 @@ from app.core.database import Base, get_db
 from app.core.security import create_access_token
 from app.main import app
 from app.models.user import User
-from app.services.token_encryption import encrypt_token
+from app.core.token_encryption import encrypt_token
 
 
 @pytest.fixture

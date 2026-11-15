@@ -24,7 +24,7 @@ from app.models.classroom import CourseExternalSource, UserCourseEnrollment
 from app.models.user import User
 from app.repositories.academic_repo import AcademicSyncRepository
 from app.schemas.dutic import SyncDuticResponse
-from app.services.token_encryption import decrypt_token
+from app.core.token_encryption import decrypt_token
 
 
 class DuticIcalService:
