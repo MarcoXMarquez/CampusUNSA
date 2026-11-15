@@ -133,8 +133,24 @@ self.addEventListener("sync", (event) => {
   }
 });
 
+async function matchCachedShell(shellCache, request) {
+  const cachedExact = await shellCache.match(request);
+  if (cachedExact) {
+    return cachedExact;
+  }
+  return shellCache.match("/");
+}
+
 async function handleNavigationRequest(request) {
   const shellCache = await caches.open(SHELL_CACHE);
+
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    const cachedOffline = await matchCachedShell(shellCache, request);
+    if (cachedOffline) {
+      return cachedOffline;
+    }
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 2000);
 
@@ -147,13 +163,9 @@ async function handleNavigationRequest(request) {
     return networkResponse;
   } catch {
     clearTimeout(timeoutId);
-    const cachedExact = await shellCache.match(request);
-    if (cachedExact) {
-      return cachedExact;
-    }
-    const cachedRoot = await shellCache.match("/");
-    if (cachedRoot) {
-      return cachedRoot;
+    const cachedFallback = await matchCachedShell(shellCache, request);
+    if (cachedFallback) {
+      return cachedFallback;
     }
     return new Response("Offline", {
       status: 503,
@@ -165,6 +177,10 @@ async function handleNavigationRequest(request) {
 async function handleStaticAssetRequest(event, request) {
   const staticCache = await caches.open(STATIC_CACHE);
   const cached = await staticCache.match(request);
+
+  if (cached && typeof navigator !== "undefined" && navigator.onLine === false) {
+    return cached;
+  }
 
   const networkPromise = fetch(request)
     .then((response) => {
@@ -196,6 +212,18 @@ async function handleApiRequest(request, requiresAuth) {
 
   const apiCache = await caches.open(API_CACHE);
   const scopedKey = buildScopedApiCacheRequest(request.url, subject);
+
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    const cachedOffline = await apiCache.match(scopedKey);
+    if (cachedOffline) {
+      return cachedOffline;
+    }
+    return new Response(JSON.stringify({ detail: "Offline cache miss" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 2500);
 
