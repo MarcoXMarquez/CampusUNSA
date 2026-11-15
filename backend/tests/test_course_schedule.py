@@ -20,7 +20,7 @@ from app.core.security import create_access_token
 from app.main import app
 from app.models.classroom import UserCourseEnrollment
 from app.models.user import User
-from app.services.curriculum_resolver import DEFAULT_TERM, CurriculumResolverService
+from app.services.academic.curriculum_resolver import DEFAULT_TERM, CurriculumResolverService
 
 
 @pytest.fixture

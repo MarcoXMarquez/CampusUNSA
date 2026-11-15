@@ -140,7 +140,7 @@ class ClassroomSyncService:
                 )
             plain_refresh_token = decrypt_token(user.google_refresh_token)
             try:
-                from app.services.google_oauth import GoogleOAuthService
+                from app.services.classroom.google_oauth import GoogleOAuthService
                 effective_token = GoogleOAuthService.refresh_access_token(plain_refresh_token)
             except GoogleClassroomAuthError as exc:
                 user.classroom_sync_status = "NEEDS_REAUTH"

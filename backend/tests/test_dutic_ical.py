@@ -738,7 +738,7 @@ def test_moodle_sync_does_not_overwrite_google_classroom_sync_state(
     app.dependency_overrides[get_db] = lambda: test_db_session
     try:
         with patch(
-            "app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses",
+            "app.services.dutic.dutic_sync.DuticApiClient.fetch_enrolled_courses",
             side_effect=DuticSessionExpiredError("Moodle session expired"),
         ):
             with TestClient(app) as client:
@@ -761,7 +761,7 @@ def test_moodle_sync_does_not_overwrite_google_classroom_sync_state(
 
 def test_parse_ical_content_generates_deterministic_uid_when_uid_missing() -> None:
     """Missing iCal UIDs must hash event content rather than array index position."""
-    from app.services.dutic_ical import DuticIcalService
+    from app.services.dutic.dutic_ical import DuticIcalService
 
     event_alpha = (
         "BEGIN:VEVENT\n"

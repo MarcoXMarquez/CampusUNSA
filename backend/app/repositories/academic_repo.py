@@ -26,7 +26,7 @@ from app.schemas.academic import (
     ExternalSourceSummaryResponse,
     PendingLinkSourceResponse,
 )
-from app.services.curriculum_resolver import (
+from app.services.academic.curriculum_resolver import (
     CurriculumResolverService,
     DEFAULT_TERM,
 )

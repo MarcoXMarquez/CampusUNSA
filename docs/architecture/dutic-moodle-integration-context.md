@@ -83,7 +83,7 @@ In the same Developer Tools window, the student navigates to:
 The student opens the CampusUNSA web app, navigates to the **DUTIC Moodle Synchronization** tab, pastes both the `MoodleSession` cookie and the `sesskey`, and clicks **"Sincronizar DUTIC"**.
 
 ### Step 5: Backend Ingestion
-The CampusUNSA FastAPI backend (`app/services/dutic_sync.py`) receives both tokens and executes backend-to-Moodle HTTP POST requests via Python `httpx`, mimicking an active browser session:
+The CampusUNSA FastAPI backend (`app/services/dutic/dutic_sync.py`) receives both tokens and executes backend-to-Moodle HTTP POST requests via Python `httpx`, mimicking an active browser session:
 
 * **Endpoint:**
   `POST https://aulavirtual.unsa.edu.pe/2026B/lib/ajax/service.php?sesskey={sesskey}`

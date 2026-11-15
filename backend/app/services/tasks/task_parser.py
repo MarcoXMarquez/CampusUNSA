@@ -5,8 +5,8 @@ import re
 import httpx
 
 from app.schemas.task_parser import ParseTaskRequest, ParseTaskResponse, TaskDraft
-from app.services.task_dates import DeadlineEvidence, normalize, resolve_deadline
-from app.services.task_llm import ExtractionProvider
+from app.services.tasks.task_dates import DeadlineEvidence, normalize, resolve_deadline
+from app.services.tasks.task_llm import ExtractionProvider
 
 
 def fallback_draft(request: ParseTaskRequest, evidence: DeadlineEvidence) -> TaskDraft:

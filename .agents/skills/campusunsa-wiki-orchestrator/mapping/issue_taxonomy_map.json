@@ -220,17 +220,17 @@
         "target_page_fallback": "Auth-and-Institutional-SSO.md"
       },
       {
-        "pattern": "backend/app/services/classroom.*",
+        "pattern": "backend/app/services/classroom/.*",
         "category": "academic_hub",
         "target_page_fallback": "Google-Classroom-Sync-Service.md"
       },
       {
-        "pattern": "backend/app/services/dutic.*",
+        "pattern": "backend/app/services/dutic/.*",
         "category": "academic_hub",
         "target_page_fallback": "DUTIC-Moodle-Extraction-Service.md"
       },
       {
-        "pattern": "backend/app/services/task_.*",
+        "pattern": "backend/app/services/tasks/.*",
         "category": "messaging_and_nlp",
         "target_page_fallback": "NLP-Task-Parser-and-LLM-Pipelines.md"
       },

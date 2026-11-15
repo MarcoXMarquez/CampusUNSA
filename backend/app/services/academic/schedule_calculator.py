@@ -12,7 +12,7 @@ from app.schemas.academic import (
     WeeklyScheduleResponse,
     WeeklyScheduleSessionResponse,
 )
-from app.services.curriculum_resolver import DEFAULT_TERM
+from app.services.academic.curriculum_resolver import DEFAULT_TERM
 
 LIMA_TIMEZONE = ZoneInfo("America/Lima")
 

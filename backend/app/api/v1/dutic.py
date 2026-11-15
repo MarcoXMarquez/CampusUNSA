@@ -26,8 +26,8 @@ from app.schemas.dutic import (
     SyncDuticRequest,
     SyncDuticResponse,
 )
-from app.services.dutic_ical import DuticIcalService
-from app.services.dutic_sync import DuticSyncService
+from app.services.dutic.dutic_ical import DuticIcalService
+from app.services.dutic.dutic_sync import DuticSyncService
 from app.services.token_encryption import encrypt_token
 
 logger = logging.getLogger(__name__)

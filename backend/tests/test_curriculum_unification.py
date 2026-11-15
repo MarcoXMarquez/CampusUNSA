@@ -155,10 +155,10 @@ def test_unifies_moodle_and_classroom_theory_and_lab_into_single_enrollment(
                 assert res_ical.status_code == 200
 
             with patch(
-                "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+                "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
                 return_value=classroom_courses,
             ), patch(
-                "app.services.classroom_sync.ClassroomApiClient.fetch_coursework",
+                "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework",
                 side_effect=mock_coursework,
             ):
                 res_gc = client.post(
@@ -256,10 +256,10 @@ def test_shared_external_source_keeps_groups_a_to_f_isolated_per_student(
     try:
         with TestClient(app) as client:
             with patch(
-                "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+                "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
                 return_value=shared_classroom,
             ), patch(
-                "app.services.classroom_sync.ClassroomApiClient.fetch_coursework",
+                "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework",
                 return_value=[],
             ):
                 assert client.post("/api/v1/classroom/sync", headers=headers_a, json={"refresh_token": "t1"}).status_code == 200
@@ -423,10 +423,10 @@ def test_curriculum_inference_disambiguates_shared_course_names_between_2017_and
             assert refreshed.inferred_curriculum_year == 2025
 
             with patch(
-                "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+                "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
                 return_value=classroom_courses,
             ), patch(
-                "app.services.classroom_sync.ClassroomApiClient.fetch_coursework",
+                "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework",
                 return_value=[],
             ):
                 assert client.post("/api/v1/classroom/sync", headers=headers, json={"refresh_token": "t"}).status_code == 200
