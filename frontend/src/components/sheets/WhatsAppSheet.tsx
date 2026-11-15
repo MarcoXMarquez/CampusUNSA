@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Sheet, Preloader } from "konsta/react";
 import { WhatsappLogo, CheckCircle, WarningCircle } from "@phosphor-icons/react";
-import { verifyWhatsAppPairingCode } from "../lib/api-client";
+import { verifyWhatsAppPairingCode } from "@/lib/api-client";
 
 interface WhatsAppSheetProps {
   opened: boolean;

@@ -21,8 +21,8 @@ Completion describes the student's progress inside CampusUNSA. It does not repre
 
 | Layer | Implementation | Responsibility |
 | :--- | :--- | :--- |
-| Presentation | `frontend/src/components/HoyView.tsx` | Group deadlines, filter sources, render mandatory view states |
-| Detail | `frontend/src/components/TaskDetailSheet.tsx` | Complete or reopen an assignment through a dedicated sheet |
+| Presentation | `frontend/src/components/views/HoyView.tsx` | Group deadlines, filter sources, render mandatory view states |
+| Detail | `frontend/src/components/sheets/TaskDetailSheet.tsx` | Complete or reopen an assignment through a dedicated sheet |
 | Date service | `frontend/src/lib/task-urgency.ts` | Pure urgency classification and stable deadline ordering |
 | Query service | `frontend/src/hooks/useAcademicBoard.ts` | Read data, optimistic mutation, rollback, invalidation, cache persistence |
 | Controller | `backend/app/api/v1/classroom.py` | Authenticate and update an assignment owned by the current user |

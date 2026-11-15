@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AcademicAssignment } from "../components/TaskDetailSheet";
+import type { AcademicAssignment } from "@/components/sheets/TaskDetailSheet";
 import { getApiBaseUrl, type CourseScheduleBlock } from "../lib/api-client";
 import {
   readBoardFromIndexedDb,

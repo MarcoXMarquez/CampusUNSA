@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Sheet } from "konsta/react";
-import { AuthFlow, type AuthFlowUser } from "./AuthFlow";
+import { AuthFlow, type AuthFlowUser } from "@/components/AuthFlow";
 
 interface LoginModalProps {
   opened: boolean;

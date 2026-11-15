@@ -22,12 +22,12 @@ import {
   CheckCircle,
   WarningCircle,
 } from "@phosphor-icons/react";
-import { WhatsAppSheet } from "./WhatsAppSheet";
+import { WhatsAppSheet } from "@/components/sheets/WhatsAppSheet";
 import {
   getUserDisplayName,
   type BackendHealthStatus,
   type UserProfile,
-} from "../lib/api-client";
+} from "@/lib/api-client";
 
 interface AjustesViewProps {
   user: UserProfile | null;

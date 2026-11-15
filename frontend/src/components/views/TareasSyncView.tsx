@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { taskSyncMessages as messages } from "../lib/task-board-messages";
+import { taskSyncMessages as messages } from "@/lib/task-board-messages";
 
 export interface TareasSyncViewProps {
   classroomConnected: boolean;

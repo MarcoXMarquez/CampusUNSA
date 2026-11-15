@@ -5,7 +5,7 @@ import { Sheet, Button } from "konsta/react";
 import { ArrowSquareOut, Clock, BookOpen } from "@phosphor-icons/react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { taskBoardMessages as messages } from "../lib/task-board-messages";
+import { taskBoardMessages as messages } from "@/lib/task-board-messages";
 
 export interface AcademicAssignment {
   id: string;

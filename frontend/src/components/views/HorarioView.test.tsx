@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HorarioView } from "./HorarioView";
-import type { AcademicAssignment } from "./TaskDetailSheet";
-import type { AcademicCourse } from "../hooks/useAcademicBoard";
+import type { AcademicAssignment } from "@/components/sheets/TaskDetailSheet";
+import type { AcademicCourse } from "@/hooks/useAcademicBoard";
 
 const baseLinkedCourse: AcademicCourse = {
   id: "enr-1",
