@@ -32,8 +32,8 @@ from app.schemas.academic import (
     PendingLinkSourceResponse,
     WeeklyScheduleResponse,
 )
-from app.services.curriculum_resolver import DEFAULT_TERM
-from app.services.schedule_calculator import ScheduleCalculator
+from app.services.academic.curriculum_resolver import DEFAULT_TERM
+from app.services.academic.schedule_calculator import ScheduleCalculator
 
 router = APIRouter()
 

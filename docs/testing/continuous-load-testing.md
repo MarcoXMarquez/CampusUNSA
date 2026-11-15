@@ -28,7 +28,7 @@ Percentiles use linear interpolation over original end-to-end request times capt
 
 ## Isolation and security
 
-`docker-compose.perf.yml` is a standalone Compose file, not a developer-stack override. Every invocation gets a generated `campusunsa-perf-<id>` project, an internal network, a temporary PostgreSQL data directory, Redis without persistence, and an ephemeral identity volume. No service publishes a host port.
+`deploy/compose/docker-compose.perf.yml` is a standalone Compose file, not a developer-stack override. Every invocation gets a generated `campusunsa-perf-<id>` project, an internal network, a temporary PostgreSQL data directory, Redis without persistence, and an ephemeral identity volume. No service publishes a host port.
 
 The seeder and fixture entrypoint refuse to run unless the performance environment and exact isolated database/cache hosts match. The seeder also rejects a nonempty database. JWTs use a performance-only key and are kept in the temporary identity volume, not the Git repository or uploaded artifacts. Cleanup removes only the invocation's generated project and volume; it never prunes Docker or modifies the development database.
 

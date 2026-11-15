@@ -42,6 +42,6 @@ Academic deadlines require unambiguous visual cues:
 
 ## 3. Directory and Mock Structure
 
-- Machine-readable agent contract: `DESIGN.md` (root directory).
+- Machine-readable agent contract: `docs/design/DESIGN.md`.
 - Exported screens and visual artifacts: `docs/design/mocks/`.
 - Production implementation: `frontend/src/components/`.

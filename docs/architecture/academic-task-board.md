@@ -21,8 +21,8 @@ Completion describes the student's progress inside CampusUNSA. It does not repre
 
 | Layer | Implementation | Responsibility |
 | :--- | :--- | :--- |
-| Presentation | `frontend/src/components/HoyView.tsx` | Group deadlines, filter sources, render mandatory view states |
-| Detail | `frontend/src/components/TaskDetailSheet.tsx` | Complete or reopen an assignment through a dedicated sheet |
+| Presentation | `frontend/src/components/views/HoyView.tsx` | Group deadlines, filter sources, render mandatory view states |
+| Detail | `frontend/src/components/sheets/TaskDetailSheet.tsx` | Complete or reopen an assignment through a dedicated sheet |
 | Date service | `frontend/src/lib/task-urgency.ts` | Pure urgency classification and stable deadline ordering |
 | Query service | `frontend/src/hooks/useAcademicBoard.ts` | Read data, optimistic mutation, rollback, invalidation, cache persistence |
 | Controller | `backend/app/api/v1/classroom.py` | Authenticate and update an assignment owned by the current user |
@@ -89,7 +89,7 @@ The endpoint accepts assignments from either LMS origin because both use the sam
 
 The user story explicitly requires red, yellow, and green urgency indicators. Yellow and green therefore extend the existing semantic token palette as `deadline-soon` and `deadline-later`, each with a dark variant. This story uses one compact badge per row, with a colored dot and readable neutral text. Source attribution remains secondary text rather than an additional colored badge. Deadline color is never the sole means of identifying priority.
 
-Konsta inset lists, the three existing tabs, system fonts, and the shared detail sheet remain in use. Rows are single keyboard-accessible button targets with chevrons; completion controls live in the sheet. Headlines clamp to two lines, metadata truncates, and interactive controls have a minimum 44-pixel target. Light and dark modes are verified at 360 and 768 pixels. Spanish product copy is centralized in `task-board-messages.ts`.
+Konsta inset lists, the three existing tabs, system fonts, and the shared detail sheet remain in use. Rows are single keyboard-accessible button targets with chevrons; completion controls live in the sheet. Headlines clamp to two lines, metadata truncates, and interactive controls have a minimum 44-pixel target. Light and dark modes are verified at 360 and 768 pixels. Spanish product copy is centralized in `messages/task-board-messages.ts`.
 
 ## Verification Runbook
 

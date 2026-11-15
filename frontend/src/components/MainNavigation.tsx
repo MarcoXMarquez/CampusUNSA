@@ -5,27 +5,27 @@ import { onlineManager } from "@tanstack/react-query";
 import { Page } from "konsta/react";
 import { WhatsappLogo } from "@phosphor-icons/react";
 import Script from "next/script";
-import { HoyView } from "./HoyView";
-import { TareasSyncView } from "./TareasSyncView";
-import { HorarioView } from "./HorarioView";
-import { AjustesView } from "./AjustesView";
-import { LoginModal } from "./LoginModal";
-import { WhatsAppSheet } from "./WhatsAppSheet";
-import { QueryProvider } from "./QueryProvider";
-import { useAcademicBoard } from "../hooks/useAcademicBoard";
+import { HoyView } from "@/components/views/HoyView";
+import { TareasSyncView } from "@/components/views/TareasSyncView";
+import { HorarioView } from "@/components/views/HorarioView";
+import { AjustesView } from "@/components/views/AjustesView";
+import { LoginModal } from "@/components/sheets/LoginModal";
+import { WhatsAppSheet } from "@/components/sheets/WhatsAppSheet";
+import { QueryProvider } from "@/components/providers/QueryProvider";
+import { useAcademicBoard } from "@/hooks/useAcademicBoard";
 import {
   clearOfflineAccountData,
   readSessionFromIndexedDb,
   readSessionSnapshotSync,
   writeSessionSnapshot,
   type OfflineSessionSnapshot,
-} from "../lib/offline-db";
+} from "@/lib/offline-db";
 import {
   clearSwApiCache,
   registerServiceWorker,
   requestBackgroundSync,
-} from "../lib/pwa-sw";
-import { taskSyncMessages as syncMessages } from "../lib/task-board-messages";
+} from "@/lib/pwa-sw";
+import { taskSyncMessages as syncMessages } from "@/lib/messages/task-board-messages";
 import {
   ApiRequestError,
   authenticateWithGoogleToken,
@@ -46,7 +46,7 @@ import {
   type CourseScheduleBlock,
   type CourseScheduleBlockInput,
   type UserProfile,
-} from "../lib/api-client";
+} from "@/lib/api-client";
 
 export function MainNavigation(): React.JSX.Element {
   return (

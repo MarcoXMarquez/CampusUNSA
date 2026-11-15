@@ -17,7 +17,7 @@ from app.core.security import (
 )
 from app.models.user import User
 from app.api.v1.auth import get_or_create_user
-from app.services.token_encryption import decrypt_token, encrypt_token
+from app.core.token_encryption import decrypt_token, encrypt_token
 
 
 def test_validate_institutional_email_valid():

@@ -6,8 +6,8 @@ on:
       - main
     paths:
       - "docs/**"
-      - "scripts/wiki_engine.py"
-      - "scripts/wiki_validator.py"
+      - "scripts/wiki/wiki_engine.py"
+      - "scripts/wiki/wiki_validator.py"
       - ".agents/skills/campusunsa-wiki-orchestrator/**"
 
 permissions:
@@ -32,8 +32,8 @@ jobs:
 
       - name: Initialize and Validate Wiki Workspace
         run: |
-          python3 scripts/wiki_engine.py --init --wiki-dir .wiki_workspace
-          python3 scripts/wiki_validator.py .wiki_workspace
+          python3 scripts/wiki/wiki_engine.py --init --wiki-dir .wiki_workspace
+          python3 scripts/wiki/wiki_validator.py .wiki_workspace
 
       - name: Publish Documentation to GitHub Wiki
         env:

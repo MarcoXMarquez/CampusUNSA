@@ -14,7 +14,7 @@ import re
 from typing import Dict, Any, List, Optional
 
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 MAPPING_FILE = os.path.join(
     PROJECT_ROOT,
     ".agents/skills/campusunsa-wiki-orchestrator/mapping/issue_taxonomy_map.json",
@@ -537,7 +537,7 @@ def main():
         sys.exit(0)
 
     if args.validate:
-        validator_script = os.path.join(PROJECT_ROOT, "scripts/wiki_validator.py")
+        validator_script = os.path.join(PROJECT_ROOT, "scripts/wiki/wiki_validator.py")
         res = subprocess.run([sys.executable, validator_script, args.wiki_dir])
         sys.exit(res.returncode)
 

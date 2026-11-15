@@ -15,7 +15,7 @@ async def test_provider_sends_schema_and_validates_json(
 ) -> None:
     from app.core.config import Settings
     from app.schemas.task_parser import ParseTaskRequest
-    from app.services.task_llm import StructuredLLMClient
+    from app.services.tasks.task_llm import StructuredLLMClient
 
     requests: list[httpx.Request] = []
     draft = {"title": "Lab", "course": "Compilers", "due_date": "2026-10-16T18:00:00Z"}
@@ -64,7 +64,7 @@ async def test_provider_sends_schema_and_validates_json(
 async def test_provider_http_failures_do_not_return_a_task(status: int) -> None:
     from app.core.config import Settings
     from app.schemas.task_parser import ParseTaskRequest
-    from app.services.task_llm import StructuredLLMClient
+    from app.services.tasks.task_llm import StructuredLLMClient
 
     client = StructuredLLMClient(
         Settings(TASK_PARSER_PROVIDER="ollama", TASK_PARSER_MODEL="test-model"),
@@ -90,7 +90,7 @@ async def test_provider_http_failures_do_not_return_a_task(status: int) -> None:
 async def test_malformed_outputs_are_rejected(envelope: dict[str, object]) -> None:
     from app.core.config import Settings
     from app.schemas.task_parser import ParseTaskRequest
-    from app.services.task_llm import StructuredLLMClient
+    from app.services.tasks.task_llm import StructuredLLMClient
 
     client = StructuredLLMClient(
         Settings(TASK_PARSER_PROVIDER="ollama", TASK_PARSER_MODEL="test-model"),
@@ -110,7 +110,7 @@ def test_missing_provider_configuration_fails_explicitly(
     provider: str, key: str, model: str
 ) -> None:
     from app.core.config import Settings
-    from app.services.task_llm import StructuredLLMClient
+    from app.services.tasks.task_llm import StructuredLLMClient
 
     with pytest.raises(ValueError):
         StructuredLLMClient(

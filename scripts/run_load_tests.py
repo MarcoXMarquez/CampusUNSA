@@ -40,7 +40,7 @@ def main() -> int:
         "-p",
         project,
         "-f",
-        str(ROOT / "docker-compose.perf.yml"),
+        str(ROOT / "deploy/compose/docker-compose.perf.yml"),
     ]
     monitor: subprocess.Popen | None = None
     failed: list[str] = []

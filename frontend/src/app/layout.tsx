@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import KonstaProvider from "@/components/KonstaProvider";
+import KonstaProvider from "@/components/providers/KonstaProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {

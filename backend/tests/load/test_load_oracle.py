@@ -16,7 +16,7 @@ import pytest
 def test_bash_oracle_propagates_performance_result(
     tmp_path: Path, load_exit: int
 ) -> None:
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     if not (root / "scripts/verify.sh").exists():
         pytest.skip("Oracle contract test requires the repository checkout")
     commands = {
@@ -49,7 +49,7 @@ def test_bash_oracle_propagates_performance_result(
 def test_powershell_oracle_propagates_performance_result(
     tmp_path: Path, load_exit: int
 ) -> None:
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     if not (root / "scripts/verify.ps1").exists():
         pytest.skip("Oracle contract test requires the repository checkout")
     script = tmp_path / "oracle-contract.ps1"

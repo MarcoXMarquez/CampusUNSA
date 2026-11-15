@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AcademicAssignment } from "../components/TaskDetailSheet";
+import type { AcademicAssignment } from "@/components/sheets/TaskDetailSheet";
 import { getApiBaseUrl, type CourseScheduleBlock } from "../lib/api-client";
 import {
   readBoardFromIndexedDb,
   readBoardSnapshotSync,
   writeBoardSnapshot,
 } from "../lib/offline-db";
-import { taskBoardMessages } from "../lib/task-board-messages";
+import { taskBoardMessages } from "@/lib/messages/task-board-messages";
 
 export interface AcademicCourseSource {
   source_id: string;

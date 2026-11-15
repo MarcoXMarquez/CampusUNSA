@@ -1,6 +1,6 @@
 import type { AcademicCourse } from "../hooks/useAcademicBoard";
 import type { CourseScheduleBlock } from "./api-client";
-import { horarioMessages as messages } from "./task-board-messages";
+import { horarioMessages as messages } from "./messages/task-board-messages";
 
 export const COURSE_COLORS = [
   "#3b82f6",

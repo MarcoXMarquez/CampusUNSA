@@ -174,10 +174,10 @@ def test_classroom_resynchronization_preserves_completion(
     source = completion_db.get(CourseExternalSource, assignment.source_id)
     assert source is not None
     with patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
         return_value=[{"id": source.external_course_id, "name": source.raw_name}],
     ), patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_coursework",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework",
         return_value=[{"id": assignment.classroom_assignment_id, "title": "Updated LMS title"}],
     ):
         response = completion_client.post(

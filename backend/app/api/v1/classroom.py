@@ -22,7 +22,7 @@ from app.schemas.classroom import (
     SyncClassroomRequest,
     SyncClassroomResponse,
 )
-from app.services.classroom_sync import ClassroomSyncService
+from app.services.classroom.classroom_sync import ClassroomSyncService
 
 router = APIRouter()
 

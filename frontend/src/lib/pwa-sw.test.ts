@@ -4,7 +4,7 @@ import {
   registerServiceWorker,
   requestBackgroundSync,
   SW_SYNC_MESSAGE_TYPE,
-} from "../pwa-sw";
+} from "./pwa-sw";
 
 describe("pwa-sw controller", () => {
   let messageHandlers: Array<(event: MessageEvent) => void>;

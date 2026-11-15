@@ -34,15 +34,15 @@ Every wiki page generated or updated by this skill MUST strictly adhere to the f
 Whenever an AI agent or developer completes an issue or prepares a Pull Request resolving an issue (`Closes #X`), follow this protocol:
 
 ### Step 1: Execute Wiki Engine for the Target Issue
-Run `scripts/wiki_engine.py` with the issue number:
+Run `scripts/wiki/wiki_engine.py` with the issue number:
 ```bash
-python scripts/wiki_engine.py --issue <ISSUE_NUMBER> --wiki-dir .wiki_workspace
+python scripts/wiki/wiki_engine.py --issue <ISSUE_NUMBER> --wiki-dir .wiki_workspace
 ```
 
 ### Step 2: Validate Against Quality Oracle
 Verify that the updated wiki workspace passes all validation checks:
 ```bash
-python scripts/wiki_validator.py .wiki_workspace
+python scripts/wiki/wiki_validator.py .wiki_workspace
 ```
 
 ### Step 3: Verify Oppia Structural Parity
@@ -76,7 +76,7 @@ The skill handles future issues through a **Dynamic Agile Inference Engine**:
    - Dynamically registers the issue into `mapping/issue_taxonomy_map.json` and updates `_Sidebar.md`.
 3. **Manual Registration:** Developers or agents can also explicitly register arbitrary future user stories using:
    ```bash
-   python scripts/wiki_engine.py --register --issue <ID> --page <PAGE_NAME>.md --category <CATEGORY_ID> --title "<TITLE>"
+   python scripts/wiki/wiki_engine.py --register --issue <ID> --page <PAGE_NAME>.md --category <CATEGORY_ID> --title "<TITLE>"
    ```
 
 ---
@@ -98,6 +98,6 @@ The wiki organizes knowledge across eight core categories inspired by Oppia:
 
 ## 6. CLI Tooling Directory
 
-* **`scripts/wiki_engine.py`:** Master orchestrator for initializing workspaces, updating issues, and updating `_Sidebar.md`.
-* **`scripts/wiki_validator.py`:** Verification oracle checking emojis, broken links, and Mermaid blocks.
+* **`scripts/wiki/wiki_engine.py`:** Master orchestrator for initializing workspaces, updating issues, and updating `_Sidebar.md`.
+* **`scripts/wiki/wiki_validator.py`:** Verification oracle checking emojis, broken links, and Mermaid blocks.
 * **`scripts/oppia_comparator.py`:** Structural comparison oracle evaluating parity against `wikis/oppia.wiki/`.

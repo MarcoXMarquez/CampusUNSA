@@ -33,7 +33,7 @@ def test_parse_endpoint_requires_authentication(client: TestClient) -> None:
 @pytest.mark.parametrize("case", CASES, ids=[case["id"] for case in CASES])
 async def test_twenty_student_messages_without_llm(case: dict[str, str]) -> None:
     from app.schemas.task_parser import ParseTaskRequest
-    from app.services.task_parser import NLPTaskParserService
+    from app.services.tasks.task_parser import NLPTaskParserService
 
     request = ParseTaskRequest(
         message=case["message"],
@@ -60,8 +60,8 @@ def test_task_parser_redos_adversarial_payload_completes_in_linear_time() -> Non
     import time
     from datetime import timezone
     from app.schemas.task_parser import ParseTaskRequest
-    from app.services.task_dates import DeadlineEvidence
-    from app.services.task_parser import fallback_draft
+    from app.services.tasks.task_dates import DeadlineEvidence
+    from app.services.tasks.task_parser import fallback_draft
 
     # Adversarial payload within character limits that would trigger polynomial backtracking
     malicious_text = "Estudiar para el examen final " + ("para a las " * 150)
@@ -90,7 +90,7 @@ def test_task_parser_redos_adversarial_payload_completes_in_linear_time() -> Non
 @pytest.mark.asyncio
 async def test_issue_acceptance_example_with_structured_llm() -> None:
     from app.schemas.task_parser import ParseTaskRequest, TaskDraft
-    from app.services.task_parser import NLPTaskParserService
+    from app.services.tasks.task_parser import NLPTaskParserService
 
     provider = AsyncMock()
     provider.name = "ollama"
@@ -119,7 +119,7 @@ async def test_issue_acceptance_example_with_structured_llm() -> None:
 )
 async def test_provider_failure_uses_real_fallback(error: Exception) -> None:
     from app.schemas.task_parser import ParseTaskRequest
-    from app.services.task_parser import NLPTaskParserService
+    from app.services.tasks.task_parser import NLPTaskParserService
 
     provider = AsyncMock()
     provider.name = "ollama"
@@ -137,7 +137,7 @@ async def test_provider_failure_uses_real_fallback(error: Exception) -> None:
 @pytest.mark.asyncio
 async def test_hallucinated_course_requires_clarification() -> None:
     from app.schemas.task_parser import ParseTaskRequest, TaskDraft
-    from app.services.task_parser import NLPTaskParserService
+    from app.services.tasks.task_parser import NLPTaskParserService
 
     provider = AsyncMock()
     provider.name = "gemini"
@@ -181,7 +181,7 @@ def test_invalid_inputs_are_rejected(changes: dict[str, object]) -> None:
 @pytest.mark.parametrize("date", ["2026-03-08 02:30", "2026-11-01 01:30"])
 async def test_nonexistent_or_ambiguous_dst_time_is_not_guessed(date: str) -> None:
     from app.schemas.task_parser import ParseTaskRequest
-    from app.services.task_parser import NLPTaskParserService
+    from app.services.tasks.task_parser import NLPTaskParserService
 
     result = await NLPTaskParserService().parse(
         ParseTaskRequest(message=f"submit lab {date}", timezone="America/New_York")
@@ -284,7 +284,7 @@ async def test_mixed_or_malformed_deadline_is_not_silently_accepted(
     message: str,
 ) -> None:
     from app.schemas.task_parser import ParseTaskRequest
-    from app.services.task_parser import NLPTaskParserService
+    from app.services.tasks.task_parser import NLPTaskParserService
 
     result = await NLPTaskParserService().parse(ParseTaskRequest(message=message))
     assert result.status == "needs_clarification"
@@ -294,7 +294,7 @@ async def test_mixed_or_malformed_deadline_is_not_silently_accepted(
 @pytest.mark.asyncio
 async def test_missing_deadline_cannot_be_invented_by_model() -> None:
     from app.schemas.task_parser import ParseTaskRequest, TaskDraft
-    from app.services.task_parser import NLPTaskParserService
+    from app.services.tasks.task_parser import NLPTaskParserService
 
     provider = AsyncMock()
     provider.name = "ollama"
@@ -336,7 +336,7 @@ async def test_deadlines_respect_local_calendar(
     message: str, reference: str, zone: str, expected: str
 ) -> None:
     from app.schemas.task_parser import ParseTaskRequest
-    from app.services.task_parser import NLPTaskParserService
+    from app.services.tasks.task_parser import NLPTaskParserService
 
     result = await NLPTaskParserService().parse(
         ParseTaskRequest(message=message, reference_time=reference, timezone=zone)
@@ -347,7 +347,7 @@ async def test_deadlines_respect_local_calendar(
 @pytest.mark.asyncio
 async def test_fractional_iso_timestamp_preserves_explicit_offset() -> None:
     from app.schemas.task_parser import ParseTaskRequest
-    from app.services.task_parser import NLPTaskParserService
+    from app.services.tasks.task_parser import NLPTaskParserService
 
     result = await NLPTaskParserService().parse(
         ParseTaskRequest(

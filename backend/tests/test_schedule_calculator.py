@@ -19,8 +19,8 @@ from app.main import app
 from app.models.classroom import UserCourseEnrollment
 from app.models.user import User
 from app.schemas.academic import AcademicCourseResponse, CourseScheduleBlockResponse
-from app.services.curriculum_resolver import DEFAULT_TERM, CurriculumResolverService
-from app.services.schedule_calculator import ScheduleCalculator
+from app.services.academic.curriculum_resolver import DEFAULT_TERM, CurriculumResolverService
+from app.services.academic.schedule_calculator import ScheduleCalculator
 
 
 def _make_course(

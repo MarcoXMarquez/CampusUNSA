@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Structured NLP task extraction endpoint `POST /api/v1/nlp/parse-task` supporting Gemini and Ollama providers with deterministic regex fallback ([#47](https://github.com/MarcoXMarquez/CampusUNSA/pull/47), closes [#10](https://github.com/MarcoXMarquez/CampusUNSA/issues/10)).
 - Continuous automated load testing harness and concurrency gate (TECH-02 / CR-01) validating 1,000 active student sessions under 50 spawns/s ([#48](https://github.com/MarcoXMarquez/CampusUNSA/pull/48), closes [#42](https://github.com/MarcoXMarquez/CampusUNSA/issues/42)).
 - Starlette ASGI admission semaphore middleware (`RequestCapacityMiddleware`) bounding synchronous database queries below pool capacity.
-- Disposable isolated performance environment stack in `docker-compose.perf.yml` with RAM-backed PostgreSQL (tmpfs) and least-connections NGINX gateway.
+- Disposable isolated performance environment stack in `deploy/compose/docker-compose.perf.yml` with RAM-backed PostgreSQL (tmpfs) and least-connections NGINX gateway.
 - Comprehensive load testing documentation and reproduction procedures in `docs/testing/continuous-load-testing.md`.
 
 ### Changed

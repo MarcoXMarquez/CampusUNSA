@@ -5,11 +5,11 @@ import { Navbar, BlockTitle, List, ListItem, Segmented, SegmentedButton, Dialog,
 import { Gear, QrCode, FileText, ArrowClockwise, CheckCircle, CaretRight, Clock } from "@phosphor-icons/react";
 import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { AcademicAssignment, TaskDetailSheet } from "./TaskDetailSheet";
-import type { AcademicCourse } from "../hooks/useAcademicBoard";
-import { resolveNextClass } from "../lib/schedule-calculator";
-import { groupTasksByUrgency, TaskGroup } from "../lib/task-urgency";
-import { horarioMessages, taskBoardMessages as messages } from "../lib/task-board-messages";
+import { AcademicAssignment, TaskDetailSheet } from "@/components/sheets/TaskDetailSheet";
+import type { AcademicCourse } from "@/hooks/useAcademicBoard";
+import { resolveNextClass } from "@/lib/schedule-calculator";
+import { groupTasksByUrgency, TaskGroup } from "@/lib/task-urgency";
+import { horarioMessages, taskBoardMessages as messages } from "@/lib/messages/task-board-messages";
 
 interface HoyViewProps {
   assignments: AcademicAssignment[];

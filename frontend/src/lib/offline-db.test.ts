@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AcademicBoardData } from "../../hooks/useAcademicBoard";
-import type { UserProfile } from "../api-client";
+import type { AcademicBoardData } from "@/hooks/useAcademicBoard";
+import type { UserProfile } from "@/lib/api-client";
 import {
   clearOfflineAccountData,
   extractTokenSubject,
@@ -11,7 +11,7 @@ import {
   writeBoardSnapshot,
   writeSessionSnapshot,
   type OfflineSessionSnapshot,
-} from "../offline-db";
+} from "./offline-db";
 
 function makeJwt(sub: string): string {
   return `header.${btoa(JSON.stringify({ sub }))}.signature`;

@@ -21,7 +21,7 @@ from app.core.exceptions import (  # noqa: F401
 from app.models.user import User
 from app.repositories.academic_repo import AcademicSyncRepository
 from app.schemas.classroom import SyncClassroomResponse
-from app.services.token_encryption import decrypt_token
+from app.core.token_encryption import decrypt_token
 
 
 class ClassroomApiClient:
@@ -140,7 +140,7 @@ class ClassroomSyncService:
                 )
             plain_refresh_token = decrypt_token(user.google_refresh_token)
             try:
-                from app.services.google_oauth import GoogleOAuthService
+                from app.services.classroom.google_oauth import GoogleOAuthService
                 effective_token = GoogleOAuthService.refresh_access_token(plain_refresh_token)
             except GoogleClassroomAuthError as exc:
                 user.classroom_sync_status = "NEEDS_REAUTH"

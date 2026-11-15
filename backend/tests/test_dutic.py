@@ -122,10 +122,10 @@ def test_dutic_sync_courses_and_assignments_success(
     app.dependency_overrides[get_db] = lambda: test_db_session
 
     with patch(
-        "app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses",
+        "app.services.dutic.dutic_sync.DuticApiClient.fetch_enrolled_courses",
         return_value=mock_moodle_courses,
     ), patch(
-        "app.services.dutic_sync.DuticApiClient.fetch_all_tasks",
+        "app.services.dutic.dutic_sync.DuticApiClient.fetch_all_tasks",
         return_value=mock_moodle_tasks,
     ):
         with TestClient(app) as test_client:
@@ -170,10 +170,10 @@ def test_dutic_sync_hidden_tasks_detection(
     ]
 
     with patch(
-        "app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses",
+        "app.services.dutic.dutic_sync.DuticApiClient.fetch_enrolled_courses",
         return_value=mock_moodle_courses,
     ), patch(
-        "app.services.dutic_sync.DuticApiClient.fetch_all_tasks",
+        "app.services.dutic.dutic_sync.DuticApiClient.fetch_all_tasks",
         return_value=tasks_with_hidden,
     ):
         with TestClient(app) as test_client:
@@ -237,11 +237,11 @@ def test_dutic_sync_deduplication_updates_existing_assignment(
     ]
 
     with patch(
-        "app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses",
+        "app.services.dutic.dutic_sync.DuticApiClient.fetch_enrolled_courses",
         return_value=mock_moodle_courses,
     ):
         with patch(
-            "app.services.dutic_sync.DuticApiClient.fetch_all_tasks",
+            "app.services.dutic.dutic_sync.DuticApiClient.fetch_all_tasks",
             return_value=initial_tasks,
         ):
             with TestClient(app) as test_client:
@@ -253,7 +253,7 @@ def test_dutic_sync_deduplication_updates_existing_assignment(
                 assert res1.status_code == 200
 
         with patch(
-            "app.services.dutic_sync.DuticApiClient.fetch_all_tasks",
+            "app.services.dutic.dutic_sync.DuticApiClient.fetch_all_tasks",
             return_value=updated_tasks,
         ):
             with TestClient(app) as test_client:
@@ -287,10 +287,10 @@ def test_dutic_sync_expired_session_handling(
     """
     app.dependency_overrides[get_db] = lambda: test_db_session
 
-    from app.services.dutic_sync import DuticSessionExpiredError
+    from app.services.dutic.dutic_sync import DuticSessionExpiredError
 
     with patch(
-        "app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses",
+        "app.services.dutic.dutic_sync.DuticApiClient.fetch_enrolled_courses",
         side_effect=DuticSessionExpiredError("Moodle session expired or invalid"),
     ):
         with TestClient(app) as test_client:
@@ -319,10 +319,10 @@ def test_dutic_sync_empty_courses_handling(
     app.dependency_overrides[get_db] = lambda: test_db_session
 
     with patch(
-        "app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses",
+        "app.services.dutic.dutic_sync.DuticApiClient.fetch_enrolled_courses",
         return_value=[],
     ), patch(
-        "app.services.dutic_sync.DuticApiClient.fetch_all_tasks",
+        "app.services.dutic.dutic_sync.DuticApiClient.fetch_all_tasks",
         return_value=[],
     ):
         with TestClient(app) as test_client:
@@ -362,10 +362,10 @@ def test_get_dutic_courses_endpoint(
     app.dependency_overrides[get_db] = lambda: test_db_session
 
     with patch(
-        "app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses",
+        "app.services.dutic.dutic_sync.DuticApiClient.fetch_enrolled_courses",
         return_value=mock_moodle_courses,
     ), patch(
-        "app.services.dutic_sync.DuticApiClient.fetch_all_tasks",
+        "app.services.dutic.dutic_sync.DuticApiClient.fetch_all_tasks",
         return_value=[],
     ):
         with TestClient(app) as test_client:
@@ -390,7 +390,7 @@ def test_get_dutic_courses_endpoint(
 def test_dutic_api_client_ajax_batch_unit() -> None:
     """Direct unit tests for DuticApiClient HTTP and AJAX batch handling."""
     from unittest.mock import MagicMock
-    from app.services.dutic_sync import (
+    from app.services.dutic.dutic_sync import (
         DuticApiClient,
         DuticSessionExpiredError,
         DuticRateLimitError,
@@ -451,10 +451,10 @@ def test_dutic_sync_rate_limited_handling(
 ) -> None:
     """Test handling when Moodle API throws DuticRateLimitError."""
     app.dependency_overrides[get_db] = lambda: test_db_session
-    from app.services.dutic_sync import DuticRateLimitError
+    from app.services.dutic.dutic_sync import DuticRateLimitError
 
     with patch(
-        "app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses",
+        "app.services.dutic.dutic_sync.DuticApiClient.fetch_enrolled_courses",
         side_effect=DuticRateLimitError("Rate limit exceeded"),
     ):
         with TestClient(app) as test_client:
@@ -469,8 +469,8 @@ def test_dutic_sync_rate_limited_handling(
     app.dependency_overrides.clear()
 
 
-@patch("app.services.dutic_sync.DuticApiClient.fetch_all_tasks")
-@patch("app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses")
+@patch("app.services.dutic.dutic_sync.DuticApiClient.fetch_all_tasks")
+@patch("app.services.dutic.dutic_sync.DuticApiClient.fetch_enrolled_courses")
 def test_dutic_sync_multi_course_with_mocked_client(
     mock_fetch_courses: Any,
     mock_fetch_tasks: Any,
@@ -479,7 +479,7 @@ def test_dutic_sync_multi_course_with_mocked_client(
 ) -> None:
     """Tests multi-course DUTIC sync via mocked HTTP client and confirms 'demo' is not bypassed."""
     from datetime import datetime, timezone
-    from app.services.dutic_sync import DuticSessionExpiredError
+    from app.services.dutic.dutic_sync import DuticSessionExpiredError
 
     current_epoch = int(datetime.now(timezone.utc).timestamp())
     mock_fetch_courses.return_value = [

@@ -42,3 +42,13 @@ docs/design/mocks/*.png
 frontend/test-results/
 frontend/playwright-report/
 
+# Local virtual environments, linters, OS files, coverage, and env variants
+.venv/
+venv/
+.ruff_cache/
+.mypy_cache/
+.DS_Store
+frontend/coverage/
+.env.*
+!.env.example
+

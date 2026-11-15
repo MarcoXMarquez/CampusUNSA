@@ -6,8 +6,8 @@ from app.api.dependencies import has_role
 from app.core.config import settings
 from app.models.user import User
 from app.schemas.task_parser import ParseTaskRequest, ParseTaskResponse
-from app.services.task_llm import StructuredLLMClient
-from app.services.task_parser import NLPTaskParserService
+from app.services.tasks.task_llm import StructuredLLMClient
+from app.services.tasks.task_parser import NLPTaskParserService
 
 router = APIRouter()
 

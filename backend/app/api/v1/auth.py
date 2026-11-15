@@ -21,9 +21,9 @@ from app.schemas.classroom import (
     ClassroomConsentResponse,
     ClassroomStatusResponse,
 )
-from app.services.classroom_sync import ClassroomSyncService, GoogleClassroomError
-from app.services.google_oauth import GoogleOAuthService
-from app.services.token_encryption import encrypt_token
+from app.services.classroom.classroom_sync import ClassroomSyncService, GoogleClassroomError
+from app.services.classroom.google_oauth import GoogleOAuthService
+from app.core.token_encryption import encrypt_token
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

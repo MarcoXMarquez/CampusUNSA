@@ -126,10 +126,10 @@ def test_sync_courses_and_coursework_success(
     app.dependency_overrides[get_db] = lambda: test_db_session
 
     with patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
         return_value=mock_classroom_courses,
     ), patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_coursework",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework",
         return_value=mock_classroom_assignments,
     ):
         with TestClient(app) as test_client:
@@ -189,11 +189,11 @@ def test_sync_deduplication_updates_existing_assignment(
     ]
 
     with patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
         return_value=mock_classroom_courses,
     ):
         with patch(
-            "app.services.classroom_sync.ClassroomApiClient.fetch_coursework",
+            "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework",
             return_value=initial_assignments,
         ):
             with TestClient(app) as test_client:
@@ -205,7 +205,7 @@ def test_sync_deduplication_updates_existing_assignment(
                 assert first_response.status_code == 200
 
         with patch(
-            "app.services.classroom_sync.ClassroomApiClient.fetch_coursework",
+            "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework",
             return_value=updated_assignments,
         ):
             with TestClient(app) as test_client:
@@ -240,10 +240,10 @@ def test_sync_expired_token_graceful_handling(
     """
     app.dependency_overrides[get_db] = lambda: test_db_session
 
-    from app.services.classroom_sync import GoogleClassroomAuthError
+    from app.services.classroom.classroom_sync import GoogleClassroomAuthError
 
     with patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
         side_effect=GoogleClassroomAuthError("Token expired or revoked by Google"),
     ):
         with TestClient(app) as test_client:
@@ -272,10 +272,10 @@ def test_sync_rate_limited_handling(
     """
     app.dependency_overrides[get_db] = lambda: test_db_session
 
-    from app.services.classroom_sync import GoogleClassroomRateLimitError
+    from app.services.classroom.classroom_sync import GoogleClassroomRateLimitError
 
     with patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
         side_effect=GoogleClassroomRateLimitError("Quota exceeded for Classroom API"),
     ):
         with TestClient(app) as test_client:
@@ -304,7 +304,7 @@ def test_sync_empty_courses_handling(
     app.dependency_overrides[get_db] = lambda: test_db_session
 
     with patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
         return_value=[],
     ):
         with TestClient(app) as test_client:
@@ -344,10 +344,10 @@ def test_get_student_courses_endpoint(
     app.dependency_overrides[get_db] = lambda: test_db_session
 
     with patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
         return_value=mock_classroom_courses,
     ), patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_coursework",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework",
         return_value=[],
     ):
         with TestClient(app) as test_client:
@@ -372,7 +372,7 @@ def test_get_student_courses_endpoint(
 
 def test_classroom_api_client_fetch_courses_and_coursework_unit() -> None:
     """Direct unit tests for ClassroomApiClient HTTP behaviors."""
-    from app.services.classroom_sync import (
+    from app.services.classroom.classroom_sync import (
         ClassroomApiClient,
         GoogleClassroomAuthError,
         GoogleClassroomRateLimitError,
@@ -422,17 +422,17 @@ def test_sync_coursework_errors_handling(
     """Test error handling when coursework endpoint raises 401 or 429."""
     app.dependency_overrides[get_db] = lambda: test_db_session
 
-    from app.services.classroom_sync import (
+    from app.services.classroom.classroom_sync import (
         GoogleClassroomAuthError,
         GoogleClassroomRateLimitError,
     )
 
     # 401 during coursework fetch
     with patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
         return_value=mock_classroom_courses,
     ), patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_coursework",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework",
         side_effect=GoogleClassroomAuthError("Coursework token expired"),
     ):
         with TestClient(app) as test_client:
@@ -446,10 +446,10 @@ def test_sync_coursework_errors_handling(
 
     # 429 during coursework fetch
     with patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
         return_value=mock_classroom_courses,
     ), patch(
-        "app.services.classroom_sync.ClassroomApiClient.fetch_coursework",
+        "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework",
         side_effect=GoogleClassroomRateLimitError("Rate limit exceeded"),
     ):
         with TestClient(app) as test_client:
@@ -464,8 +464,8 @@ def test_sync_coursework_errors_handling(
     app.dependency_overrides.clear()
 
 
-@patch("app.services.classroom_sync.ClassroomApiClient.fetch_coursework")
-@patch("app.services.classroom_sync.ClassroomApiClient.fetch_courses")
+@patch("app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework")
+@patch("app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses")
 def test_sync_classroom_multi_course_with_mocked_client(
     mock_fetch_courses: MagicMock,
     mock_fetch_coursework: MagicMock,
@@ -473,7 +473,7 @@ def test_sync_classroom_multi_course_with_mocked_client(
     auth_student_headers: Dict[str, str],
 ) -> None:
     """Tests multi-course synchronization using mocked Classroom HTTP boundaries and confirms 'demo' is not bypassed."""
-    from app.services.classroom_sync import GoogleClassroomAuthError
+    from app.services.classroom.classroom_sync import GoogleClassroomAuthError
 
     mock_fetch_courses.return_value = [
         {

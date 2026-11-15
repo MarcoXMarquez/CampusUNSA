@@ -245,7 +245,7 @@ def test_dutic_ical_sync_with_feed_data(
     auth_student: User,
 ) -> None:
     """Tests syncing iCal feed, parsing VEVENT items and upserting into PostgreSQL."""
-    from app.services.token_encryption import encrypt_token
+    from app.core.token_encryption import encrypt_token
 
     valid_url = "https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?userid=18277&authtoken=validtoken"
     auth_student.moodle_calendar_url = encrypt_token(valid_url)
@@ -293,7 +293,7 @@ def test_dutic_ical_sync_revoked_token_sets_needs_reauth(
     auth_student: User,
 ) -> None:
     """Tests handling of revoked or invalid Moodle token (Moodle redirects to login)."""
-    from app.services.token_encryption import encrypt_token
+    from app.core.token_encryption import encrypt_token
 
     auth_student.moodle_calendar_url = encrypt_token(
         "https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?userid=18277&authtoken=revoked"
@@ -602,7 +602,7 @@ def test_dutic_ical_sync_enforces_canonical_url_and_no_redirects(
     auth_student: User,
 ) -> None:
     """Tests that sync reconstructs canonical https://aulavirtual.unsa.edu.pe base URL and sets follow_redirects=False."""
-    from app.services.token_encryption import encrypt_token
+    from app.core.token_encryption import encrypt_token
 
     valid_url = "https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?userid=18277&authtoken=validtoken"
     auth_student.moodle_calendar_url = encrypt_token(valid_url)
@@ -738,7 +738,7 @@ def test_moodle_sync_does_not_overwrite_google_classroom_sync_state(
     app.dependency_overrides[get_db] = lambda: test_db_session
     try:
         with patch(
-            "app.services.dutic_sync.DuticApiClient.fetch_enrolled_courses",
+            "app.services.dutic.dutic_sync.DuticApiClient.fetch_enrolled_courses",
             side_effect=DuticSessionExpiredError("Moodle session expired"),
         ):
             with TestClient(app) as client:
@@ -761,7 +761,7 @@ def test_moodle_sync_does_not_overwrite_google_classroom_sync_state(
 
 def test_parse_ical_content_generates_deterministic_uid_when_uid_missing() -> None:
     """Missing iCal UIDs must hash event content rather than array index position."""
-    from app.services.dutic_ical import DuticIcalService
+    from app.services.dutic.dutic_ical import DuticIcalService
 
     event_alpha = (
         "BEGIN:VEVENT\n"

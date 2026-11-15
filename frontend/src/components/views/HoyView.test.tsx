@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HoyView } from "./HoyView";
-import type { AcademicAssignment } from "./TaskDetailSheet";
+import type { AcademicAssignment } from "@/components/sheets/TaskDetailSheet";
 
 const task: AcademicAssignment = {
   id: "task-1", course_id: "course-1", classroom_assignment_id: "external-1",

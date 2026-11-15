@@ -64,8 +64,8 @@ The default is `TASK_PARSER_PROVIDER=disabled`: deterministic fallback only, wit
 From the repository root, start the optional Compose service and pull a model:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.llm.yml --profile llm up -d ollama
-docker compose -f docker-compose.yml -f docker-compose.llm.yml --profile llm exec ollama ollama pull qwen2.5:3b
+docker compose -f docker-compose.yml -f deploy/compose/docker-compose.llm.yml --profile llm up -d ollama
+docker compose -f docker-compose.yml -f deploy/compose/docker-compose.llm.yml --profile llm exec ollama ollama pull qwen2.5:3b
 ```
 
 Set these values in the untracked `.env`, then recreate the backend:
@@ -117,9 +117,9 @@ bash scripts/verify.sh
 ## Source map and provider references
 
 - `app/schemas/task_parser.py`: request, draft, and response contracts.
-- `app/services/task_dates.py`: date evidence, local calendars, and UTC normalization.
-- `app/services/task_llm.py`: few-shot prompt and typed HTTP provider adapters.
-- `app/services/task_parser.py`: fallback, provider orchestration, and clarification policy.
+- `app/services/tasks/task_dates.py`: date evidence, local calendars, and UTC normalization.
+- `app/services/tasks/task_llm.py`: few-shot prompt and typed HTTP provider adapters.
+- `app/services/tasks/task_parser.py`: fallback, provider orchestration, and clarification policy.
 - `app/api/v1/nlp.py`: authenticated preview endpoint and provider dependency.
 - [Ollama structured outputs](https://docs.ollama.com/capabilities/structured-outputs).
 - [Gemini generation API](https://ai.google.dev/api/generate-content).

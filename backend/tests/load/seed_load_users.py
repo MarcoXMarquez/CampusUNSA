@@ -18,7 +18,7 @@ from app.models.classroom import (
 )
 from app.models.ticket import Ticket
 from app.models.user import User, UserProfile
-from app.services.curriculum_resolver import CurriculumResolverService, DEFAULT_TERM
+from app.services.academic.curriculum_resolver import CurriculumResolverService, DEFAULT_TERM
 
 
 def require_isolation() -> None:

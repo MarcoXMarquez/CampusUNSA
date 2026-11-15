@@ -27,7 +27,7 @@ from app.models.classroom import (
     UserExternalCourse,
 )
 from app.models.user import User
-from app.services.classroom_sync import GoogleClassroomAuthError, GoogleClassroomError
+from app.services.classroom.classroom_sync import GoogleClassroomAuthError, GoogleClassroomError
 
 
 @pytest.fixture
@@ -86,9 +86,9 @@ def test_classroom_status_disconnected_by_default(
     app.dependency_overrides.clear()
 
 
-@patch("app.services.classroom_sync.ClassroomApiClient.fetch_coursework")
-@patch("app.services.classroom_sync.ClassroomApiClient.fetch_courses")
-@patch("app.services.google_oauth.GoogleOAuthService.exchange_code_for_tokens")
+@patch("app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework")
+@patch("app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses")
+@patch("app.services.classroom.google_oauth.GoogleOAuthService.exchange_code_for_tokens")
 def test_classroom_oauth_callback_success(
     mock_exchange: MagicMock,
     mock_fetch_courses: MagicMock,
@@ -167,10 +167,10 @@ def test_classroom_oauth_callback_success(
 
 
 @patch(
-    "app.services.classroom_sync.ClassroomApiClient.fetch_courses",
+    "app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses",
     side_effect=GoogleClassroomError("Temporary Classroom API outage"),
 )
-@patch("app.services.google_oauth.GoogleOAuthService.exchange_code_for_tokens")
+@patch("app.services.classroom.google_oauth.GoogleOAuthService.exchange_code_for_tokens")
 def test_classroom_oauth_callback_preserves_connection_if_initial_sync_fails(
     mock_exchange: MagicMock,
     _mock_fetch_courses: MagicMock,
@@ -205,7 +205,7 @@ def test_classroom_oauth_callback_preserves_connection_if_initial_sync_fails(
     app.dependency_overrides.clear()
 
 
-@patch("app.services.google_oauth.GoogleOAuthService.exchange_code_for_tokens")
+@patch("app.services.classroom.google_oauth.GoogleOAuthService.exchange_code_for_tokens")
 def test_classroom_oauth_callback_error(
     mock_exchange: MagicMock,
     test_db_session: Session,
@@ -248,9 +248,9 @@ def test_sync_without_token_unconnected_user_rejected(
     app.dependency_overrides.clear()
 
 
-@patch("app.services.classroom_sync.ClassroomApiClient.fetch_coursework")
-@patch("app.services.classroom_sync.ClassroomApiClient.fetch_courses")
-@patch("app.services.google_oauth.GoogleOAuthService.refresh_access_token")
+@patch("app.services.classroom.classroom_sync.ClassroomApiClient.fetch_coursework")
+@patch("app.services.classroom.classroom_sync.ClassroomApiClient.fetch_courses")
+@patch("app.services.classroom.google_oauth.GoogleOAuthService.refresh_access_token")
 def test_sync_automatic_with_stored_refresh_token(
     mock_refresh: MagicMock,
     mock_fetch_courses: MagicMock,
@@ -260,7 +260,7 @@ def test_sync_automatic_with_stored_refresh_token(
     auth_student: User,
 ) -> None:
     """Tests automatic sync without passing tokens in payload when user has connected Classroom."""
-    from app.services.token_encryption import encrypt_token
+    from app.core.token_encryption import encrypt_token
 
     # Setup student with stored encrypted token
     auth_student.google_refresh_token = encrypt_token("sample_stored_refresh_token")
@@ -311,7 +311,7 @@ def test_sync_automatic_with_stored_refresh_token(
     app.dependency_overrides.clear()
 
 
-@patch("app.services.google_oauth.GoogleOAuthService.refresh_access_token")
+@patch("app.services.classroom.google_oauth.GoogleOAuthService.refresh_access_token")
 def test_sync_revoked_stored_token_sets_needs_reauth(
     mock_refresh: MagicMock,
     test_db_session: Session,
@@ -319,7 +319,7 @@ def test_sync_revoked_stored_token_sets_needs_reauth(
     auth_student: User,
 ) -> None:
     """Tests that expired or revoked stored refresh tokens flag user as NEEDS_REAUTH."""
-    from app.services.token_encryption import encrypt_token
+    from app.core.token_encryption import encrypt_token
 
     auth_student.google_refresh_token = encrypt_token("revoked_refresh_token")
     auth_student.google_classroom_sync_status = "CONNECTED"
@@ -349,7 +349,7 @@ def test_sync_revoked_stored_token_sets_needs_reauth(
 
 def test_token_encryption_empty_strings() -> None:
     """Tests encryption service edge cases with empty strings."""
-    from app.services.token_encryption import decrypt_token, encrypt_token
+    from app.core.token_encryption import decrypt_token, encrypt_token
 
     assert encrypt_token("") == ""
     assert decrypt_token("") == ""
@@ -357,7 +357,7 @@ def test_token_encryption_empty_strings() -> None:
 
 def test_google_oauth_service_validation_errors() -> None:
     """Tests client-side parameter validation for Google OAuth service."""
-    from app.services.google_oauth import GoogleOAuthService
+    from app.services.classroom.google_oauth import GoogleOAuthService
 
     with pytest.raises(ValueError, match="Authorization code is required"):
         GoogleOAuthService.exchange_code_for_tokens("")
@@ -369,7 +369,7 @@ def test_google_oauth_service_validation_errors() -> None:
 @patch("httpx.Client.post")
 def test_google_oauth_service_exchange_success(mock_post: MagicMock) -> None:
     """Tests successful HTTP exchange with Google OAuth token endpoint."""
-    from app.services.google_oauth import GoogleOAuthService
+    from app.services.classroom.google_oauth import GoogleOAuthService
 
     mock_resp = MagicMock()
     mock_resp.status_code = 200
@@ -388,7 +388,7 @@ def test_google_oauth_service_exchange_success(mock_post: MagicMock) -> None:
 @patch("httpx.Client.post")
 def test_google_oauth_service_exchange_failure(mock_post: MagicMock) -> None:
     """Tests Google OAuth token endpoint returning an error response."""
-    from app.services.google_oauth import GoogleOAuthService
+    from app.services.classroom.google_oauth import GoogleOAuthService
 
     mock_resp = MagicMock()
     mock_resp.status_code = 400
@@ -403,7 +403,7 @@ def test_google_oauth_service_exchange_failure(mock_post: MagicMock) -> None:
 @patch("httpx.Client.post")
 def test_google_oauth_service_refresh_success(mock_post: MagicMock) -> None:
     """Tests successful token refresh call to Google OAuth token endpoint."""
-    from app.services.google_oauth import GoogleOAuthService
+    from app.services.classroom.google_oauth import GoogleOAuthService
 
     mock_resp = MagicMock()
     mock_resp.status_code = 200
@@ -417,7 +417,7 @@ def test_google_oauth_service_refresh_success(mock_post: MagicMock) -> None:
 @patch("httpx.Client.post")
 def test_google_oauth_service_refresh_revoked(mock_post: MagicMock) -> None:
     """Tests token refresh call when Google returns 401 unauthorized."""
-    from app.services.google_oauth import GoogleOAuthService
+    from app.services.classroom.google_oauth import GoogleOAuthService
 
     mock_resp = MagicMock()
     mock_resp.status_code = 401

@@ -76,11 +76,11 @@ Every AI agent modifying or generating code in this repository MUST strictly fol
 
 ### 3.2 Stitch-First Frontend Workflow and UI Engineering Directives
 
-Every AI agent that creates or modifies code under `frontend/` MUST follow the Stitch-First directives in this section. **Google Stitch (project `4575327637306768444`) and `DESIGN.md` are the authoritative visual source of truth.** Agents MUST NOT override or flatten Stitch visual tokens (colors, elevation shadows, card surfaces, radii, or layout geometry) in the name of generic templates.
+Every AI agent that creates or modifies code under `frontend/` MUST follow the Stitch-First directives in this section. **Google Stitch (project `4575327637306768444`) and `docs/design/DESIGN.md` are the authoritative visual source of truth.** Agents MUST NOT override or flatten Stitch visual tokens (colors, elevation shadows, card surfaces, radii, or layout geometry) in the name of generic templates.
 
 #### 3.2.1 Stitch-First Visual Authority
 
-* **Design Source of Truth:** When implementing or updating any screen designed in Stitch, agents MUST inspect the Stitch design via the `stitch` MCP (`stitch_find`, `stitch_get`) or `DESIGN.md`, and reproduce its palette, surfaces, shadows, border radii, and visual hierarchy 1:1.
+* **Design Source of Truth:** When implementing or updating any screen designed in Stitch, agents MUST inspect the Stitch design via the `stitch` MCP (`stitch_find`, `stitch_get`) or `docs/design/DESIGN.md`, and reproduce its palette, surfaces, shadows, border radii, and visual hierarchy 1:1.
 * **Asset Optimization Strategy:** Raster illustrations exported from Stitch MUST be saved as optimized local Retina WebP files (`< 30 KB` per asset, e.g., `frontend/public/images/onboarding/`), and minimalist marks or icons MUST use SVG rather than heavy PNG bundles.
 * **Color Schemes:** Components SHOULD support both light and dark presentations consistent with the corresponding Stitch screen and system preferences.
 
@@ -111,7 +111,7 @@ The following technical defects are strictly prohibited under `frontend/`:
 * **Auth & WhatsApp Functional Rules:**
   * Institutional `@unsa.edu.pe` domain restriction applies equally to email/password auth and Google OAuth.
   * WhatsApp OTP pairing MUST use numeric 6-digit input (`inputMode="numeric"`, `autoComplete="one-time-code"`, `maxLength={6}`) with countdown derived strictly from the server-issued Redis expiry (300-second TTL).
-* **Localization (`es-PE`):** User-facing UI copy MUST be centralized in message catalogs (for example, `frontend/src/lib/auth-messages.ts`) in `es-PE`, while code identifiers, comments, tests, commits, and documentation remain in English.
+* **Localization (`es-PE`):** User-facing UI copy MUST be centralized in message catalogs (for example, `frontend/src/lib/messages/auth-messages.ts`) in `es-PE`, while code identifiers, comments, tests, commits, and documentation remain in English.
 * **Accessibility & Verification:**
   * Provide accessible labels (`aria-label`, `aria-current`, semantic `role="alert"` / `role="status"`), keyboard focusability, and interactive targets >= 44px where applicable.
   * `node scripts/verify-ui-directives.mjs` MUST pass (invoked by `./scripts/verify.sh`, `./scripts/verify.ps1`, and CI).
@@ -214,8 +214,8 @@ node scripts/verify-ui-directives.mjs
    * **UI Evidence Gate:** Pull Requests that change rendered UI under `frontend/` must contain a fully checked `UI Directives Compliance` section and at least one screenshot, covering light and dark mode.
 
 4. **Continuous Documentation Directive (Oppia-Caliber Wiki Gate):**
-   * Whenever an issue or user story is resolved and closed (`Closes #X`), the AI agent or developer MUST execute the `campusunsa-wiki-orchestrator` skill (`python scripts/wiki_engine.py --issue X`).
-   * The skill analyzes the code delta, updates or creates the assigned Oppia-caliber wiki page with Mermaid sequence diagrams, refreshes `_Sidebar.md`, and validates quality gates (`python scripts/wiki_validator.py`).
+   * Whenever an issue or user story is resolved and closed (`Closes #X`), the AI agent or developer MUST execute the `campusunsa-wiki-orchestrator` skill (`python scripts/wiki/wiki_engine.py --issue X`).
+   * The skill analyzes the code delta, updates or creates the assigned Oppia-caliber wiki page with Mermaid sequence diagrams, refreshes `_Sidebar.md`, and validates quality gates (`python scripts/wiki/wiki_validator.py`).
    * For newly introduced agile user stories, the skill's dynamic inference engine automatically maps the feature into the appropriate architectural category.
    * Pull Requests must include evidence that the wiki documentation was synchronized and validated.
 

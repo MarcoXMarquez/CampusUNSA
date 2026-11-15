@@ -3,7 +3,7 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider, onlineManager } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { academicBoardKey, useAcademicBoard } from "./useAcademicBoard";
-import type { AcademicAssignment } from "../components/TaskDetailSheet";
+import type { AcademicAssignment } from "@/components/sheets/TaskDetailSheet";
 
 const token = `header.${btoa(JSON.stringify({ sub: "student-1" }))}.signature`;
 const assignment: AcademicAssignment = {
