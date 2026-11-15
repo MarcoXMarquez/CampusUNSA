@@ -517,6 +517,7 @@ function NavigationContent(): React.JSX.Element {
               opened={hugoSheetOpened}
               onClose={() => setHugoSheetOpened(false)}
               token={token}
+              isOnline={isOnline}
             />
           </section>
         )}

@@ -13,6 +13,12 @@ export type CourseScheduleUpdateRequest = components["schemas"]["CourseScheduleU
 export type ExternalSourceSummary = components["schemas"]["ExternalSourceSummaryResponse"];
 export type ApiAcademicCourseResponse = components["schemas"]["AcademicCourseResponse"];
 export type ManualCourseLinkPayload = components["schemas"]["ManualCourseLinkRequest"];
+export type MessagingChannel = components["schemas"]["OtpGenerateRequest"]["channel"];
+export type OtpGenerateResponse = components["schemas"]["OtpGenerateResponse"];
+export type OtpVerifyRequest = components["schemas"]["OtpVerifyRequest"];
+export type OtpVerifyResponse = components["schemas"]["OtpVerifyResponse"];
+export type OtpStatusResponse = components["schemas"]["OtpStatusResponse"];
+export type OtpUnlinkResponse = components["schemas"]["OtpUnlinkResponse"];
 
 export interface UserProfile extends Omit<UserResponse, "full_name"> {
   full_name?: string | null;
@@ -262,21 +268,72 @@ export async function clearSyncedCourses(token: string): Promise<number> {
   return data.deleted_count ?? 0;
 }
 
-export async function verifyWhatsAppPairingCode(
-  code: string,
+export async function generateMessagingOtp(
+  channel: MessagingChannel,
   token?: string | null
-): Promise<void> {
-  const res = await fetch(`${getApiBaseUrl()}/whatsapp/pair`, {
+): Promise<OtpGenerateResponse> {
+  const res = await fetch(`${getApiBaseUrl()}/auth/otp/generate`, {
     method: "POST",
     headers: buildHeaders(token, true),
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({ channel }),
   });
   if (!res.ok) {
     throw new ApiRequestError(
-      await parseErrorMessage(res, "Código inválido o expirado"),
+      await parseErrorMessage(res, "No se pudo generar el código OTP"),
       res.status
     );
   }
+  return (await res.json()) as OtpGenerateResponse;
+}
+
+export async function verifyMessagingOtp(
+  payload: OtpVerifyRequest,
+  token?: string | null
+): Promise<OtpVerifyResponse> {
+  const res = await fetch(`${getApiBaseUrl()}/auth/otp/verify`, {
+    method: "POST",
+    headers: buildHeaders(token, true),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new ApiRequestError(
+      await parseErrorMessage(res, "Código OTP inválido o expirado"),
+      res.status
+    );
+  }
+  return (await res.json()) as OtpVerifyResponse;
+}
+
+export async function fetchMessagingOtpStatus(
+  token?: string | null
+): Promise<OtpStatusResponse> {
+  const res = await fetch(`${getApiBaseUrl()}/auth/otp/status`, {
+    headers: buildHeaders(token),
+  });
+  if (!res.ok) {
+    throw new ApiRequestError(
+      await parseErrorMessage(res, "No se pudo consultar el estado de mensajería"),
+      res.status
+    );
+  }
+  return (await res.json()) as OtpStatusResponse;
+}
+
+export async function unlinkMessagingChannel(
+  channel: MessagingChannel,
+  token?: string | null
+): Promise<OtpUnlinkResponse> {
+  const res = await fetch(`${getApiBaseUrl()}/auth/otp/link/${encodeURIComponent(channel)}`, {
+    method: "DELETE",
+    headers: buildHeaders(token),
+  });
+  if (!res.ok) {
+    throw new ApiRequestError(
+      await parseErrorMessage(res, "No se pudo desvincular el canal"),
+      res.status
+    );
+  }
+  return (await res.json()) as OtpUnlinkResponse;
 }
 
 export async function fetchCurriculumCatalog(

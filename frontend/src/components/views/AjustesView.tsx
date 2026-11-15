@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Navbar,
   BlockTitle,
@@ -24,10 +24,13 @@ import {
 } from "@phosphor-icons/react";
 import { WhatsAppSheet } from "@/components/sheets/WhatsAppSheet";
 import {
+  fetchMessagingOtpStatus,
   getUserDisplayName,
   type BackendHealthStatus,
+  type OtpStatusResponse,
   type UserProfile,
 } from "@/lib/api-client";
+import { MESSAGING_MESSAGES } from "@/lib/messages/messaging-messages";
 
 interface AjustesViewProps {
   user: UserProfile | null;
@@ -70,6 +73,34 @@ export function AjustesView({
   const [cleaningCourses, setCleaningCourses] = useState<boolean>(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [messagingStatus, setMessagingStatus] = useState<OtpStatusResponse | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (!token || !isOnline) return;
+    let active = true;
+    void fetchMessagingOtpStatus(token)
+      .then((status) => {
+        if (active) setMessagingStatus(status);
+      })
+      .catch(() => {
+        // Keep last known status when offline or unauthenticated
+      });
+    return () => {
+      active = false;
+    };
+  }, [token, isOnline]);
+
+  const anyMessagingConnected = Boolean(
+    messagingStatus?.whatsapp_connected || messagingStatus?.telegram_connected
+  );
+  const connectedChannelsSummary = [
+    messagingStatus?.whatsapp_connected ? "WhatsApp" : null,
+    messagingStatus?.telegram_connected ? "Telegram" : null,
+  ]
+    .filter(Boolean)
+    .join(" y ");
 
   const displayName = getUserDisplayName(user);
   const avatarInitial = displayName[0]?.toUpperCase() || "U";
@@ -234,11 +265,23 @@ export function AjustesView({
         <ListItem
           link
           chevron
-          title="Asistente de WhatsApp"
-          subtitle="Recordatorios automáticos en tu chat"
+          title={MESSAGING_MESSAGES.settingsRowTitle}
+          subtitle={
+            connectedChannelsSummary
+              ? `Conectado: ${connectedChannelsSummary}`
+              : MESSAGING_MESSAGES.settingsRowSubtitleDefault
+          }
           after={
-            <span className="text-[15px] text-black/60 dark:text-white/60">
-              Vincular
+            <span className="inline-flex items-center gap-1.5 text-[15px] text-black/60 dark:text-white/60">
+              {anyMessagingConnected && (
+                <span
+                  aria-hidden="true"
+                  className="w-2 h-2 rounded-full bg-emerald-500"
+                />
+              )}
+              {anyMessagingConnected
+                ? MESSAGING_MESSAGES.settingsRowActionConnected
+                : MESSAGING_MESSAGES.settingsRowActionLink}
             </span>
           }
           media={
@@ -520,11 +563,14 @@ export function AjustesView({
         </p>
       </div>
 
-      {/* WhatsApp Pairing Sheet */}
+      {/* WhatsApp & Telegram Omnichannel Pairing Sheet */}
       <WhatsAppSheet
         opened={whatsappSheetOpened}
         onClose={() => setWhatsappSheetOpened(false)}
         token={token}
+        isOnline={isOnline}
+        initialStatus={messagingStatus}
+        onStatusChange={setMessagingStatus}
       />
 
       {/* Moodle iCal Dialog */}

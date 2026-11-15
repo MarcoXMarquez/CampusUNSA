@@ -49,6 +49,12 @@ class User(Base):
         unique=True,
         nullable=True,
     )
+    telegram_chat_id: Mapped[Optional[str]] = mapped_column(
+        String(64),
+        unique=True,
+        nullable=True,
+        default=None,
+    )
     is_active: Mapped[bool] = mapped_column(
         default=True,
         nullable=False,

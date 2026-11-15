@@ -45,6 +45,18 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://ollama:11434"
     GEMINI_API_KEY: SecretStr = SecretStr("")
 
+    # Messaging Gateways & Omnichannel OTP Binding (US-08 / REQ-16 / REQ-36)
+    OTP_TTL_SECONDS: int = 300
+    OTP_MAX_ATTEMPTS: int = 3
+    OTP_GENERATION_RATE_LIMIT: int = 5
+    OTP_GENERATION_WINDOW_SECONDS: int = 600
+    WHATSAPP_BOT_NUMBER: str = ""
+    EVOLUTION_API_URL: str = "http://evolution:8080"
+    EVOLUTION_INSTANCE_NAME: str = "campusunsa"
+    EVOLUTION_API_KEY: SecretStr = SecretStr("")
+    TELEGRAM_BOT_USERNAME: str = ""
+    TELEGRAM_BOT_TOKEN: SecretStr = SecretStr("")
+
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",

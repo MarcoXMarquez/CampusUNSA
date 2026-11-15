@@ -131,6 +131,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/otp/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Messaging Otp
+         * @description Generates a 6-digit single-use OTP with strict 300-second Redis TTL.
+         */
+        post: operations["generate_messaging_otp_api_v1_auth_otp_generate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/otp/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Messaging Otp
+         * @description Verifies a 6-digit OTP against Redis and binds WhatsApp or Telegram to the user.
+         */
+        post: operations["verify_messaging_otp_api_v1_auth_otp_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/otp/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Messaging Otp Status
+         * @description Returns WhatsApp and Telegram linkage status plus active OTP countdowns.
+         */
+        get: operations["get_messaging_otp_status_api_v1_auth_otp_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/otp/link/{channel}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unlink Messaging Channel
+         * @description Removes the bound WhatsApp phone number or Telegram chat ID from the user account.
+         */
+        delete: operations["unlink_messaging_channel_api_v1_auth_otp_link__channel__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tickets/all": {
         parameters: {
             query?: never;
@@ -1237,6 +1317,124 @@ export interface components {
              */
             computed_at: string;
         };
+        /**
+         * OtpGenerateRequest
+         * @description Request payload to generate a 5-minute channel pairing OTP.
+         */
+        OtpGenerateRequest: {
+            /**
+             * Channel
+             * @default whatsapp
+             * @enum {string}
+             */
+            channel: "whatsapp" | "telegram";
+        };
+        /**
+         * OtpGenerateResponse
+         * @description Response containing the generated 6-digit OTP and channel metadata.
+         */
+        OtpGenerateResponse: {
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "whatsapp" | "telegram";
+            /** Otp Code */
+            otp_code: string;
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Deep Link Url */
+            deep_link_url?: string | null;
+            /**
+             * Status
+             * @default PENDING
+             * @constant
+             */
+            status: "PENDING";
+        };
+        /**
+         * OtpStatusResponse
+         * @description Current WhatsApp and Telegram linkage status plus pending OTP TTLs.
+         */
+        OtpStatusResponse: {
+            /** Whatsapp Connected */
+            whatsapp_connected: boolean;
+            /** Whatsapp Phone */
+            whatsapp_phone?: string | null;
+            /** Telegram Connected */
+            telegram_connected: boolean;
+            /** Telegram Chat Id */
+            telegram_chat_id?: string | null;
+            /**
+             * Pending Whatsapp Ttl
+             * @default 0
+             */
+            pending_whatsapp_ttl: number;
+            /**
+             * Pending Telegram Ttl
+             * @default 0
+             */
+            pending_telegram_ttl: number;
+        };
+        /**
+         * OtpUnlinkResponse
+         * @description Response confirming removal of a linked messaging channel.
+         */
+        OtpUnlinkResponse: {
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "whatsapp" | "telegram";
+            /**
+             * Linked
+             * @default false
+             */
+            linked: boolean;
+            /** Message */
+            message: string;
+        };
+        /**
+         * OtpVerifyRequest
+         * @description Request payload to verify a 6-digit OTP and bind a channel identifier.
+         */
+        OtpVerifyRequest: {
+            /**
+             * Channel
+             * @default whatsapp
+             * @enum {string}
+             */
+            channel: "whatsapp" | "telegram";
+            /** Code */
+            code: string;
+            /** Identifier */
+            identifier: string;
+        };
+        /**
+         * OtpVerifyResponse
+         * @description Response emitted after successful OTP verification and persistence.
+         */
+        OtpVerifyResponse: {
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "whatsapp" | "telegram";
+            /** Identifier */
+            identifier: string;
+            /**
+             * Linked
+             * @default true
+             */
+            linked: boolean;
+            /** Message */
+            message: string;
+        };
         /** ParseTaskRequest */
         ParseTaskRequest: {
             /** Message */
@@ -1637,6 +1835,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClassroomConsentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_messaging_otp_api_v1_auth_otp_generate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OtpGenerateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OtpGenerateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_messaging_otp_api_v1_auth_otp_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OtpVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OtpVerifyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_messaging_otp_status_api_v1_auth_otp_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OtpStatusResponse"];
+                };
+            };
+        };
+    };
+    unlink_messaging_channel_api_v1_auth_otp_link__channel__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channel: "whatsapp" | "telegram";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OtpUnlinkResponse"];
                 };
             };
             /** @description Validation Error */
