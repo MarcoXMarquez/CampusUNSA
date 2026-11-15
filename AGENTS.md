@@ -76,11 +76,11 @@ Every AI agent modifying or generating code in this repository MUST strictly fol
 
 ### 3.2 Stitch-First Frontend Workflow and UI Engineering Directives
 
-Every AI agent that creates or modifies code under `frontend/` MUST follow the Stitch-First directives in this section. **Google Stitch (project `4575327637306768444`) and `DESIGN.md` are the authoritative visual source of truth.** Agents MUST NOT override or flatten Stitch visual tokens (colors, elevation shadows, card surfaces, radii, or layout geometry) in the name of generic templates.
+Every AI agent that creates or modifies code under `frontend/` MUST follow the Stitch-First directives in this section. **Google Stitch (project `4575327637306768444`) and `docs/design/DESIGN.md` are the authoritative visual source of truth.** Agents MUST NOT override or flatten Stitch visual tokens (colors, elevation shadows, card surfaces, radii, or layout geometry) in the name of generic templates.
 
 #### 3.2.1 Stitch-First Visual Authority
 
-* **Design Source of Truth:** When implementing or updating any screen designed in Stitch, agents MUST inspect the Stitch design via the `stitch` MCP (`stitch_find`, `stitch_get`) or `DESIGN.md`, and reproduce its palette, surfaces, shadows, border radii, and visual hierarchy 1:1.
+* **Design Source of Truth:** When implementing or updating any screen designed in Stitch, agents MUST inspect the Stitch design via the `stitch` MCP (`stitch_find`, `stitch_get`) or `docs/design/DESIGN.md`, and reproduce its palette, surfaces, shadows, border radii, and visual hierarchy 1:1.
 * **Asset Optimization Strategy:** Raster illustrations exported from Stitch MUST be saved as optimized local Retina WebP files (`< 30 KB` per asset, e.g., `frontend/public/images/onboarding/`), and minimalist marks or icons MUST use SVG rather than heavy PNG bundles.
 * **Color Schemes:** Components SHOULD support both light and dark presentations consistent with the corresponding Stitch screen and system preferences.
 
