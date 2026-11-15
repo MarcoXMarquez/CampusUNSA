@@ -111,7 +111,7 @@ The following technical defects are strictly prohibited under `frontend/`:
 * **Auth & WhatsApp Functional Rules:**
   * Institutional `@unsa.edu.pe` domain restriction applies equally to email/password auth and Google OAuth.
   * WhatsApp OTP pairing MUST use numeric 6-digit input (`inputMode="numeric"`, `autoComplete="one-time-code"`, `maxLength={6}`) with countdown derived strictly from the server-issued Redis expiry (300-second TTL).
-* **Localization (`es-PE`):** User-facing UI copy MUST be centralized in message catalogs (for example, `frontend/src/lib/auth-messages.ts`) in `es-PE`, while code identifiers, comments, tests, commits, and documentation remain in English.
+* **Localization (`es-PE`):** User-facing UI copy MUST be centralized in message catalogs (for example, `frontend/src/lib/messages/auth-messages.ts`) in `es-PE`, while code identifiers, comments, tests, commits, and documentation remain in English.
 * **Accessibility & Verification:**
   * Provide accessible labels (`aria-label`, `aria-current`, semantic `role="alert"` / `role="status"`), keyboard focusability, and interactive targets >= 44px where applicable.
   * `node scripts/verify-ui-directives.mjs` MUST pass (invoked by `./scripts/verify.sh`, `./scripts/verify.ps1`, and CI).

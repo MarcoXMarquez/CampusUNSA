@@ -16,7 +16,7 @@ import {
   getLimaClock,
   resolveNextClass,
 } from "@/lib/schedule-calculator";
-import { horarioMessages as messages, taskBoardMessages } from "@/lib/task-board-messages";
+import { horarioMessages as messages, taskBoardMessages } from "@/lib/messages/task-board-messages";
 
 const GROUP_OPTIONS = ["A", "B", "C", "D", "E", "F"] as const;
 const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7] as const;

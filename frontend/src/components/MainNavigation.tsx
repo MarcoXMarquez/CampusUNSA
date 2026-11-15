@@ -25,7 +25,7 @@ import {
   registerServiceWorker,
   requestBackgroundSync,
 } from "@/lib/pwa-sw";
-import { taskSyncMessages as syncMessages } from "@/lib/task-board-messages";
+import { taskSyncMessages as syncMessages } from "@/lib/messages/task-board-messages";
 import {
   ApiRequestError,
   authenticateWithGoogleToken,

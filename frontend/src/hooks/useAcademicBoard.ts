@@ -9,7 +9,7 @@ import {
   readBoardSnapshotSync,
   writeBoardSnapshot,
 } from "../lib/offline-db";
-import { taskBoardMessages } from "../lib/task-board-messages";
+import { taskBoardMessages } from "@/lib/messages/task-board-messages";
 
 export interface AcademicCourseSource {
   source_id: string;

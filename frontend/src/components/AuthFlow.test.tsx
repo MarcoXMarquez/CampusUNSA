@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthFlow } from "./AuthFlow";
-import { AUTH_MESSAGES, ONBOARDING_SLIDES } from "@/lib/auth-messages";
+import { AUTH_MESSAGES, ONBOARDING_SLIDES } from "@/lib/messages/auth-messages";
 
 describe("AuthFlow Component", () => {
   const mockOnSuccess = vi.fn();

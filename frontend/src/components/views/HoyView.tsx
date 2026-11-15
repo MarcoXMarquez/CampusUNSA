@@ -9,7 +9,7 @@ import { AcademicAssignment, TaskDetailSheet } from "@/components/sheets/TaskDet
 import type { AcademicCourse } from "@/hooks/useAcademicBoard";
 import { resolveNextClass } from "@/lib/schedule-calculator";
 import { groupTasksByUrgency, TaskGroup } from "@/lib/task-urgency";
-import { horarioMessages, taskBoardMessages as messages } from "@/lib/task-board-messages";
+import { horarioMessages, taskBoardMessages as messages } from "@/lib/messages/task-board-messages";
 
 interface HoyViewProps {
   assignments: AcademicAssignment[];

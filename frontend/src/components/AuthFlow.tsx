@@ -11,7 +11,7 @@ import {
   LockKey,
   User as UserIcon,
 } from "@phosphor-icons/react";
-import { AUTH_MESSAGES, ONBOARDING_SLIDES } from "@/lib/auth-messages";
+import { AUTH_MESSAGES, ONBOARDING_SLIDES } from "@/lib/messages/auth-messages";
 import { getApiBaseUrl, getGoogleClientId } from "@/lib/api-client";
 
 export interface AuthFlowUser {
