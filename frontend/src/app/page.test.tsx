@@ -40,8 +40,8 @@ describe("HomePage Component", () => {
     expect(screen.getByRole("button", { name: "Crear nueva tarea" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Hugo" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Ajustes" })).toBeDefined();
-    expect(screen.getByText("Sincroniza tus plataformas")).toBeDefined();
-    expect(screen.getByText("0 de 2 sincronizadas")).toBeDefined();
+    expect(screen.getByText("Conecta tus plataformas")).toBeDefined();
+    expect(screen.getByText("0 de 2 conectadas")).toBeDefined();
   });
 
   it("transitions from TareasSyncView to HoyView once both Classroom and DUTIC are connected", async () => {
@@ -71,8 +71,8 @@ describe("HomePage Component", () => {
     render(<HomePage />);
 
     await waitFor(() => {
-      expect(screen.getAllByText("Hoy").length).toBeGreaterThanOrEqual(1);
-      expect(screen.queryByText("Sincroniza tus plataformas")).toBeNull();
+      expect(screen.getAllByRole("heading", { name: "Tareas" }).length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryByText("Conecta tus plataformas")).toBeNull();
     });
   });
 
@@ -106,9 +106,9 @@ describe("HomePage Component", () => {
     render(<HomePage />);
 
     await waitFor(() => {
-      expect(screen.getByText("1 de 2 sincronizadas")).toBeDefined();
+      expect(screen.getByText("1 de 2 conectadas")).toBeDefined();
     });
-    expect(screen.getByText("Sincroniza tus plataformas")).toBeDefined();
+    expect(screen.getByText("Conecta tus plataformas")).toBeDefined();
   });
 
   it("renders the 3 campus geographical locations in Ajustes", () => {
@@ -301,7 +301,7 @@ describe("HomePage Component", () => {
     expect(screen.getAllByText("Operativo").length).toBeGreaterThanOrEqual(3);
   });
 
-  it("renders HorarioView inside Horario tab while preserving 5-tab bar and Pendiente de implementacion modal", async () => {
+  it("renders HorarioView inside Horario tab while preserving 5-tab bar and opening Nueva tarea sheet", async () => {
     localStorage.setItem("campusunsa_token", testToken);
     vi.stubGlobal(
       "fetch",
@@ -371,9 +371,12 @@ describe("HomePage Component", () => {
     expect(screen.getByRole("button", { name: "Hugo" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Ajustes" })).toBeDefined();
 
-    // Tapping + Tarea opens Pendiente de implementacion modal
+    // Tapping + Tarea opens Nueva tarea sheet with course pre-selected
     fireEvent.click(screen.getByRole("button", { name: "+ Tarea" }));
-    expect(screen.getByText(/Pendiente de implementación/i)).toBeDefined();
+    expect(screen.getByRole("dialog", { name: "Nueva tarea" })).toBeDefined();
+    expect(screen.getByTestId("selected-course-display").textContent).toBe(
+      "Desarrollo de Software para Juegos A"
+    );
   });
 
   it("renders HoyView and HorarioView from offline snapshot without flashing TareasSyncView when reloaded offline", async () => {
@@ -448,7 +451,7 @@ describe("HomePage Component", () => {
     render(<HomePage />);
 
     // Renders cached view immediately instead of TareasSyncView
-    expect(screen.queryByText("Sincroniza tus plataformas")).toBeNull();
+    expect(screen.queryByText("Conecta tus plataformas")).toBeNull();
     expect(screen.getByText("Practica Offline Cacheada")).toBeDefined();
     expect(
       screen.getByText(/Sin conexión · mostrando datos guardados/i)

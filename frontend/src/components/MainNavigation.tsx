@@ -10,9 +10,10 @@ import { TareasSyncView } from "@/components/views/TareasSyncView";
 import { HorarioView } from "@/components/views/HorarioView";
 import { AjustesView } from "@/components/views/AjustesView";
 import { LoginModal } from "@/components/sheets/LoginModal";
+import { NewTaskSheet } from "@/components/sheets/NewTaskSheet";
 import { WhatsAppSheet } from "@/components/sheets/WhatsAppSheet";
 import { QueryProvider } from "@/components/providers/QueryProvider";
-import { useAcademicBoard } from "@/hooks/useAcademicBoard";
+import { useAcademicBoard, type AcademicCourse } from "@/hooks/useAcademicBoard";
 import {
   clearOfflineAccountData,
   readSessionFromIndexedDb,
@@ -66,6 +67,8 @@ function NavigationContent(): React.JSX.Element {
   const [loginModalOpened, setLoginModalOpened] = useState<boolean>(false);
   const [hugoSheetOpened, setHugoSheetOpened] = useState<boolean>(false);
   const [newTaskModalOpened, setNewTaskModalOpened] = useState<boolean>(false);
+  const [newTaskInitialCourse, setNewTaskInitialCourse] =
+    useState<AcademicCourse | null>(null);
   const [backendHealth, setBackendHealth] = useState<BackendHealthStatus | null>(null);
   const [catalogCourses, setCatalogCourses] = useState<CourseCatalogItem[]>([]);
 
@@ -164,8 +167,15 @@ function NavigationContent(): React.JSX.Element {
     setCompletion,
     completionPending,
     completionError,
+    createAssignment,
+    creatingAssignment,
     refresh,
   } = useAcademicBoard(token);
+
+  const handleOpenNewTask = useCallback((course?: AcademicCourse) => {
+    setNewTaskInitialCourse(course ?? null);
+    setNewTaskModalOpened(true);
+  }, []);
 
   const refreshRef = useRef(refresh);
   refreshRef.current = refresh;
@@ -422,9 +432,8 @@ function NavigationContent(): React.JSX.Element {
   };
 
   const allSourcesSynced = classroomConnected && moodleIcalConnected;
-  const isSyncDarkFullBleed = activeTab === "tareas" && !allSourcesSynced;
   const useDarkBottomBar =
-    isSyncDarkFullBleed || activeTab === "hugo" || activeTab === "horario";
+    activeTab === "tareas" || activeTab === "hugo" || activeTab === "horario";
 
   return (
     <Page
@@ -447,24 +456,22 @@ function NavigationContent(): React.JSX.Element {
               onSubscribeMoodleIcal={handleSubscribeMoodleIcal}
             />
           ) : (
-            <div className="w-full max-w-lg mx-auto">
-              <HoyView
-                assignments={assignments}
-                courses={courses}
-                loading={loading}
-                syncing={syncing}
-                isOnline={isOnline}
-                moodleSessionExpired={moodleSessionExpired}
-                syncError={syncError}
-                onRefresh={fetchAcademicData}
-                onOpenSettings={() => setActiveTab("ajustes")}
-                onOpenSchedule={() => setActiveTab("horario")}
-                onReconnectMoodle={() => setActiveTab("ajustes")}
-                onCompletionChange={setCompletion}
-                completionPending={completionPending}
-                completionError={completionError}
-              />
-            </div>
+            <HoyView
+              assignments={assignments}
+              courses={courses}
+              loading={loading}
+              syncing={syncing}
+              isOnline={isOnline}
+              moodleSessionExpired={moodleSessionExpired}
+              syncError={syncError}
+              onRefresh={fetchAcademicData}
+              onOpenSettings={() => setActiveTab("ajustes")}
+              onOpenSchedule={() => setActiveTab("horario")}
+              onReconnectMoodle={() => setActiveTab("ajustes")}
+              onCompletionChange={setCompletion}
+              completionPending={completionPending}
+              completionError={completionError}
+            />
           ))}
 
         {activeTab === "horario" && (
@@ -479,7 +486,7 @@ function NavigationContent(): React.JSX.Element {
             syncError={syncError}
             onRefresh={fetchAcademicData}
             onReconnectMoodle={() => setActiveTab("ajustes")}
-            onOpenNewTask={() => setNewTaskModalOpened(true)}
+            onOpenNewTask={handleOpenNewTask}
             onSaveSchedule={handleSaveCourseSchedule}
             onLoadCatalog={handleLoadCatalog}
             onLoadGroupSchedule={handleLoadGroupSchedule}
@@ -637,7 +644,7 @@ function NavigationContent(): React.JSX.Element {
             <button
               type="button"
               aria-label={syncMessages.nav.newTaskAria}
-              onClick={() => setNewTaskModalOpened(true)}
+              onClick={() => handleOpenNewTask()}
               className="flex items-center justify-center w-12 h-12 rounded-full bg-[#8B0000] hover:bg-[#A51C30] text-white shadow-2xl active:scale-95 transition -mt-6 border-2 border-white/80 ring-1 ring-neutral-700/60 cursor-pointer"
             >
               <svg
@@ -752,39 +759,20 @@ function NavigationContent(): React.JSX.Element {
         </nav>
       </footer>
 
-      {/* New Task Placeholder Modal */}
-      {newTaskModalOpened && (
-        <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-          onClick={() => setNewTaskModalOpened(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="new-task-modal-title"
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-2xl bg-[#121214] border border-neutral-800 p-5 text-white shadow-2xl space-y-4"
-          >
-            <div>
-              <h2 id="new-task-modal-title" className="text-lg font-bold text-white">
-                {syncMessages.newTaskTitle}
-              </h2>
-              <p className="text-sm text-neutral-300 mt-2 leading-relaxed">
-                {syncMessages.newTaskPlaceholder}
-              </p>
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setNewTaskModalOpened(false)}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#8B0000] hover:bg-[#A51C30] text-xs font-semibold text-white cursor-pointer"
-              >
-                {syncMessages.newTaskCloseButton}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* New Task Creation Sheet */}
+      <NewTaskSheet
+        opened={newTaskModalOpened}
+        courses={courses}
+        initialCourse={newTaskInitialCourse}
+        allSourcesSynced={allSourcesSynced}
+        isOnline={isOnline}
+        submitting={creatingAssignment}
+        onClose={() => {
+          setNewTaskModalOpened(false);
+          setNewTaskInitialCourse(null);
+        }}
+        onSubmit={createAssignment}
+      />
 
       {/* Login Sheet Modal */}
       <LoginModal

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowClockwise, BookOpen, Flask } from "@phosphor-icons/react";
 import type { AcademicAssignment } from "@/components/sheets/TaskDetailSheet";
 import type { AcademicCourse } from "@/hooks/useAcademicBoard";
 import type {
@@ -9,17 +10,16 @@ import type {
   CourseScheduleBlockInput,
 } from "@/lib/api-client";
 import {
-  buildWeeklySchedule,
-  formatBlockComponentLabel,
   formatBlockLocation,
   getCourseColor,
-  getLimaClock,
   resolveNextClass,
 } from "@/lib/schedule-calculator";
+import { formatAcademicTitle } from "@/lib/text-format";
 import { horarioMessages as messages, taskBoardMessages } from "@/lib/messages/task-board-messages";
 
 const GROUP_OPTIONS = ["A", "B", "C", "D", "E", "F"] as const;
 const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7] as const;
+const PULL_THRESHOLD_PX = 48;
 
 export interface HorarioViewProps {
   courses: AcademicCourse[];
@@ -68,17 +68,6 @@ interface EditableBlock {
   pavilion: string;
 }
 
-function formatGroupSubtitle(course: AcademicCourse): string | null {
-  const parts: string[] = [];
-  if (course.theory_group) {
-    parts.push(`Teoría ${course.theory_group}`);
-  }
-  if (course.lab_group) {
-    parts.push(`Lab ${course.lab_group}`);
-  }
-  return parts.length > 0 ? parts.join(" · ") : null;
-}
-
 function toEditableBlocks(blocks: CourseScheduleBlock[] | undefined): EditableBlock[] {
   return (blocks ?? []).map((b, idx) => ({
     key: b.id || `block-${idx}`,
@@ -93,7 +82,6 @@ function toEditableBlocks(blocks: CourseScheduleBlock[] | undefined): EditableBl
 
 export function HorarioView({
   courses,
-  assignments,
   catalogCourses = [],
   loading,
   syncing,
@@ -134,20 +122,9 @@ export function HorarioView({
     [linkedCourses, effectiveNow]
   );
 
-  const weeklyDays = useMemo(
-    () => buildWeeklySchedule(linkedCourses),
-    [linkedCourses]
-  );
-  const limaToday = useMemo(
-    () => getLimaClock(effectiveNow).dayOfWeek,
-    [effectiveNow]
-  );
-  const [viewMode, setViewMode] = useState<"courses" | "weekly">("courses");
-
-  const termLabel = useMemo(() => {
-    const firstBlock = linkedCourses.find((c) => (c.schedule_blocks ?? []).length > 0)?.schedule_blocks?.[0];
-    return firstBlock?.term ?? "2026B";
-  }, [linkedCourses]);
+  const [verAulaOpen, setVerAulaOpen] = useState<boolean>(false);
+  const [pullDistance, setPullDistance] = useState<number>(0);
+  const pullStartYRef = useRef<number | null>(null);
 
   // Schedule editor modal state
   const [editingCourse, setEditingCourse] = useState<AcademicCourse | null>(null);
@@ -367,9 +344,66 @@ export function HorarioView({
     }
   };
 
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (syncing || loading) return;
+    if (typeof window !== "undefined" && window.scrollY > 0) return;
+    pullStartYRef.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (pullStartYRef.current === null || syncing) return;
+    if (typeof window !== "undefined" && window.scrollY > 0) {
+      pullStartYRef.current = null;
+      setPullDistance(0);
+      return;
+    }
+    const currentY = event.touches[0]?.clientY ?? pullStartYRef.current;
+    const delta = currentY - pullStartYRef.current;
+    if (delta > 0) {
+      setPullDistance(Math.min(88, Math.round(delta * 0.5)));
+    } else {
+      setPullDistance(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullStartYRef.current === null) return;
+    const shouldRefresh = pullDistance >= PULL_THRESHOLD_PX && !syncing;
+    pullStartYRef.current = null;
+    setPullDistance(0);
+    if (shouldRefresh) {
+      onRefresh();
+    }
+  };
+
+  const nextClassCourseTitle = nextClass
+    ? formatAcademicTitle(nextClass.course.name) || nextClass.course.name
+    : null;
+
   return (
-    <div className="w-full min-h-dvh bg-black text-white safe-areas pb-28">
+    <div
+      data-testid="horario-board"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="w-full min-h-dvh bg-black text-white safe-areas pb-28 overflow-x-hidden"
+    >
       <div className="w-full max-w-md mx-auto px-5 pt-8">
+        {(pullDistance > 12 || syncing) && (
+          <div
+            role="status"
+            className="mb-3 flex items-center justify-center gap-2 text-xs text-neutral-400"
+          >
+            <ArrowClockwise
+              aria-hidden="true"
+              className={`w-3.5 h-3.5 ${syncing ? "animate-spin text-[#d85858]" : ""}`}
+            />
+            <span>
+              {syncing ? taskBoardMessages.updating : taskBoardMessages.pullToRefreshHint}
+            </span>
+          </div>
+        )}
+
         <header className="mb-5">
           <h1 className="text-4xl font-extrabold tracking-tight text-white">
             {messages.title}
@@ -411,38 +445,63 @@ export function HorarioView({
           </div>
         )}
 
-        {/* Prominent "Siguiente" Card matching Stitch 1:1 */}
+        {/* Prominent "Siguiente clase" Card matching Stitch reference */}
         <section
           data-purpose="next-class-card"
           aria-label={messages.nextLabel}
-          className="rounded-3xl p-5 mb-8 border border-[#3e1117] bg-gradient-to-b from-[#1b080b] to-[#120507] shadow-lg shadow-black/80"
+          className="rounded-3xl p-5 mb-7 border border-[#2d1417] bg-[#1d0f12]"
         >
           {nextClass ? (
             <>
-              <div className="text-[#f26c6d] text-base font-medium tracking-wide mb-1">
+              <p className="text-[#e05258] text-xs font-semibold tracking-wide mb-2">
                 {nextClass.subLabel}
-              </div>
-              <div className="flex items-baseline space-x-2 my-1">
-                <span className="text-5xl font-black tracking-tight text-white">
+              </p>
+              <div className="flex items-baseline space-x-2">
+                <span className="text-5xl font-extrabold tracking-tight text-neutral-100 leading-none">
                   {nextClass.block.start_time}
                 </span>
-                <span className="text-2xl font-normal text-neutral-400">
+                <span className="text-lg font-medium text-neutral-400">
                   – {nextClass.block.end_time}
                 </span>
               </div>
-              <h2 className="text-2xl font-bold text-white leading-tight mt-3 mb-2 tracking-tight line-clamp-2">
-                {nextClass.course.name}
+              <h2 className="text-xl font-bold text-neutral-100 leading-snug mt-3 mb-3 tracking-tight line-clamp-2">
+                {nextClassCourseTitle}
               </h2>
-              <p className="text-sm text-neutral-300">
-                {formatBlockComponentLabel(nextClass.block)}
-              </p>
+              <div className="flex items-end justify-between gap-3">
+                <div className="space-y-0.5 text-xs min-w-0">
+                  <div className="flex items-center gap-1.5 text-neutral-200 font-semibold">
+                    {nextClass.block.component_type === "LABORATORIO" ? (
+                      <Flask aria-hidden="true" className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
+                    ) : (
+                      <BookOpen aria-hidden="true" className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
+                    )}
+                    <span className="truncate">
+                      {nextClass.block.component_type === "LABORATORIO" ? "Laboratorio" : "Teoría"}
+                    </span>
+                  </div>
+                  {nextClass.block.room && (
+                    <p className="text-neutral-300 truncate">{nextClass.block.room}</p>
+                  )}
+                  {nextClass.block.pavilion && (
+                    <p className="text-neutral-400 truncate">{nextClass.block.pavilion}</p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setVerAulaOpen(true)}
+                  className="min-h-[44px] bg-[#83121a] hover:bg-[#991b22] text-white text-xs font-semibold rounded-full px-5 py-2.5 shrink-0 transition-colors cursor-pointer"
+                >
+                  {messages.verAulaButton}
+                </button>
+              </div>
             </>
           ) : (
             <>
-              <div className="text-[#f26c6d] text-base font-medium tracking-wide mb-1">
+              <p className="text-[#e05258] text-xs font-semibold tracking-wide mb-2">
                 {messages.nextLabel}
-              </div>
-              <h2 className="text-xl font-bold text-white leading-tight mt-2 mb-1">
+              </p>
+              <h2 className="text-xl font-bold text-neutral-100 leading-tight mt-1 mb-1">
                 {messages.emptySchedules}
               </h2>
               <p className="text-sm text-neutral-400">
@@ -462,7 +521,7 @@ export function HorarioView({
             {[0, 1, 2].map((index) => (
               <div
                 key={index}
-                className="border-t border-neutral-900 pt-5 space-y-2.5"
+                className="rounded-2xl bg-[#1c1c1e] p-4 space-y-2.5"
               >
                 <div className="h-5 w-3/4 rounded bg-neutral-800" />
                 <div className="h-4 w-1/3 rounded bg-neutral-900" />
@@ -481,236 +540,95 @@ export function HorarioView({
               <section
                 aria-label={messages.sectionTitle}
                 data-purpose="enrolled-courses-list"
-                className="space-y-6"
+                className="space-y-5"
               >
                 {linkedCourses.length > 0 && (
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                      {messages.sectionTitle} · {termLabel}
-                    </p>
-                    <div
-                      role="group"
-                      aria-label={messages.viewModeToggleAria}
-                      className="inline-flex rounded-xl bg-[#141416] border border-neutral-800 p-0.5 shrink-0"
-                    >
-                      <button
-                        type="button"
-                        aria-pressed={viewMode === "courses"}
-                        onClick={() => setViewMode("courses")}
-                        className={`min-h-[44px] px-3 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                          viewMode === "courses"
-                            ? "bg-[#8B0000] text-white"
-                            : "text-neutral-400 hover:text-white"
-                        }`}
-                      >
-                        {messages.viewModeCourses}
-                      </button>
-                      <button
-                        type="button"
-                        aria-pressed={viewMode === "weekly"}
-                        onClick={() => setViewMode("weekly")}
-                        className={`min-h-[44px] px-3 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                          viewMode === "weekly"
-                            ? "bg-[#8B0000] text-white"
-                            : "text-neutral-400 hover:text-white"
-                        }`}
-                      >
-                        {messages.viewModeWeekly}
-                      </button>
-                    </div>
+                    <h2 className="text-2xl font-bold tracking-tight text-white">
+                      {messages.sectionTitle}
+                    </h2>
+                    <span className="text-sm font-medium text-neutral-500">
+                      {messages.courseCountLabel(linkedCourses.length)}
+                    </span>
                   </div>
                 )}
 
-                {viewMode === "weekly" && linkedCourses.length > 0 ? (
-                  <div
-                    data-purpose="weekly-schedule-grid"
-                    aria-label={messages.weeklySectionAria}
-                    className="space-y-3"
-                  >
-                    {weeklyDays
-                      .filter(
-                        (day) =>
-                          day.dayOfWeek <= 6 ||
-                          day.sessions.length > 0 ||
-                          day.dayOfWeek === limaToday
-                      )
-                      .map((day) => {
-                        const isToday = day.dayOfWeek === limaToday;
-                        return (
-                          <div
-                            key={day.dayOfWeek}
-                            className={`rounded-2xl border p-3.5 space-y-2.5 ${
-                              isToday
-                                ? "bg-[#19090c] border-[#4a1118]"
-                                : "bg-[#121214] border-neutral-800/80"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <h3 className="text-sm font-bold text-white">
-                                {messages.dayFullNames[day.dayOfWeek]}
-                              </h3>
-                              {isToday && (
-                                <span className="rounded-full bg-[#8B0000]/30 border border-[#f26c6d]/40 px-2 py-0.5 text-[11px] font-semibold text-[#f26c6d]">
-                                  {messages.weeklyTodayBadge}
-                                </span>
-                              )}
-                            </div>
-                            {day.sessions.length > 0 ? (
-                              <div className="space-y-2">
-                                {day.sessions.map((session) => {
-                                  const location = formatBlockLocation(session.block);
-                                  const comp =
-                                    session.block.component_type === "LABORATORIO"
-                                      ? "Lab"
-                                      : "Teoría";
-                                  return (
-                                    <div
-                                      key={session.block.id}
-                                      className="flex items-start gap-2.5 rounded-xl bg-black/50 border border-neutral-800/70 p-2.5"
-                                    >
-                                      <span
-                                        aria-hidden="true"
-                                        className="w-1 self-stretch rounded-full shrink-0"
-                                        style={{ backgroundColor: session.color }}
-                                      />
-                                      <div className="min-w-0 flex-1 space-y-0.5">
-                                        <div className="flex items-center justify-between gap-2">
-                                          <span className="font-mono text-xs font-semibold text-neutral-200">
-                                            {session.block.start_time}–{session.block.end_time}
-                                          </span>
-                                          <span className="text-[11px] text-neutral-400 shrink-0">
-                                            {comp} {session.block.group_code}
-                                          </span>
-                                        </div>
-                                        <p className="text-sm font-semibold text-white line-clamp-2">
-                                          {session.course.name}
-                                        </p>
-                                        {location && (
-                                          <p className="text-xs text-neutral-400 truncate">
-                                            {location}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              <p className="text-xs text-neutral-500">
-                                {messages.weeklyNoDaySessions}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
-                  </div>
-                ) : (
-                  linkedCourses.map((course) => {
+                {linkedCourses.map((course) => {
                   const color = getCourseColor(course.course_code ?? course.id);
-                  const groupSubtitle = formatGroupSubtitle(course);
-                  const courseAssignments = assignments.filter(
-                    (a) =>
-                      a.course_id === course.id ||
-                      (Boolean(course.course_code) && a.course_code === course.course_code)
-                  );
-                  const totalCount = courseAssignments.length;
-                  const completedCount = courseAssignments.filter(
-                    (a) => Boolean(a.is_completed)
-                  ).length;
-                  const pendingCount = totalCount - completedCount;
+                  const displayCourseName =
+                    formatAcademicTitle(course.name) || course.name;
+                  const blocks = course.schedule_blocks ?? [];
 
                   return (
-                    <article
-                      key={course.id}
-                      className="border-t border-neutral-900 pt-5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start space-x-2.5 pt-1 min-w-0">
+                    <article key={course.id} className="space-y-2">
+                      <div className="flex items-center justify-between gap-2 px-1">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <span
                             aria-hidden="true"
-                            className="w-3.5 h-3.5 rounded-sm inline-block shrink-0 mt-1"
+                            className="w-2.5 h-2.5 rounded-sm inline-block shrink-0"
                             style={{ backgroundColor: color }}
                           />
-                          <h3 className="text-lg font-bold text-white tracking-tight leading-snug line-clamp-2">
-                            {course.name}
+                          <h3 className="text-[15px] font-bold text-white tracking-tight leading-snug line-clamp-2">
+                            {displayCourseName}
                           </h3>
                         </div>
                         <button
                           type="button"
                           onClick={() => onOpenNewTask(course)}
-                          className="min-h-[44px] px-2 text-sm font-bold text-neutral-200 hover:text-white transition-colors shrink-0 cursor-pointer"
+                          className="min-h-[44px] px-2 text-xs font-semibold text-[#f87171] hover:text-white transition-colors shrink-0 cursor-pointer"
                         >
                           {messages.addTaskButton}
                         </button>
                       </div>
 
-                      <div className="pl-6 mt-0.5 mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                        {groupSubtitle ? (
-                          <span className="text-neutral-400 text-sm font-normal">
-                            {groupSubtitle}
-                          </span>
-                        ) : (
-                          <span className="text-neutral-500 text-sm font-normal">
-                            {messages.configureGroupsSubtitle}
-                          </span>
-                        )}
-                        {course.course_code && onSaveSchedule && (
-                          <button
-                            type="button"
-                            onClick={() => openScheduleEditor(course)}
-                            className="min-h-[44px] text-xs font-semibold text-[#f26c6d] hover:text-white transition-colors cursor-pointer"
-                          >
-                            {messages.editScheduleButton}
-                          </button>
-                        )}
-                      </div>
-
-                      {(course.schedule_blocks ?? []).length > 0 ? (
-                        <div className="pl-6 space-y-1 font-mono text-sm text-neutral-200">
-                          {(course.schedule_blocks ?? []).map((block) => {
+                      <button
+                        type="button"
+                        onClick={() => openScheduleEditor(course)}
+                        aria-label={messages.editScheduleAria(displayCourseName)}
+                        className="w-full min-h-[44px] text-left bg-[#1c1c1e] hover:bg-[#232326] border border-white/5 rounded-2xl p-3 space-y-3 transition-colors cursor-pointer"
+                      >
+                        {blocks.length > 0 ? (
+                          blocks.map((block) => {
                             const location = formatBlockLocation(block);
+                            const compName =
+                              block.component_type === "LABORATORIO"
+                                ? "Laboratorio"
+                                : "Teoría";
+                            const subtitle = `${messages.dayFullNames[block.day_of_week] ?? "Lunes"} ${block.start_time}–${block.end_time}${location ? ` · ${location}` : ""}`;
+
                             return (
                               <div
                                 key={block.id}
-                                className="flex items-center min-w-0"
+                                className="flex items-center gap-3 min-w-0"
                               >
-                                <span className="w-16 font-sans text-neutral-400 font-normal shrink-0">
-                                  {block.component_type === "LABORATORIO"
-                                    ? "Lab"
-                                    : "Teoría"}
-                                </span>
-                                <span className="tracking-tight truncate">
-                                  {messages.dayAbbreviations[block.day_of_week] ?? "Lun"}{" "}
-                                  {block.start_time}–{block.end_time}
-                                  {location ? ` · ${location}` : ""}
-                                </span>
+                                <div className="w-9 h-9 rounded-xl bg-[#2c2c2e] flex items-center justify-center shrink-0 text-neutral-200">
+                                  {block.component_type === "LABORATORIO" ? (
+                                    <Flask aria-hidden="true" className="w-4 h-4" />
+                                  ) : (
+                                    <BookOpen aria-hidden="true" className="w-4 h-4" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold text-white truncate">
+                                    {compName}
+                                    {block.group_code ? ` · Grupo ${block.group_code}` : ""}
+                                  </p>
+                                  <p className="text-xs text-neutral-400 truncate">
+                                    {subtitle}
+                                  </p>
+                                </div>
                               </div>
                             );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="pl-6 text-xs text-neutral-500">
-                          {messages.courseNoSessionsHint}
-                        </p>
-                      )}
-
-                      <p className="text-neutral-400 text-sm mt-2 pl-6 font-normal">
-                        {completedCount}/{totalCount} entregas
-                        {pendingCount > 0 && (
-                          <>
-                            {" "}
-                            <span className="text-neutral-600">·</span>{" "}
-                            <span className="text-[#f87171] font-medium">
-                              {pendingCount}{" "}
-                              {pendingCount === 1 ? "pendiente" : "pendientes"}
-                            </span>
-                          </>
+                          })
+                        ) : (
+                          <p className="text-xs text-neutral-400 py-1">
+                            {messages.courseNoSessionsHint}
+                          </p>
                         )}
-                      </p>
+                      </button>
                     </article>
                   );
-                })
-                )}
+                })}
               </section>
             )}
 
@@ -760,6 +678,43 @@ export function HorarioView({
         )}
       </div>
 
+      {/* Ver Aula Pending Placeholder Modal */}
+      {verAulaOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+          onClick={() => setVerAulaOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ver-aula-placeholder-title"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl bg-[#121214] border border-neutral-800 p-5 text-white shadow-2xl space-y-4"
+          >
+            <div>
+              <h2
+                id="ver-aula-placeholder-title"
+                className="text-lg font-bold text-white"
+              >
+                {messages.verAulaTitle}
+              </h2>
+              <p className="text-sm text-neutral-300 mt-2 leading-relaxed">
+                {messages.verAulaPlaceholder}
+              </p>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setVerAulaOpen(false)}
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#8B0000] hover:bg-[#A51C30] text-xs font-semibold text-white cursor-pointer"
+              >
+                {messages.verAulaCloseButton}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Group & Schedule Editor Modal */}
       {editingCourse && (
         <div
@@ -778,7 +733,7 @@ export function HorarioView({
                 {messages.editorDialogTitle}
               </h2>
               <p className="text-xs text-neutral-400 mt-1 line-clamp-2">
-                {editingCourse.name}
+                {formatAcademicTitle(editingCourse.name) || editingCourse.name}
               </p>
             </div>
 
@@ -1027,7 +982,9 @@ export function HorarioView({
                             : "text-neutral-200 hover:bg-neutral-800"
                         }`}
                       >
-                        <span className="font-mono">{item.code}</span> · {item.official_name} ({item.curriculum_year})
+                        <span className="font-mono">{item.code}</span> ·{" "}
+                        {formatAcademicTitle(item.official_name) || item.official_name} (
+                        {item.curriculum_year})
                       </button>
                     );
                   })

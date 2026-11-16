@@ -170,11 +170,11 @@ class AcademicCourseResponse(BaseModel):
 
 
 class AcademicAssignmentResponse(BaseModel):
-    """Normalized academic coursework assignment entity across LMS origins."""
+    """Normalized academic coursework assignment entity across LMS origins and manual tasks."""
 
     id: uuid.UUID
-    course_id: uuid.UUID
-    source_id: uuid.UUID
+    course_id: Optional[uuid.UUID] = None
+    source_id: Optional[uuid.UUID] = None
     course_code: Optional[str] = None
     enrollment_id: Optional[uuid.UUID] = None
     classroom_assignment_id: str
@@ -184,12 +184,42 @@ class AcademicAssignmentResponse(BaseModel):
     max_points: Optional[float] = None
     state: str
     is_completed: bool = False
+    priority: Optional[str] = None
+    component_type: Optional[str] = None
+    group_code: Optional[str] = None
     alternate_link: Optional[str] = None
     origin: str
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CreateManualAssignmentRequest(BaseModel):
+    """Payload to create a student-authored manual task in PostgreSQL."""
+
+    title: str = Field(min_length=1, max_length=500)
+    course_code: Optional[str] = Field(default=None, max_length=20)
+    component_type: Literal["TEORIA", "LABORATORIO"] = "TEORIA"
+    due_date: Optional[datetime] = None
+    priority: Optional[Literal["ALTA", "MEDIA", "BAJA"]] = None
+    notes: Optional[str] = Field(default=None, max_length=2000)
+
+    @field_validator("title")
+    @classmethod
+    def validate_non_empty_title(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Task title cannot be blank")
+        return cleaned
+
+    @field_validator("course_code", "notes")
+    @classmethod
+    def normalize_optional_text(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        cleaned = value.strip()
+        return cleaned if cleaned else None
 
 
 class CourseCatalogResponse(BaseModel):

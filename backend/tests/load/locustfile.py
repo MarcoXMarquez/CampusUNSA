@@ -179,6 +179,13 @@ class StudentBrowser(FastHttpUser):
                 "code": "000000",
                 "identifier": "+51900000000",
             }
+        elif case.method == "POST" and case.path.endswith("/courses/assignments"):
+            payload = {
+                "title": "Perf manual assignment",
+                "course_code": dataset.get("completion_course_code", "1705275"),
+                "component_type": "TEORIA",
+                "priority": "ALTA",
+            }
         elif case.path.endswith("/nlp/parse-task"):
             payload = {
                 "message": "submit report for SO 2030-01-01T18:00:00Z",
@@ -229,6 +236,8 @@ class StudentBrowser(FastHttpUser):
                     )
                 elif case.method == "DELETE" and case.path.endswith(("/assignments", "/courses")):
                     assert "deleted_count" in body
+                elif case.method == "POST" and case.path.endswith("/courses/assignments"):
+                    assert body["origin"] == "manual" and body["title"] == "Perf manual assignment"
                 elif case.path.endswith(("/enrolled", "/pending-links")):
                     assert isinstance(body, list)
                 elif case.path.endswith(("/courses", "/assignments", "/tickets/all", "/catalog")):

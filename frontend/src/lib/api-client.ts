@@ -12,6 +12,8 @@ export type CourseScheduleBlockInput = components["schemas"]["CourseScheduleBloc
 export type CourseScheduleUpdateRequest = components["schemas"]["CourseScheduleUpdateRequest"];
 export type ExternalSourceSummary = components["schemas"]["ExternalSourceSummaryResponse"];
 export type ApiAcademicCourseResponse = components["schemas"]["AcademicCourseResponse"];
+export type ApiAcademicAssignmentResponse = components["schemas"]["AcademicAssignmentResponse"];
+export type CreateManualAssignmentPayload = components["schemas"]["CreateManualAssignmentRequest"];
 export type ManualCourseLinkPayload = components["schemas"]["ManualCourseLinkRequest"];
 export type MessagingChannel = components["schemas"]["OtpGenerateRequest"]["channel"];
 export type OtpGenerateResponse = components["schemas"]["OtpGenerateResponse"];
@@ -425,4 +427,22 @@ export async function saveCourseSchedule(
     );
   }
   return (await res.json()) as ApiAcademicCourseResponse;
+}
+
+export async function createManualAssignment(
+  token: string,
+  payload: CreateManualAssignmentPayload
+): Promise<ApiAcademicAssignmentResponse> {
+  const res = await fetch(`${getApiBaseUrl()}/courses/assignments`, {
+    method: "POST",
+    headers: buildHeaders(token, true),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new ApiRequestError(
+      await parseErrorMessage(res, "No se pudo crear la tarea"),
+      res.status
+    );
+  }
+  return (await res.json()) as ApiAcademicAssignmentResponse;
 }

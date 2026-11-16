@@ -113,4 +113,56 @@ describe("academic board query and completion mutations", () => {
     await act(async () => { await result.current.refresh(); });
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  it("creates a manual assignment, appends to board cache, and writes snapshot", async () => {
+    const created: AcademicAssignment = {
+      id: "manual-1",
+      course_id: "enr-1",
+      source_id: null,
+      course_code: "1705275",
+      classroom_assignment_id: "manual:uuid-1",
+      title: "Informe de laboratorio 04",
+      description: "Subir ZIP",
+      due_date: "2026-11-20T23:59:00-05:00",
+      state: "PUBLISHED",
+      is_completed: false,
+      priority: "ALTA",
+      component_type: "LABORATORIO",
+      origin: "manual",
+      created_at: "2026-11-16T01:00:00Z",
+    };
+
+    let storedAssignments: AcademicAssignment[] = [assignment];
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      if (init?.method === "POST" && String(input).endsWith("/courses/assignments")) {
+        storedAssignments = [assignment, created];
+        return response(created, 201);
+      }
+      if (String(input).endsWith("/courses/assignments")) return response(storedAssignments);
+      if (String(input).endsWith("/status")) return response({ sync_status: "SYNCED" });
+      return response([]);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { queryClient, wrapper } = setup();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    const { result } = renderHook(() => useAcademicBoard(token), { wrapper });
+    await waitFor(() => expect(result.current.assignments).toHaveLength(1));
+
+    await act(async () => {
+      await result.current.createAssignment({
+        title: "Informe de laboratorio 04",
+        course_code: "1705275",
+        component_type: "LABORATORIO",
+        due_date: "2026-11-20T23:59:00-05:00",
+        priority: "ALTA",
+        notes: "Subir ZIP",
+      });
+    });
+
+    await waitFor(() => expect(result.current.assignments).toHaveLength(2));
+    expect(result.current.assignments[1].id).toBe("manual-1");
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: academicBoardKey(token) });
+    expect(JSON.parse(localStorage.getItem("campusunsa_board:student-1") ?? "{}").assignments).toHaveLength(2);
+  });
 });

@@ -49,6 +49,7 @@ BASE_SCENARIOS = (
     Scenario("GET", "/api/v1/courses/schedule/next-class"),
     Scenario("GET", "/api/v1/courses/schedule/weekly"),
     Scenario("GET", "/api/v1/courses/assignments"),
+    Scenario("POST", "/api/v1/courses/assignments", role="completion", expected=201),
     Scenario("POST", "/api/v1/auth/otp/generate"),
     Scenario("POST", "/api/v1/auth/otp/verify", expected=400),
     Scenario("GET", "/api/v1/auth/otp/status"),

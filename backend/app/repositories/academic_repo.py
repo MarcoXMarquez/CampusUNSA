@@ -2,10 +2,10 @@
 
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Sequence, Set, Tuple
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.curriculum_catalog_data import CURRICULUM_CATALOG_ENTRIES
 from app.models.classroom import (
@@ -1132,7 +1132,14 @@ class AcademicSyncRepository:
         origin: Optional[str] = None,
     ) -> List[ClassroomAssignment]:
         """Return assignments for a student, optionally filtered by origin."""
-        query = db.query(ClassroomAssignment).filter(ClassroomAssignment.user_id == user_id)
+        query = (
+            db.query(ClassroomAssignment)
+            .options(
+                joinedload(ClassroomAssignment.source),
+                joinedload(ClassroomAssignment.enrollment),
+            )
+            .filter(ClassroomAssignment.user_id == user_id)
+        )
         if origin:
             query = query.filter(ClassroomAssignment.origin == origin)
         return query.order_by(ClassroomAssignment.due_date.asc().nullslast()).all()
@@ -1148,6 +1155,10 @@ class AcademicSyncRepository:
         """Persist completion state for an assignment owned by the caller."""
         assignment = (
             db.query(ClassroomAssignment)
+            .options(
+                joinedload(ClassroomAssignment.source),
+                joinedload(ClassroomAssignment.enrollment),
+            )
             .filter(
                 ClassroomAssignment.id == assignment_id,
                 ClassroomAssignment.user_id == user_id,
@@ -1162,6 +1173,63 @@ class AcademicSyncRepository:
         return assignment
 
     @staticmethod
+    def create_manual_assignment(
+        db: Session,
+        *,
+        user_id: UUID,
+        title: str,
+        course_code: Optional[str] = None,
+        component_type: str = "TEORIA",
+        due_date: Optional[datetime] = None,
+        priority: Optional[str] = None,
+        notes: Optional[str] = None,
+        term: str = DEFAULT_TERM,
+    ) -> ClassroomAssignment:
+        """Persist a manual assignment optionally attached to one of the student's enrollments."""
+        enrollment: Optional[UserCourseEnrollment] = None
+        if course_code:
+            enrollment = (
+                db.query(UserCourseEnrollment)
+                .filter(
+                    UserCourseEnrollment.user_id == user_id,
+                    UserCourseEnrollment.course_code == course_code,
+                    UserCourseEnrollment.term == term,
+                )
+                .first()
+            )
+            if enrollment is None:
+                raise LookupError(
+                    f"Student is not enrolled in course {course_code} for term {term}."
+                )
+
+        assignment = ClassroomAssignment(
+            user_id=user_id,
+            source_id=None,
+            course_code=enrollment.course_code if enrollment is not None else None,
+            enrollment_id=enrollment.id if enrollment is not None else None,
+            classroom_assignment_id=f"manual-{uuid4()}",
+            title=title,
+            description=notes,
+            due_date=due_date,
+            state="PUBLISHED",
+            is_completed=False,
+            priority=priority,
+            component_type_override=component_type,
+            origin="manual",
+        )
+        db.add(assignment)
+        db.commit()
+        return (
+            db.query(ClassroomAssignment)
+            .options(
+                joinedload(ClassroomAssignment.source),
+                joinedload(ClassroomAssignment.enrollment),
+            )
+            .filter(ClassroomAssignment.id == assignment.id)
+            .one()
+        )
+
+    @staticmethod
     def clear_assignments(
         db: Session,
         user_id: UUID,
@@ -1172,6 +1240,8 @@ class AcademicSyncRepository:
         query = db.query(ClassroomAssignment).filter(ClassroomAssignment.user_id == user_id)
         if origin:
             query = query.filter(ClassroomAssignment.origin == origin)
+        else:
+            query = query.filter(ClassroomAssignment.origin != "manual")
         count = query.delete(synchronize_session=False)
         db.commit()
         return count
@@ -1184,8 +1254,8 @@ class AcademicSyncRepository:
         origin: Optional[str] = None,
     ) -> int:
         """
-        Batch remove student's external course memberships, dependent assignments,
-        and orphaned enrollments without mutating shared catalog/source definitions.
+        Batch remove student's external course memberships, dependent synced assignments,
+        and orphaned enrollments without mutating shared catalog or manual tasks.
         """
         link_query = db.query(UserExternalCourse.id, UserExternalCourse.source_id).filter(
             UserExternalCourse.user_id == user_id
@@ -1204,6 +1274,7 @@ class AcademicSyncRepository:
         db.query(ClassroomAssignment).filter(
             ClassroomAssignment.user_id == user_id,
             ClassroomAssignment.source_id.in_(source_ids),
+            ClassroomAssignment.origin != "manual",
         ).delete(synchronize_session=False)
 
         deleted_count = (
@@ -1226,10 +1297,18 @@ class AcademicSyncRepository:
         orphan_query = db.query(UserCourseEnrollment).filter(
             UserCourseEnrollment.user_id == user_id
         )
+        detach_query = db.query(ClassroomAssignment).filter(
+            ClassroomAssignment.user_id == user_id,
+            ClassroomAssignment.enrollment_id.isnot(None),
+        )
         if active_enrollment_ids:
             orphan_query = orphan_query.filter(
                 UserCourseEnrollment.id.notin_(active_enrollment_ids)
             )
+            detach_query = detach_query.filter(
+                ClassroomAssignment.enrollment_id.notin_(active_enrollment_ids)
+            )
+        detach_query.update({ClassroomAssignment.enrollment_id: None}, synchronize_session=False)
         orphan_query.delete(synchronize_session=False)
 
         db.commit()
