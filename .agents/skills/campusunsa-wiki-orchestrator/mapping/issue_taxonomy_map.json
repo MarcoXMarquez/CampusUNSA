@@ -215,6 +215,11 @@
       "category": "onboarding_and_meta",
       "target_page": "Contributing-to-CampusUNSA.md",
       "title": "Documentation Update (Issue #111)"
+    },
+    "113": {
+      "category": "architecture_and_core",
+      "target_page": "Frontend-Architecture-and-PWA.md",
+      "title": "Module Architecture And Core (Issue #113)"
     }
   },
   "dynamic_heuristics": {
