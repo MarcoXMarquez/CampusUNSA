@@ -1,0 +1,45 @@
+name: Promote Verified Main to Deploy Branch
+
+on:
+  workflow_run:
+    workflows: ["CampusUNSA Continuous Integration"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-branch-promotion
+  cancel-in-progress: false
+
+jobs:
+  promote-deploy:
+    name: Promote CI-Verified Commit to deploy Branch
+    runs-on: ubuntu-24.04
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push'
+      )
+    steps:
+      - name: Checkout Verified Commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || 'refs/heads/main' }}
+          fetch-depth: 0
+
+      - name: Fast-Forward deploy Branch Without Force Flags
+        run: |
+          TARGET_SHA="$(git rev-parse HEAD)"
+          echo "Promoting verified SHA $TARGET_SHA to refs/heads/deploy"
+          if git ls-remote --exit-code --heads origin deploy >/dev/null 2>&1; then
+            git fetch origin deploy:refs/remotes/origin/deploy
+            if ! git merge-base --is-ancestor origin/deploy "$TARGET_SHA"; then
+              echo "ERROR: refs/heads/deploy is not an ancestor of $TARGET_SHA; refusing non-fast-forward promotion."
+              exit 1
+            fi
+          fi
+          git push origin "$TARGET_SHA:refs/heads/deploy"

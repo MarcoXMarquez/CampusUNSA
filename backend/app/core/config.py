@@ -1,4 +1,5 @@
 from typing import List, Literal
+from urllib.parse import urlparse
 from pydantic import ConfigDict, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings
 
@@ -69,24 +70,32 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres_dev_password"
     POSTGRES_DB: str = "campusunsa"
-
-    @property
-    def DATABASE_URL(self) -> str:
-        return (
-            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-            f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-        )
+    DATABASE_URL: str = ""
 
     # Redis Cache & Queues
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
-
-    @property
-    def REDIS_URL(self) -> str:
-        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+    REDIS_URL: str = ""
 
     @model_validator(mode="after")
-    def validate_production_secrets(self) -> "Settings":
+    def validate_and_resolve_urls(self) -> "Settings":
+        explicit_db_url = self.DATABASE_URL.strip()
+        if explicit_db_url:
+            if explicit_db_url.startswith("postgres://"):
+                explicit_db_url = "postgresql://" + explicit_db_url.removeprefix("postgres://")
+            self.DATABASE_URL = explicit_db_url
+        else:
+            self.DATABASE_URL = (
+                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            )
+
+        explicit_redis_url = self.REDIS_URL.strip()
+        if explicit_redis_url:
+            self.REDIS_URL = explicit_redis_url
+        else:
+            self.REDIS_URL = f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+
         env = self.ENVIRONMENT.strip().lower()
         if env in {"production", "staging"}:
             secret = self.SECRET_KEY.strip()
@@ -97,7 +106,11 @@ class Settings(BaseSettings):
                 raise ValueError("ENCRYPTION_KEY must be set to a strong non-default value in non-development environments")
             if encryption == secret:
                 raise ValueError("ENCRYPTION_KEY must be distinct from SECRET_KEY in non-development environments")
-            if self.POSTGRES_PASSWORD == "postgres_dev_password":
+            if explicit_db_url:
+                parsed_pw = urlparse(self.DATABASE_URL).password or ""
+                if not parsed_pw or parsed_pw == "postgres_dev_password":
+                    raise ValueError("POSTGRES_PASSWORD must be changed from the development default in non-development environments")
+            elif self.POSTGRES_PASSWORD == "postgres_dev_password":
                 raise ValueError("POSTGRES_PASSWORD must be changed from the development default in non-development environments")
         return self
 
