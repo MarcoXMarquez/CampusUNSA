@@ -143,9 +143,13 @@ test("renders Stitch Tareas board, filters, saves inline completion with undo, a
   await page.getByRole("button", { name: "Cerrar", exact: true }).click();
 
   // Complete inline + Undo toast + reload persistence
+  const patchCompletionPromise = page.waitForResponse(
+    (res) => res.request().method() === "PATCH" && res.url().includes("/completion")
+  );
   await page.getByRole("button", { name: "Marcar como completada: Laboratorio 4" }).click();
   await expect(page.getByText("Tarea completada")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Laboratorio 4" })).toBeHidden();
+  await patchCompletionPromise;
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Laboratorio 4" })).toBeHidden();
