@@ -27,10 +27,36 @@ def upgrade() -> None:
         existing_type=sa.UUID(),
         nullable=True,
     )
+    op.drop_constraint(
+        "classroom_assignments_source_id_fkey",
+        "classroom_assignments",
+        type_="foreignkey",
+    )
+    op.create_foreign_key(
+        "classroom_assignments_source_id_fkey",
+        "classroom_assignments",
+        "course_external_sources",
+        ["source_id"],
+        ["id"],
+        ondelete="SET NULL",
+    )
 
 
 def downgrade() -> None:
     op.execute(sa.text("DELETE FROM classroom_assignments WHERE source_id IS NULL"))
+    op.drop_constraint(
+        "classroom_assignments_source_id_fkey",
+        "classroom_assignments",
+        type_="foreignkey",
+    )
+    op.create_foreign_key(
+        "classroom_assignments_source_id_fkey",
+        "classroom_assignments",
+        "course_external_sources",
+        ["source_id"],
+        ["id"],
+        ondelete="CASCADE",
+    )
     op.alter_column(
         "classroom_assignments",
         "source_id",
