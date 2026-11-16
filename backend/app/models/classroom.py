@@ -321,9 +321,9 @@ class ClassroomAssignment(Base):
         nullable=False,
         index=True,
     )
-    source_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("course_external_sources.id", ondelete="CASCADE"),
-        nullable=False,
+    source_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("course_external_sources.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
     course_code: Mapped[Optional[str]] = mapped_column(
@@ -356,6 +356,12 @@ class ClassroomAssignment(Base):
         server_default="false",
         nullable=False,
     )
+    priority: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    component_type_override: Mapped[Optional[str]] = mapped_column(
+        "component_type",
+        String(20),
+        nullable=True,
+    )
     alternate_link: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     origin: Mapped[str] = mapped_column(String(50), default="classroom", nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -371,7 +377,7 @@ class ClassroomAssignment(Base):
     )
 
     user: Mapped["User"] = relationship("User", back_populates="assignments")
-    source: Mapped["CourseExternalSource"] = relationship(
+    source: Mapped[Optional["CourseExternalSource"]] = relationship(
         "CourseExternalSource",
         back_populates="assignments",
     )
@@ -391,9 +397,31 @@ class ClassroomAssignment(Base):
     )
 
     @property
-    def course_id(self) -> uuid.UUID:
+    def course_id(self) -> Optional[uuid.UUID]:
         """Return unified enrollment ID when linked, or fallback to external source ID."""
         return self.enrollment_id or self.source_id
+
+    @property
+    def component_type(self) -> Optional[str]:
+        """Return explicit assignment component type override or external source component type."""
+        if self.component_type_override:
+            return self.component_type_override
+        return self.source.component_type if self.source is not None else None
+
+    @property
+    def group_code(self) -> Optional[str]:
+        """Resolve the student's section group for this assignment's component."""
+        component = self.component_type
+        if self.enrollment is not None:
+            if component == "LABORATORIO" and self.enrollment.lab_group:
+                return self.enrollment.lab_group
+            if component in ("TEORIA", "UNICO") and self.enrollment.theory_group:
+                return self.enrollment.theory_group
+            if self.enrollment.theory_group or self.enrollment.lab_group:
+                return self.enrollment.theory_group or self.enrollment.lab_group
+        if self.source is not None:
+            return self.source.default_group_code
+        return None
 
     def __repr__(self) -> str:
         return f"<ClassroomAssignment(id={self.id}, title='{self.title}', due_date='{self.due_date}')>"

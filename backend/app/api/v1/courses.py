@@ -25,6 +25,7 @@ from app.schemas.academic import (
     CourseCatalogResponse,
     CourseScheduleBlockResponse,
     CourseScheduleUpdateRequest,
+    CreateManualAssignmentRequest,
     EnrollmentGroupUpdateRequest,
     ExternalSourceSummaryResponse,
     ManualCourseLinkRequest,
@@ -231,3 +232,35 @@ def get_unified_assignments(
         origin=origin,
     )
     return [AcademicAssignmentResponse.model_validate(item) for item in assignments]
+
+
+@router.post(
+    "/assignments",
+    response_model=AcademicAssignmentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_manual_assignment(
+    payload: CreateManualAssignmentRequest,
+    term: str = Query(default=DEFAULT_TERM),
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+) -> AcademicAssignmentResponse:
+    """Create a manual task optionally tied to one of the student's enrolled courses."""
+    try:
+        assignment = AcademicSyncRepository.create_manual_assignment(
+            db,
+            user_id=current_user.id,
+            title=payload.title,
+            course_code=payload.course_code,
+            component_type=payload.component_type,
+            due_date=payload.due_date,
+            priority=payload.priority,
+            notes=payload.notes,
+            term=term,
+        )
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "ENROLLMENT_NOT_FOUND", "message": str(exc)},
+        ) from exc
+    return AcademicAssignmentResponse.model_validate(assignment)

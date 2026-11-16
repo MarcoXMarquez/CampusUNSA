@@ -354,8 +354,8 @@ def test_task_title_hint_links_internal_moodle_code_and_preserves_unlinked_tasks
 
             enrolled = client.get("/api/v1/courses/enrolled", headers=headers).json()
             by_name = {c["name"]: c for c in enrolled}
-            assert "NEGOCIOS ELECTRONICOS (E)" in by_name
-            assert by_name["NEGOCIOS ELECTRONICOS (E)"]["course_code"] == "1704257"
+            assert "Negocios Electrónicos (E)" in by_name
+            assert by_name["Negocios Electrónicos (E)"]["course_code"] == "1704257"
 
             # 26B_SISTEMAS_096 remains pending link, but its assignment must still be returned
             pending = client.get("/api/v1/courses/pending-links", headers=headers).json()
