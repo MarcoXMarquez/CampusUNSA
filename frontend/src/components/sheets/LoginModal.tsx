@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Sheet } from "konsta/react";
 import { AuthFlow, type AuthFlowUser } from "@/components/AuthFlow";
 
 interface LoginModalProps {
@@ -10,16 +9,24 @@ interface LoginModalProps {
   onSuccess: (token: string, user: AuthFlowUser) => void;
 }
 
+/**
+ * Full-screen institutional onboarding and sign-in modal overlay.
+ */
 export function LoginModal({
   opened,
   onClose,
   onSuccess,
-}: LoginModalProps): React.JSX.Element {
+}: LoginModalProps): React.JSX.Element | null {
+  if (!opened) {
+    return null;
+  }
+
   return (
-    <Sheet
-      opened={opened}
-      onBackdropClick={onClose}
-      className="rounded-t-3xl pb-safe bg-black max-h-[92vh] overflow-y-auto"
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Inicio de sesión institucional"
+      className="fixed inset-0 z-[60] bg-canvas overflow-y-auto"
     >
       <AuthFlow
         initialStep="welcome"
@@ -30,6 +37,6 @@ export function LoginModal({
         }}
         onCancel={onClose}
       />
-    </Sheet>
+    </div>
   );
 }

@@ -102,24 +102,24 @@ export function CoursePickerSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-[430px] max-h-[88dvh] flex flex-col bg-[#f2f2f7] dark:bg-[#18181a] rounded-t-[24px] sm:rounded-[24px] pt-2.5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] px-4 text-black dark:text-white shadow-2xl border border-black/10 dark:border-white/10"
+        className="w-full max-w-[430px] max-h-[88dvh] flex flex-col bg-surface-sheet rounded-t-[24px] sm:rounded-[24px] pt-2.5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] px-4 text-ink-primary shadow-2xl border border-subtle"
       >
         <div
           aria-hidden="true"
-          className="w-9 h-1.5 bg-black/20 dark:bg-[#444448] rounded-full mx-auto mb-2.5"
+          className="w-9 h-1.5 bg-control rounded-full mx-auto mb-2.5"
         />
 
         <header className="relative flex items-center justify-between min-h-[44px] mb-3 px-1">
           <button
             type="button"
             onClick={onClose}
-            className="min-h-[44px] px-1 text-[#d34545] active:opacity-60 text-[17px] font-normal leading-tight transition-opacity"
+            className="min-h-[44px] px-1 text-brand-action active:opacity-60 text-ios-headline font-normal transition-opacity"
           >
             {messages.cancelAction}
           </button>
           <h2
             id={titleId}
-            className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-black dark:text-white tracking-tight"
+            className="absolute left-1/2 -translate-x-1/2 text-ios-headline font-semibold text-ink-primary"
           >
             {messages.sheetTitle}
           </h2>
@@ -130,7 +130,7 @@ export function CoursePickerSheet({
           <label htmlFor={searchInputId} className="sr-only">
             {messages.searchAria}
           </label>
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-black/40 dark:text-[#7c7c82]">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-ink-muted">
             <MagnifyingGlass size={16} weight="bold" aria-hidden="true" />
           </div>
           <input
@@ -140,13 +140,13 @@ export function CoursePickerSheet({
             placeholder={searchPlaceholder}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="w-full min-h-[44px] bg-white dark:bg-[#252528] text-black dark:text-white placeholder:text-black/40 dark:placeholder:text-[#68686d] text-[15px] rounded-xl pl-9 pr-4 py-2.5 outline-none focus:ring-1 focus:ring-[#5e5e63]"
+            className="w-full min-h-[44px] bg-surface-card border border-subtle text-ink-primary placeholder:text-ink-muted text-ios-subhead rounded-xl pl-9 pr-4 py-2.5 outline-none focus:ring-1 focus:ring-brand-action/60"
           />
         </div>
 
         <div className="overflow-y-auto space-y-3 pb-1">
           {!query.trim() && (
-            <div className="bg-white dark:bg-[#242426] rounded-2xl overflow-hidden">
+            <div className="bg-surface-card border border-subtle rounded-2xl overflow-hidden">
               <button
                 type="button"
                 aria-pressed={selectedCourseCode === ""}
@@ -154,7 +154,7 @@ export function CoursePickerSheet({
                   onSelect("");
                   onClose();
                 }}
-                className="w-full min-h-[56px] px-4 py-2.5 flex items-center justify-between text-left active:bg-black/5 dark:active:bg-[#2d2d31] transition-colors"
+                className="w-full min-h-[56px] px-4 py-2.5 flex items-center justify-between text-left active:bg-surface-elevated transition-colors"
               >
                 <div className="flex items-center min-w-0 flex-1">
                   <span
@@ -163,17 +163,17 @@ export function CoursePickerSheet({
                     style={{ backgroundColor: getCourseColor("personal") }}
                   />
                   <div className="min-w-0 pr-2">
-                    <p className="text-[16px] font-medium text-black dark:text-white leading-snug truncate">
+                    <p className="text-ios-callout font-medium text-ink-primary leading-snug truncate">
                       {messages.noCourseTitle}
                     </p>
-                    <p className="text-[13px] text-black/55 dark:text-[#8e8e93] leading-tight mt-0.5">
+                    <p className="text-ios-footnote text-ink-secondary leading-tight mt-0.5">
                       {messages.noCourseSubtitle}
                     </p>
                   </div>
                 </div>
                 {selectedCourseCode === "" && (
                   <span aria-label={messages.selectedAria} className="pl-2 flex-shrink-0">
-                    <Check size={18} weight="bold" className="text-[#d34545]" aria-hidden="true" />
+                    <Check size={18} weight="bold" className="text-brand-action" aria-hidden="true" />
                   </span>
                 )}
               </button>
@@ -181,17 +181,17 @@ export function CoursePickerSheet({
           )}
 
           <div>
-            <p className="px-1.5 pb-2 text-[13px] font-normal text-black/55 dark:text-[#7c7c82]">
+            <p className="px-1.5 pb-2 text-ios-footnote font-normal text-ink-muted">
               {messages.sectionTitle}
             </p>
             {filteredItems.length === 0 ? (
-              <p className="bg-white dark:bg-[#242426] rounded-2xl px-4 py-4 text-[14px] text-black/60 dark:text-[#8e8e93] text-center">
+              <p className="bg-surface-card border border-subtle rounded-2xl px-4 py-4 text-ios-subhead text-ink-secondary text-center">
                 {messages.emptySearch}
               </p>
             ) : (
               <ul
                 role="list"
-                className="bg-white dark:bg-[#242426] rounded-2xl overflow-hidden divide-y divide-black/10 dark:divide-[#323236]"
+                className="bg-surface-card border border-subtle rounded-2xl overflow-hidden divide-y divide-subtle"
               >
                 {filteredItems.map((item) => {
                   const isSelected = selectedCourseCode === item.code;
@@ -204,7 +204,7 @@ export function CoursePickerSheet({
                           onSelect(item.code);
                           onClose();
                         }}
-                        className="w-full min-h-[60px] px-4 py-3 flex items-center justify-between text-left active:bg-black/5 dark:active:bg-[#2d2d31] transition-colors"
+                        className="w-full min-h-[60px] px-4 py-3 flex items-center justify-between text-left active:bg-surface-elevated transition-colors"
                       >
                         <div className="flex items-center min-w-0 flex-1">
                           <span
@@ -213,11 +213,11 @@ export function CoursePickerSheet({
                             style={{ backgroundColor: item.color }}
                           />
                           <div className="min-w-0 pr-2">
-                            <p className="text-[16px] font-medium text-black dark:text-white tracking-tight leading-snug">
+                            <p className="text-ios-callout font-medium text-ink-primary tracking-tight leading-snug">
                               {item.displayName}
                             </p>
                             {item.subtitle && (
-                              <p className="text-[13px] text-black/55 dark:text-[#8e8e93] font-normal leading-tight mt-0.5">
+                              <p className="text-ios-footnote text-ink-secondary font-normal leading-tight mt-0.5">
                                 {item.subtitle}
                               </p>
                             )}
@@ -228,7 +228,7 @@ export function CoursePickerSheet({
                             <Check
                               size={18}
                               weight="bold"
-                              className="text-[#d34545]"
+                              className="text-brand-action"
                               aria-hidden="true"
                             />
                           </span>

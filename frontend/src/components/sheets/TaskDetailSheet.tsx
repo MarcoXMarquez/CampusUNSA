@@ -80,11 +80,11 @@ export function TaskDetailSheet({
         <button
           type="button"
           onClick={onClose}
-          className="min-h-[44px] px-2 text-primary dark:text-primary-dark text-[17px] font-normal"
+          className="min-h-[44px] px-2 text-brand-primary-tint text-ios-headline font-normal"
         >
           Cerrar
         </button>
-        <span className="text-[17px] font-semibold text-black dark:text-white truncate max-w-[200px]">
+        <span className="text-ios-headline font-semibold text-ink-primary truncate max-w-[200px]">
           Detalle de Entrega
         </span>
         <div className="w-12" />
@@ -93,33 +93,33 @@ export function TaskDetailSheet({
       <div className="p-6">
         {/* Source Badge */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[13px] font-medium text-black/60 dark:text-white/60">
+          <span className="text-ios-footnote font-medium text-ink-secondary">
             {sourceLabel}
           </span>
         </div>
 
         {/* Title */}
-        <h2 className="text-[22px] font-bold text-black dark:text-white mb-2 leading-snug break-words line-clamp-2">
+        <h2 className="text-ios-title-2 font-bold text-ink-primary mb-2 leading-snug break-words line-clamp-2">
           {assignment.title}
         </h2>
 
         {/* Course */}
         {assignment.courseName && (
-          <div className="flex items-center gap-2 text-[15px] text-black/70 dark:text-white/70 mb-4">
+          <div className="flex items-center gap-2 text-ios-subhead text-ink-secondary mb-4">
             <BookOpen size={18} weight="regular" />
             <span className="truncate">{assignment.courseName}</span>
           </div>
         )}
 
         {/* Deadline */}
-        <div className="flex items-center gap-2 text-[15px] font-medium text-black dark:text-white mb-6 p-3 rounded-xl bg-black/5 dark:bg-white/5">
-          <Clock size={18} weight="regular" className="text-primary dark:text-primary-dark" />
+        <div className="flex items-center gap-2 text-ios-subhead font-medium text-ink-primary mb-6 p-3 rounded-xl bg-surface-inset/70">
+          <Clock size={18} weight="regular" className="text-brand-primary-tint" />
           <span className="capitalize">{formattedDate}</span>
         </div>
 
         {onCompletionChange && (
           <div className="mb-6">
-            <p className="mb-3 text-[15px] text-black/60 dark:text-white/60" aria-live="polite">
+            <p className="mb-3 text-ios-subhead text-ink-secondary" aria-live="polite">
               {assignment.is_completed ? messages.completed : messages.pending}
             </p>
             <Button
@@ -129,9 +129,9 @@ export function TaskDetailSheet({
             >
               {assignment.is_completed ? messages.reopen : messages.complete}
             </Button>
-            {completionPending && <p role="status" className="mt-2 text-[13px] text-black/60 dark:text-white/60">{messages.saving}</p>}
-            {completionError && <p role="alert" className="mt-2 text-[15px] text-black dark:text-white">{completionError}</p>}
-            <p className="mt-3 text-[13px] text-black/60 dark:text-white/60">
+            {completionPending && <p role="status" className="mt-2 text-ios-footnote text-ink-secondary">{messages.saving}</p>}
+            {completionError && <p role="alert" className="mt-2 text-ios-subhead text-ink-primary">{completionError}</p>}
+            <p className="mt-3 text-ios-footnote text-ink-secondary">
               {isOnline ? messages.completionNote : messages.offlineCompletion}
             </p>
           </div>
@@ -140,10 +140,10 @@ export function TaskDetailSheet({
         {/* Description */}
         {assignment.description && (
           <div className="mb-6">
-            <h3 className="text-[13px] font-semibold uppercase tracking-wider text-black/40 dark:text-white/40 mb-1.5">
+            <h3 className="text-ios-footnote font-semibold uppercase tracking-wider text-ink-muted mb-1.5">
               Instrucciones
             </h3>
-            <p className="text-[15px] text-black/80 dark:text-white/80 leading-relaxed max-h-48 overflow-y-auto whitespace-pre-wrap">
+            <p className="text-ios-subhead text-ink-primary/85 leading-relaxed max-h-48 overflow-y-auto whitespace-pre-wrap">
               {assignment.description}
             </p>
           </div>
@@ -156,13 +156,13 @@ export function TaskDetailSheet({
               href={externalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-primary dark:bg-primary-dark text-white font-semibold text-[17px] active:opacity-80 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-brand-cta hover:bg-brand-cta-hover text-white font-semibold text-ios-headline active:opacity-80 transition-opacity"
             >
               <span>{isDutic ? "Abrir en Moodle" : "Abrir en Classroom"}</span>
               <ArrowSquareOut size={18} weight="regular" />
             </a>
           ) : (
-            <p className="text-center text-[13px] text-black/40 dark:text-white/40">
+            <p className="text-center text-ios-footnote text-ink-muted">
               No hay enlace web disponible para esta actividad
             </p>
           )}

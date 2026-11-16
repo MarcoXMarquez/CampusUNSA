@@ -2,6 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-canvas: 242 242 247;
+  --surface-sheet: 242 242 247;
+  --surface-card: 255 255 255;
+  --surface-elevated: 249 249 251;
+  --surface-inset: 229 229 234;
+  --surface-hero: 253 242 242;
+  --surface-urgent: 254 242 242;
+
+  --border-subtle: 216 216 220;
+  --border-control: 198 198 202;
+  --border-urgent: 245 194 194;
+
+  --ink-primary: 0 0 0;
+  --ink-secondary: 110 110 115;
+  --ink-muted: 113 118 126;
+  --ink-disabled: 169 173 181;
+
+  --brand-cta: 139 0 0;
+  --brand-cta-hover: 165 28 48;
+  --brand-action: 211 47 47;
+  --brand-tint: 185 28 28;
+  --brand-primary-tint: 139 0 0;
+
+  --status-urgent: 255 59 48;
+  --status-soon: 255 204 0;
+  --status-success: 52 199 89;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-canvas: 0 0 0;
+    --surface-sheet: 22 22 24;
+    --surface-card: 28 28 30;
+    --surface-elevated: 44 44 46;
+    --surface-inset: 25 25 27;
+    --surface-hero: 29 15 18;
+    --surface-urgent: 36 23 23;
+
+    --border-subtle: 42 42 46;
+    --border-control: 56 56 58;
+    --border-urgent: 62 31 32;
+
+    --ink-primary: 255 255 255;
+    --ink-secondary: 142 142 147;
+    --ink-muted: 124 124 130;
+    --ink-disabled: 85 85 90;
+
+    --brand-cta: 139 0 0;
+    --brand-cta-hover: 165 28 48;
+    --brand-action: 234 67 69;
+    --brand-tint: 235 83 83;
+    --brand-primary-tint: 229 87 91;
+
+    --status-urgent: 255 69 58;
+    --status-soon: 255 214 10;
+    --status-success: 48 209 88;
+  }
+}
+
 html {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
     system-ui, "Segoe UI", Roboto, sans-serif;
@@ -11,13 +71,6 @@ html {
 
 body {
   overscroll-behavior-y: none;
-  background-color: #F2F2F7;
-  color: #000000;
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #000000;
-    color: #FFFFFF;
-  }
+  background-color: rgb(var(--bg-canvas));
+  color: rgb(var(--ink-primary));
 }

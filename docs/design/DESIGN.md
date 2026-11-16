@@ -1,55 +1,56 @@
 ---
-name: CampusUNSA Stitch-First Design System
-version: 2.0.0
+name: CampusUNSA Apple iOS 18 HIG Design System
+version: 3.0.0
 stitch_project_id: "4575327637306768444"
-workflow: Stitch-First (Stitch MCP -> Next.js Components)
+stitch_design_system_id: "b2254f7922514144afffe91677ad283f"
+workflow: Stitch-First -> Apple iOS HIG Semantic Token Mapping -> Adaptive Light & Dark Components
+guideline_ref: "docs/design/apple-ios-palette-guideline.md"
 tokens:
-  colors:
-    chassis-dark: "#000000"        # Pure black OLED chassis container
-    onboarding-arc: "#E5E5EA"      # Curved onboarding header surface
-    card-showcase-bg: "#0D0F17"    # Mascot illustration showcase frame
-    card-surface-light: "#D6D8DB"  # Reference authentication card surface (light)
-    card-surface-dark: "#1C1C1E"   # Reference authentication card surface (dark)
-    input-surface-light: "#C8CBD1" # Rounded input background (light)
-    input-surface-dark: "#2C2C2E"  # Rounded input background (dark)
-    primary-unsa: "#920C12"        # Institutional crimson primary accent (Stitch)
-    primary-action: "#BA131A"      # Crimson submit and focus ring accent
-    primary-hover: "#9F1016"       # Crimson button hover accent
-    primary-cta: "#990000"         # Onboarding primary button fill
-    primary-cta-hover: "#800000"   # Onboarding primary button hover
-    primary-base: "#8B0000"        # Core UNSA tint
-    primary-dark-mode: "#E5575B"   # High-contrast tint on dark surfaces
-    google-border: "#DADCE0"       # Official Google Identity outline
-    text-heading-light: "#111315"  # Primary heading on silver surface
-    text-body-light: "#1F2429"     # Labels and body text on silver surface
-    text-muted-light: "#71767E"    # Secondary subtitles on silver surface
-    text-placeholder: "#7D828A"    # Input placeholder text
+  surfaces:
+    canvas: "rgb(var(--bg-canvas)) -> Light #F2F2F7 | Dark #000000"
+    surface-sheet: "rgb(var(--bg-sheet)) -> Light #FFFFFF | Dark #121214"
+    surface-card: "rgb(var(--bg-card)) -> Light #FFFFFF | Dark #1C1C1E"
+    surface-elevated: "rgb(var(--bg-elevated)) -> Light #E5E5EA | Dark #2C2C2E"
+    surface-inset: "rgb(var(--bg-inset)) -> Light #E5E5EA | Dark #2C2C2E"
+    surface-hero: "rgb(var(--bg-hero)) -> Light #FCEBEC | Dark #1D0F12"
+    surface-urgent: "rgb(var(--bg-urgent)) -> Light #FDE8E8 | Dark #241717"
+  borders:
+    subtle: "rgb(var(--border-subtle)) -> Light #E5E5EA | Dark #2C2C2E"
+    control: "rgb(var(--border-control)) -> Light #C7C7CC | Dark #3A3A3C"
+    urgent-edge: "rgb(var(--border-urgent)) -> Light #F5C2C4 | Dark #4A1C21"
+  ink:
+    ink-primary: "rgb(var(--ink-primary)) -> Light #000000 | Dark #FFFFFF"
+    ink-secondary: "rgb(var(--ink-secondary)) -> Light #6C6C70 | Dark #AEAEB2"
+    ink-muted: "rgb(var(--ink-muted)) -> Light #8E8E93 | Dark #8E8E93"
+    ink-disabled: "rgb(var(--ink-disabled)) -> Light #AEAEB2 | Dark #636366"
+  brand:
+    brand-cta: "rgb(var(--brand-cta)) -> Light #8B0000 | Dark #990000"
+    brand-cta-hover: "rgb(var(--brand-cta-hover)) -> Light #A51C30 | Dark #B2182B"
+    brand-action: "rgb(var(--brand-action)) -> Light #BA131A | Dark #E5575B"
+    brand-tint: "rgb(var(--brand-tint)) -> Light #C72C41 | Dark #FF3B5C"
+  status:
+    status-urgent: "rgb(var(--status-urgent)) -> Light #D70015 | Dark #FF453A"
+    status-soon: "rgb(var(--status-soon)) -> Light #B26A00 | Dark #FFD60A"
+    status-success: "rgb(var(--status-success)) -> Light #248A3D | Dark #30D158"
   typography:
     font-family: "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"SF Pro Display\", system-ui, sans-serif"
-  radii:
-    card-shell: "rounded-[38px]"
-    showcase: "rounded-[32px]"
-    input: "rounded-[14px]"
-    button: "rounded-2xl"
-  elevation:
-    shell: "shadow-2xl"
-    cta: "shadow-lg"
-    card-inset: "shadow-inner"
-    button-subtle: "shadow-sm"
+    scale: "text-ios-large-title (34px) .. text-ios-caption-2 (11px)"
 ---
 
-# CampusUNSA Stitch-First Design System
+# CampusUNSA Design System
 
-## 1. Visual Authority (Stitch-First Workflow)
-- Google Stitch project `4575327637306768444` is the authoritative visual source of truth for layout, surfaces, elevation shadows, border radii, and institutional color palette.
-- Implementing a designed view follows a deterministic flow:
-  1. Design or refine the screen in Google Stitch (`stitch_find` / `stitch_get`).
-  2. Export rasterized mascot illustrations as optimized local Retina WebP assets (`< 30 KB`, e.g., `frontend/public/images/onboarding/`) and vector logos/marks as SVG.
-  3. Build the Next.js component reproducing the Stitch design 1:1 while connecting strictly through `frontend/src/lib/api-client.ts` and `frontend/src/types/api.ts`.
+## 1. Visual Authority & Apple HIG Token Architecture
+- **Stitch Visual Project:** Google Stitch project `4575327637306768444` and design system `b2254f7922514144afffe91677ad283f` ("Academic iOS Design System") serve as the visual layout and proportion reference.
+- **Canonical Palette & Typography Matrix:** All semantic colors, CSS RGB custom properties (`:root` + `@media (prefers-color-scheme: dark)`), legacy hex mappings, and the 11-tier SF Pro Dynamic Type scale are documented in [apple-ios-palette-guideline.md](apple-ios-palette-guideline.md) and rendered visually in [apple-ios-design-system-light.png](apple-ios-design-system-light.png) and [apple-ios-design-system-dark.png](apple-ios-design-system-dark.png).
+- **Mandatory Mapping Workflow:**
+  1. Design or inspect any screen in Google Stitch (`stitch_find` / `stitch_get`).
+  2. Map every surface, text, border, accent, and text size to existing tokens in `frontend/src/app/globals.css` and `frontend/tailwind.config.js` instead of hardcoding hex literals or arbitrary `text-[...px]` classes inside `frontend/src/components/`.
+  3. Export rasterized mascot illustrations as optimized Retina WebP assets (`< 30 KB`, under `frontend/public/images/onboarding/`) and vector logos as SVG.
 
 ## 2. Non-Negotiable Frontend Engineering Floor
-- Strict TypeScript interfaces (`no any`) and centralized HTTP / environment access in `frontend/src/lib/api-client.ts` (never read `process.env.NEXT_PUBLIC_*` inside `frontend/src/components/`).
-- No network web-font imports (`next/font/google`, `fonts.googleapis.com`) to preserve offline-first PWA resilience.
-- No fake mobile status bar chrome (`9:41`, simulated battery/signal graphics).
+- Strict TypeScript interfaces (`no any`) and centralized HTTP / environment access in `frontend/src/lib/api-client.ts`.
+- Adaptive Light and Dark support across all views and modal sheets via semantic CSS variables (`bg-canvas`, `bg-surface-*`, `text-ink-*`, `border-subtle`).
+- Zero raw hex color literals (`Rule-3.2.5`) and zero arbitrary pixel/rem font sizes (`Rule-3.2.6`) inside `frontend/src/components/`, enforced statically by `node scripts/verify-ui-directives.mjs`.
+- Zero network web-font imports (`next/font/google`, `fonts.googleapis.com`) and zero fake mobile status bars (`9:41`).
 - Mandatory functional states on data views: Loading, Empty, Offline, Expired Session, Sync Error, and Long Content truncation.
-- Accessibility: semantic landmarks, `aria-label` / `aria-current` attributes, password visibility toggles, and dark mode support.
+- Accessibility: semantic landmarks, `aria-label` / `aria-current`, 44px minimum touch targets, and WCAG AA contrast in both Light and Dark themes.
