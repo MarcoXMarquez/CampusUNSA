@@ -3,7 +3,12 @@
 import { useCallback, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AcademicAssignment } from "@/components/sheets/TaskDetailSheet";
-import { getApiBaseUrl, type CourseScheduleBlock } from "../lib/api-client";
+import {
+  createManualAssignment,
+  getApiBaseUrl,
+  type CourseScheduleBlock,
+  type CreateManualAssignmentPayload,
+} from "../lib/api-client";
 import {
   readBoardFromIndexedDb,
   readBoardSnapshotSync,
@@ -149,6 +154,45 @@ export function useAcademicBoard(token: string | null) {
   const setCompletion = useCallback((id: string, completed: boolean) => {
     if (token) mutate({ id, completed, token });
   }, [mutate, token]);
+
+  const createMutation = useMutation({
+    mutationFn: ({
+      payload,
+      sessionToken,
+    }: {
+      payload: CreateManualAssignmentPayload;
+      sessionToken: string;
+    }) => createManualAssignment(sessionToken, payload),
+    networkMode: "always",
+    retry: false,
+    onSuccess: (created, vars) => {
+      const mutationKey = academicBoardKey(vars.sessionToken);
+      const next = client.setQueryData<AcademicBoardData>(mutationKey, (old) => {
+        const base = old ?? readCache(vars.sessionToken) ?? EMPTY_BOARD;
+        const alreadyExists = base.assignments.some((task) => task.id === created.id);
+        return {
+          ...base,
+          assignments: alreadyExists
+            ? base.assignments.map((task) => (task.id === created.id ? created : task))
+            : [...base.assignments, created],
+        };
+      });
+      if (next) writeCache(vars.sessionToken, next);
+      client.invalidateQueries({ queryKey: mutationKey });
+    },
+  });
+
+  const { mutateAsync: createMutateAsync } = createMutation;
+  const createAssignment = useCallback(
+    async (payload: CreateManualAssignmentPayload): Promise<AcademicAssignment> => {
+      if (!token) {
+        throw new Error(taskBoardMessages.syncError);
+      }
+      return createMutateAsync({ payload, sessionToken: token });
+    },
+    [createMutateAsync, token]
+  );
+
   const setAssignments = useCallback((assignments: AcademicAssignment[]): void => {
     client.setQueryData<AcademicBoardData>(key, (old) => {
       const base = old ?? readCache(token) ?? EMPTY_BOARD;
@@ -174,6 +218,7 @@ export function useAcademicBoard(token: string | null) {
     syncError: query.isError ? taskBoardMessages.syncError : null,
     completionPending: mutation.isPending && mutation.variables?.token === token,
     completionError: mutation.isError && mutation.variables?.token === token ? taskBoardMessages.completionError : null,
-    setCompletion, setAssignments, setCourses, refresh: query.refetch,
+    creatingAssignment: createMutation.isPending && createMutation.variables?.sessionToken === token,
+    setCompletion, createAssignment, setAssignments, setCourses, refresh: query.refetch,
   };
 }

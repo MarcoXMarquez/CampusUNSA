@@ -683,12 +683,12 @@ export interface components {
              * Course Id
              * Format: uuid
              */
-            course_id: string;
+            course_id?: string | null;
             /**
              * Source Id
              * Format: uuid
              */
-            source_id: string;
+            source_id?: string | null;
             /** Course Code */
             course_code?: string | null;
             /** Enrollment Id */
@@ -710,6 +710,12 @@ export interface components {
              * @default false
              */
             is_completed: boolean;
+            /** Priority */
+            priority?: string | null;
+            /** Component Type */
+            component_type?: string | null;
+            /** Group Code */
+            group_code?: string | null;
             /** Alternate Link */
             alternate_link?: string | null;
             /** Origin */
@@ -724,6 +730,30 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /**
+         * CreateManualAssignmentRequest
+         */
+        CreateManualAssignmentRequest: {
+            /** Title */
+            title: string;
+            /** Course Code */
+            course_code?: string | null;
+            /**
+             * Component Type
+             * @default TEORIA
+             * @enum {string}
+             */
+            component_type?: "TEORIA" | "LABORATORIO";
+            /** Due Date */
+            due_date?: string | null;
+            /**
+             * Priority
+             * @enum {string}
+             */
+            priority?: "ALTA" | "MEDIA" | "BAJA" | null;
+            /** Notes */
+            notes?: string | null;
         };
         /**
          * AcademicCourseResponse
@@ -831,6 +861,12 @@ export interface components {
              * @default false
              */
             is_completed: boolean;
+            /** Priority */
+            priority?: string | null;
+            /** Component Type */
+            component_type?: string | null;
+            /** Group Code */
+            group_code?: string | null;
             /** Alternate Link */
             alternate_link?: string | null;
             /** Origin */
@@ -1082,6 +1118,12 @@ export interface components {
              * @default false
              */
             is_completed: boolean;
+            /** Priority */
+            priority?: string | null;
+            /** Component Type */
+            component_type?: string | null;
+            /** Group Code */
+            group_code?: string | null;
             /** Alternate Link */
             alternate_link?: string | null;
             /** Origin */

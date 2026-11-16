@@ -1,45 +1,73 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getTaskUrgency, groupTasksByUrgency } from "./task-urgency";
+import {
+  formatTaskMetadataLine,
+  getTaskScheduleGroup,
+  groupTasksBySchedule,
+} from "./task-urgency";
 
-describe("task urgency windows", () => {
+describe("task calendar grouping (America/Lima)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-11-03T12:00:00Z"));
+    // Sunday 2026-11-15 19:00 America/Lima -> 2026-11-16T00:00:00Z
+    vi.setSystemTime(new Date("2026-11-16T00:00:00.000Z"));
   });
-  afterEach(() => { vi.useRealTimers(); });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it.each([
-    ["2026-11-03T12:00:00.000Z", "urgent"],
-    ["2026-11-04T11:59:59.999Z", "urgent"],
-    ["2026-11-04T12:00:00.000Z", "soon"],
-    ["2026-11-06T12:00:00.000Z", "soon"],
-    ["2026-11-06T12:00:00.001Z", "later"],
-    ["2026-11-03T11:59:59.999Z", "overdue"],
-    ["2026-11-04T07:00:00-05:00", "soon"],
+    ["2026-11-15T23:59:59.000Z", "overdue"],
+    ["2026-11-16T04:59:00.000Z", "today"], // Sun 23:59 Lima
+    ["2026-11-16T05:00:00.000Z", "week"], // Mon 00:00 Lima (+1 day)
+    ["2026-11-19T04:59:00.000Z", "week"], // Wed 23:59 Lima (+3 days)
+    ["2026-11-23T04:59:00.000Z", "week"], // Sun 23:59 Lima (+7 days)
+    ["2026-11-23T05:00:00.000Z", "upcoming"], // Mon 00:00 Lima (+8 days)
     ["invalid", "undated"],
     [null, "undated"],
     [undefined, "undated"],
   ])("classifies %s as %s", (deadline, expected) => {
-    expect(getTaskUrgency(deadline)).toBe(expected);
+    expect(getTaskScheduleGroup(deadline)).toBe(expected);
   });
 
-  it("accepts an explicit reference clock and respects elapsed time", () => {
-    expect(getTaskUrgency("2026-11-04T12:00:00Z", new Date("2026-11-04T11:00:00Z"))).toBe("urgent");
-    vi.advanceTimersByTime(1);
-    expect(getTaskUrgency("2026-11-04T12:00:00Z")).toBe("urgent");
-  });
-
-  it("sorts deadlines without mutating input and separates completed tasks", () => {
+  it("excludes completed tasks from active buckets and sorts ascending by due_date", () => {
     const tasks = [
-      { id: "late", due_date: "2026-11-04T10:00:00Z" },
-      { id: "done", due_date: "2026-11-03T13:00:00Z", is_completed: true },
-      { id: "early", due_date: "2026-11-03T15:00:00Z" },
-      { id: "unknown", due_date: null },
+      { id: "week-late", due_date: "2026-11-19T04:59:00Z" },
+      { id: "done", due_date: "2026-11-16T02:00:00Z", is_completed: true },
+      { id: "today-task", due_date: "2026-11-16T04:59:00Z" },
+      { id: "week-early", due_date: "2026-11-17T04:59:00Z" },
+      { id: "overdue-task", due_date: "2026-11-10T15:00:00Z" },
+      { id: "upcoming-task", due_date: "2026-11-28T15:00:00Z" },
+      { id: "no-date", due_date: null },
     ];
-    const groups = groupTasksByUrgency(tasks);
-    expect(groups.urgent.map((task) => task.id)).toEqual(["early", "late"]);
-    expect(groups.completed.map((task) => task.id)).toEqual(["done"]);
-    expect(groups.undated.map((task) => task.id)).toEqual(["unknown"]);
-    expect(tasks.map((task) => task.id)).toEqual(["late", "done", "early", "unknown"]);
+    const groups = groupTasksBySchedule(tasks);
+    expect(groups.overdue.map((t) => t.id)).toEqual(["overdue-task"]);
+    expect(groups.today.map((t) => t.id)).toEqual(["today-task"]);
+    expect(groups.week.map((t) => t.id)).toEqual(["week-early", "week-late"]);
+    expect(groups.upcoming.map((t) => t.id)).toEqual(["upcoming-task"]);
+    expect(groups.undated.map((t) => t.id)).toEqual(["no-date"]);
+    // Completed task omitted from active buckets
+    const allGroupedIds = Object.values(groups).flat().map((t) => t.id);
+    expect(allGroupedIds).not.toContain("done");
+  });
+
+  it("formats metadata lines consistently in America/Lima timezone", () => {
+    expect(
+      formatTaskMetadataLine("2026-11-16T04:59:00Z", "today", "Laboratorio")
+    ).toBe("Laboratorio · Hoy, 23:59");
+
+    const weekLabel = formatTaskMetadataLine(
+      "2026-11-19T04:59:00Z",
+      "week",
+      "Teoría"
+    );
+    expect(weekLabel).toMatch(/^Teoría · Mié 18 nov, 23:59$/i);
+
+    const overdueLabel = formatTaskMetadataLine(
+      "2026-11-13T04:59:00Z",
+      "overdue",
+      "Laboratorio"
+    );
+    expect(overdueLabel).toMatch(/^Venció .* · hace /);
   });
 });

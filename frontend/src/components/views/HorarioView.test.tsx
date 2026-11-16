@@ -35,6 +35,7 @@ const baseLinkedCourse: AcademicCourse = {
       start_time: "08:40",
       end_time: "10:20",
       room: "Aula 204",
+      pavilion: "Pabellón Matilde Pérez",
     },
     {
       id: "blk-2",
@@ -63,20 +64,9 @@ const baseAssignments: AcademicAssignment[] = [
     origin: "classroom",
     created_at: "2026-11-01T00:00:00Z",
   },
-  {
-    id: "a-2",
-    course_id: "enr-1",
-    course_code: "1705275",
-    classroom_assignment_id: "gc-a2",
-    title: "Physics Engine",
-    state: "PUBLISHED",
-    is_completed: false,
-    origin: "classroom",
-    created_at: "2026-11-01T00:00:00Z",
-  },
 ];
 
-describe("HorarioView component", () => {
+describe("HorarioView component (Stitch layout)", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
@@ -86,7 +76,6 @@ describe("HorarioView component", () => {
     const onRefresh = vi.fn();
     const onReconnectMoodle = vi.fn();
 
-    // 1. Loading skeleton state
     const { rerender } = render(
       <HorarioView
         courses={[]}
@@ -103,7 +92,6 @@ describe("HorarioView component", () => {
     );
     expect(screen.getByRole("status", { name: "Cargando horario" })).toBeDefined();
 
-    // 2. Empty state
     rerender(
       <HorarioView
         courses={[]}
@@ -120,7 +108,6 @@ describe("HorarioView component", () => {
     );
     expect(screen.getByText("Aún no tienes cursos vinculados.")).toBeDefined();
 
-    // 3. Offline + Expired + Sync error while preserving existing courses + Long course title truncation
     const longCourse: AcademicCourse = {
       ...baseLinkedCourse,
       name: "Arquitectura de Sistemas Distribuidos Avanzados y Computación en la Nube de Alta Disponibilidad",
@@ -152,8 +139,7 @@ describe("HorarioView component", () => {
     expect(titles.some((el) => el.className.includes("line-clamp-2"))).toBe(true);
   });
 
-  it("computes Siguiente card in America/Lima for upcoming today, in-progress, and next-week sessions", () => {
-    // Monday 2026-11-16 08:15 America/Lima -> 25 min before Mon 08:40-10:20 TEORIA A
+  it("renders Stitch Siguiente card with location, Ver aula placeholder modal, and live countdown", () => {
     const mondayMorning = new Date("2026-11-16T08:15:00-05:00");
     const { rerender } = render(
       <HorarioView
@@ -171,12 +157,18 @@ describe("HorarioView component", () => {
       />
     );
 
-    expect(screen.getByText(/Siguiente · en 25 min/)).toBeDefined();
+    expect(screen.getByText(/Siguiente clase · en 25 min/)).toBeDefined();
     expect(screen.getAllByText("08:40").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/10:20/).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/Teoría A · Aula 204/)).toBeDefined();
+    expect(screen.getByText("Aula 204")).toBeDefined();
+    expect(screen.getByText("Pabellón Matilde Pérez")).toBeDefined();
 
-    // Monday 2026-11-16 09:55 America/Lima -> currently in progress, ends in 25 min
+    fireEvent.click(screen.getByRole("button", { name: "Ver aula" }));
+    expect(screen.getByRole("dialog")).toBeDefined();
+    expect(screen.getByText("Pendiente de implementación.")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
+    expect(screen.queryByText("Pendiente de implementación.")).toBeNull();
+
     const mondayDuringClass = new Date("2026-11-16T09:55:00-05:00");
     rerender(
       <HorarioView
@@ -195,7 +187,6 @@ describe("HorarioView component", () => {
     );
     expect(screen.getByText(/En curso · termina en 25 min/)).toBeDefined();
 
-    // Thursday 2026-11-19 20:00 America/Lima -> next session wraps to Monday 08:40
     const thursdayNight = new Date("2026-11-19T20:00:00-05:00");
     rerender(
       <HorarioView
@@ -212,34 +203,23 @@ describe("HorarioView component", () => {
         onOpenNewTask={vi.fn()}
       />
     );
-    expect(screen.getByText(/Siguiente · Lun 08:40/)).toBeDefined();
+    expect(screen.getByText(/Siguiente clase · Lun 08:40/)).toBeDefined();
   });
 
-  it("renders schedule rows, delivery progress counts, and triggers + Tarea handler", () => {
+  it("renders Mis cursos count and grouped session rows without Semana toggle, deliveries counter, or Editar horario button", () => {
     const onOpenNewTask = vi.fn();
-    const completedCourse: AcademicCourse = {
+    const emptyScheduleCourse: AcademicCourse = {
       ...baseLinkedCourse,
       id: "enr-2",
       course_code: "1704257",
-      name: "Negocios Electronicos",
+      name: "NEGOCIOS ELECTRONICOS",
       schedule_blocks: [],
-    };
-    const completedTask: AcademicAssignment = {
-      id: "a-3",
-      course_id: "enr-2",
-      course_code: "1704257",
-      classroom_assignment_id: "gc-a3",
-      title: "Informe Final",
-      state: "PUBLISHED",
-      is_completed: true,
-      origin: "moodle",
-      created_at: "2026-11-01T00:00:00Z",
     };
 
     render(
       <HorarioView
-        courses={[baseLinkedCourse, completedCourse]}
-        assignments={[...baseAssignments, completedTask]}
+        courses={[baseLinkedCourse, emptyScheduleCourse]}
+        assignments={baseAssignments}
         loading={false}
         syncing={false}
         isOnline={true}
@@ -252,19 +232,27 @@ describe("HorarioView component", () => {
       />
     );
 
-    expect(screen.getAllByText("Teoría A · Lab B").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/Lun 08:40–10:20 · Aula 204/)).toBeDefined();
-    expect(screen.getByText(/Mié 15:50–17:30 · Lab 4/)).toBeDefined();
-    expect(screen.getByText(/1\/2 entregas/)).toBeDefined();
-    expect(screen.getByText("1 pendiente")).toBeDefined();
-    expect(screen.getByText("1/1 entregas")).toBeDefined();
+    expect(screen.getByText("2 cursos")).toBeDefined();
+    expect(screen.getByText("Negocios Electronicos")).toBeDefined();
+    expect(screen.queryByText("NEGOCIOS ELECTRONICOS")).toBeNull();
+
+    expect(screen.getAllByText("Teoría · Grupo A").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Lunes 08:40–10:20 · Aula 204/)).toBeDefined();
+    expect(screen.getByText("Laboratorio · Grupo B")).toBeDefined();
+    expect(screen.getByText(/Miércoles 15:50–17:30 · Lab 4/)).toBeDefined();
+
+    expect(screen.queryByRole("button", { name: "Semana" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Por curso" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Editar horario$/i })).toBeNull();
+    expect(screen.queryByText("Editar horario")).toBeNull();
+    expect(screen.queryByText(/entregas/i)).toBeNull();
 
     const addButtons = screen.getAllByRole("button", { name: "+ Tarea" });
     fireEvent.click(addButtons[0]);
     expect(onOpenNewTask).toHaveBeenCalledWith(baseLinkedCourse);
   });
 
-  it("opens schedule editor modal, edits groups and blocks, and saves via onSaveSchedule", async () => {
+  it("opens schedule editor when tapping course card directly and saves updated groups and pavilion", async () => {
     const onSaveSchedule = vi.fn().mockResolvedValue(undefined);
     const onLoadGroupSchedule = vi.fn().mockResolvedValue([]);
 
@@ -286,8 +274,11 @@ describe("HorarioView component", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Editar horario/i }));
-
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Editar horario de Desarrollo de Software para Juegos",
+      })
+    );
     expect(screen.getByRole("dialog", { name: /Editar horario/i })).toBeDefined();
 
     const theorySelect = screen.getByLabelText("Grupo de Teoría");
@@ -297,7 +288,9 @@ describe("HorarioView component", () => {
       expect(onLoadGroupSchedule).toHaveBeenCalledWith("1705275", "C", "B");
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /\+ Agregar sesión/i }));
+    const pavilionInputs = screen.getAllByLabelText("Pabellón (opcional)");
+    fireEvent.change(pavilionInputs[0], { target: { value: "Pabellón Alan Turing" } });
+
     fireEvent.click(screen.getByRole("button", { name: "Guardar horario" }));
 
     await waitFor(() => {
@@ -307,7 +300,34 @@ describe("HorarioView component", () => {
     expect(savedCode).toBe("1705275");
     expect(savedPayload.theory_group).toBe("C");
     expect(savedPayload.lab_group).toBe("B");
-    expect(savedPayload.blocks.length).toBeGreaterThanOrEqual(1);
+    expect(savedPayload.blocks[0].pavilion).toBe("Pabellón Alan Turing");
+  });
+
+  it("triggers onRefresh via pull-to-refresh touch gesture at top of scroll", () => {
+    const onRefresh = vi.fn();
+    render(
+      <HorarioView
+        courses={[baseLinkedCourse]}
+        assignments={baseAssignments}
+        loading={false}
+        syncing={false}
+        isOnline={true}
+        moodleSessionExpired={false}
+        syncError={null}
+        currentTime={new Date("2026-11-16T08:15:00-05:00")}
+        onRefresh={onRefresh}
+        onReconnectMoodle={vi.fn()}
+        onOpenNewTask={vi.fn()}
+      />
+    );
+
+    const container = screen.getByTestId("horario-board");
+    fireEvent.touchStart(container, { touches: [{ clientY: 100 }] });
+    fireEvent.touchMove(container, { touches: [{ clientY: 260 }] });
+    expect(screen.getByText("Suelta para actualizar")).toBeDefined();
+
+    fireEvent.touchEnd(container);
+    expect(onRefresh).toHaveBeenCalledOnce();
   });
 
   it("renders compact PENDING_LINK section and links external source to official course", async () => {
@@ -342,7 +362,7 @@ describe("HorarioView component", () => {
           {
             code: "1703239",
             curriculum_year: 2017,
-            official_name: "COMPUTACION GRAFICA",
+            official_name: "Computación Gráfica",
             normalized_name: "COMPUTACION GRAFICA",
             category: "E",
             study_year: 3,
@@ -384,57 +404,5 @@ describe("HorarioView component", () => {
         group_code: "A",
       });
     });
-  });
-
-  it("toggles between default Por curso and dynamic Semana matrix and saves pavilion", async () => {
-    const onSaveSchedule = vi.fn().mockResolvedValue(undefined);
-    const courseWithPavilion: AcademicCourse = {
-      ...baseLinkedCourse,
-      schedule_blocks: [
-        {
-          ...baseLinkedCourse.schedule_blocks![0],
-          pavilion: "Pabellón Matilde Pérez",
-        },
-        baseLinkedCourse.schedule_blocks![1],
-      ],
-    };
-
-    render(
-      <HorarioView
-        courses={[courseWithPavilion]}
-        assignments={baseAssignments}
-        loading={false}
-        syncing={false}
-        isOnline={true}
-        moodleSessionExpired={false}
-        syncError={null}
-        currentTime={new Date("2026-11-16T08:15:00-05:00")}
-        onRefresh={vi.fn()}
-        onReconnectMoodle={vi.fn()}
-        onOpenNewTask={vi.fn()}
-        onSaveSchedule={onSaveSchedule}
-      />
-    );
-
-    expect(screen.getByRole("button", { name: "Por curso" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.queryByText("Sábado")).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: "Semana" }));
-    expect(screen.getByRole("button", { name: "Semana" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByText("Lunes")).toBeDefined();
-    expect(screen.getByText("Hoy")).toBeDefined();
-    expect(screen.getByText("Miércoles")).toBeDefined();
-    expect(screen.getAllByText(/Aula 204 · Pabellón Matilde Pérez/).length).toBeGreaterThanOrEqual(2);
-
-    fireEvent.click(screen.getByRole("button", { name: "Por curso" }));
-    fireEvent.click(screen.getByRole("button", { name: /Editar horario/i }));
-    const pavilionInputs = screen.getAllByLabelText("Pabellón (opcional)");
-    fireEvent.change(pavilionInputs[0], { target: { value: "Pabellón Alan Turing" } });
-    fireEvent.click(screen.getByRole("button", { name: "Guardar horario" }));
-
-    await waitFor(() => {
-      expect(onSaveSchedule).toHaveBeenCalledTimes(1);
-    });
-    expect(onSaveSchedule.mock.calls[0][1].blocks[0].pavilion).toBe("Pabellón Alan Turing");
   });
 });

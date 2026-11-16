@@ -1,7 +1,20 @@
 import { describe, expect, it } from "vitest";
 import type { AcademicCourse } from "@/hooks/useAcademicBoard";
 import type { CourseScheduleBlock } from "@/lib/api-client";
-import { buildWeeklySchedule, resolveNextClass } from "./schedule-calculator";
+import {
+  buildCalendarMonthGrid,
+  buildWeeklySchedule,
+  formatCourseDisplayName,
+  formatCourseGroupSubtitle,
+  formatLimaDueDateTimeInput,
+  formatLimaDueDisplay,
+  formatRelativeDueSummary,
+  formatShortWeekdayDay,
+  getLimaQuickDueDate,
+  parseLimaDateTimeInput,
+  resolveNextClass,
+  resolveNextCourseSessionIso,
+} from "./schedule-calculator";
 
 function makeBlock(
   overrides: Partial<CourseScheduleBlock> & {
@@ -32,8 +45,9 @@ function makeCourse(overrides: Partial<AcademicCourse> = {}): AcademicCourse {
     origin: overrides.origin ?? "classroom",
     course_code: overrides.course_code ?? "1705275",
     curriculum_year: 2017,
-    theory_group: "A",
-    lab_group: "B",
+    theory_group: overrides.theory_group !== undefined ? overrides.theory_group : "A",
+    lab_group: overrides.lab_group !== undefined ? overrides.lab_group : "B",
+    section: overrides.section ?? null,
     mapping_status: overrides.mapping_status ?? "LINKED",
     sources: [],
     schedule_blocks: overrides.schedule_blocks ?? [],
@@ -71,7 +85,7 @@ describe("schedule-calculator domain logic", () => {
     expect(summary).not.toBeNull();
     expect(summary?.status).toBe("UPCOMING_TODAY");
     expect(summary?.minutesRemaining).toBe(30);
-    expect(summary?.subLabel).toBe("Siguiente · en 30 min");
+    expect(summary?.subLabel).toBe("Siguiente clase · en 30 min");
     expect(summary?.widgetStatusLabel).toBe("Próxima clase en 30 min");
     expect(summary?.locationLabel).toBe("Aula 201 · Pabellón Matilde Pérez");
     expect(summary?.isTomorrow).toBe(false);
@@ -134,7 +148,7 @@ describe("schedule-calculator domain logic", () => {
     const tuesdayNight = resolveNextClass([course], new Date("2026-11-17T20:00:00-05:00"));
     expect(tuesdayNight?.status).toBe("NEXT_DAY");
     expect(tuesdayNight?.isTomorrow).toBe(true);
-    expect(tuesdayNight?.subLabel).toBe("Siguiente · Mañana 08:00");
+    expect(tuesdayNight?.subLabel).toBe("Siguiente clase · Mañana 08:00");
     expect(tuesdayNight?.widgetStatusLabel).toBe("Sin más clases hoy · Próxima: Mañana 08:00");
 
     // Sunday 21:00 -> tomorrow Monday 08:00 (wraps across week boundary)
@@ -147,7 +161,7 @@ describe("schedule-calculator domain logic", () => {
     const thursdayNight = resolveNextClass([course], new Date("2026-11-19T19:00:00-05:00"));
     expect(thursdayNight?.status).toBe("NEXT_DAY");
     expect(thursdayNight?.isTomorrow).toBe(false);
-    expect(thursdayNight?.subLabel).toBe("Siguiente · Lun 08:00");
+    expect(thursdayNight?.subLabel).toBe("Siguiente clase · Lun 08:00");
     expect(thursdayNight?.widgetStatusLabel).toBe("Sin más clases hoy · Próxima: Lun 08:00");
   });
 
@@ -173,5 +187,106 @@ describe("schedule-calculator domain logic", () => {
     expect(days[0].sessions.map((s) => s.block.id)).toEqual(["early", "late"]);
     expect(days[1].sessions).toHaveLength(0);
     expect(days[4].sessions.map((s) => s.block.id)).toEqual(["fri"]);
+  });
+
+  it("computes Lima quick due dates for today and tomorrow including month rollover", () => {
+    const now = new Date("2026-11-30T14:20:00-05:00");
+    expect(getLimaQuickDueDate("today", now)).toBe("2026-11-30T23:59:00-05:00");
+    expect(getLimaQuickDueDate("tomorrow", now)).toBe("2026-12-01T23:59:00-05:00");
+    expect(formatLimaDueDisplay("2026-11-20T23:59:00-05:00")).toBe("Vie 20 nov, 23:59");
+    expect(formatLimaDueDisplay(null)).toBe("Sin fecha");
+    expect(formatLimaDueDateTimeInput("2026-11-20T23:59:00-05:00")).toBe("2026-11-20T23:59");
+    expect(parseLimaDateTimeInput("2026-11-20T23:59")).toBe("2026-11-20T23:59:00-05:00");
+  });
+
+  it("resolves next course session filtered by component type with fallback", () => {
+    const course = makeCourse({
+      id: "enr-1",
+      name: "Computación Gráfica",
+      schedule_blocks: [
+        makeBlock({
+          id: "teo-wed",
+          day_of_week: 3,
+          start_time: "08:00",
+          end_time: "09:40",
+          component_type: "TEORIA",
+        }),
+        makeBlock({
+          id: "lab-fri",
+          day_of_week: 5,
+          start_time: "14:00",
+          end_time: "15:40",
+          component_type: "LABORATORIO",
+        }),
+      ],
+    });
+    const theoryOnlyCourse = makeCourse({
+      id: "enr-2",
+      name: "Ética",
+      schedule_blocks: [
+        makeBlock({
+          id: "teo-tue",
+          day_of_week: 2,
+          start_time: "10:00",
+          end_time: "11:40",
+          component_type: "TEORIA",
+        }),
+      ],
+    });
+
+    // Monday 2026-11-16 09:00 Lima
+    const monday = new Date("2026-11-16T09:00:00-05:00");
+    expect(resolveNextCourseSessionIso(course, "TEORIA", monday)).toBe("2026-11-18T08:00:00-05:00");
+    expect(resolveNextCourseSessionIso(course, "LABORATORIO", monday)).toBe(
+      "2026-11-20T14:00:00-05:00"
+    );
+    // Fallback to any session when selected component has no blocks
+    expect(resolveNextCourseSessionIso(theoryOnlyCourse, "LABORATORIO", monday)).toBe(
+      "2026-11-17T10:00:00-05:00"
+    );
+    expect(resolveNextCourseSessionIso(null, "TEORIA", monday)).toBeNull();
+  });
+
+  it("builds Monday-first monthly calendar grid marking past and today cells in Lima", () => {
+    const now = new Date("2026-11-15T20:00:00-05:00");
+    const grid = buildCalendarMonthGrid(2026, 11, now);
+    // November 1, 2026 is Sunday -> 6 leading blank cells
+    expect(grid.slice(0, 6).every((cell) => cell.day === null)).toBe(true);
+    const nov1 = grid[6];
+    expect(nov1.day).toBe(1);
+    expect(nov1.dayOfWeek).toBe(7);
+    expect(nov1.isPast).toBe(true);
+    expect(nov1.isToday).toBe(false);
+
+    const nov15 = grid.find((cell) => cell.day === 15);
+    expect(nov15?.isPast).toBe(false);
+    expect(nov15?.isToday).toBe(true);
+
+    const nov20 = grid.find((cell) => cell.day === 20);
+    expect(nov20?.isPast).toBe(false);
+    expect(nov20?.dateKey).toBe("2026-11-20");
+
+    expect(formatRelativeDueSummary("2026-11-20T23:59:00-05:00", now)).toBe("En 5 días");
+    expect(formatRelativeDueSummary("2026-11-15T23:59:00-05:00", now)).toBe("Hoy");
+    expect(formatRelativeDueSummary("2026-11-16T23:59:00-05:00", now)).toBe("Mañana");
+    expect(formatShortWeekdayDay("2026-11-17T08:00:00-05:00")).toBe("Mar 17");
+  });
+
+  it("formats Stitch course picker display names and group subtitles", () => {
+    const singleGroup = makeCourse({
+      name: "CALIDAD DE SOFTWARE",
+      theory_group: "B",
+      lab_group: null,
+    });
+    const dualGroup = makeCourse({
+      name: "DESARROLLO DE SOFTWARE PARA JUEGOS",
+      theory_group: "A",
+      lab_group: "A",
+    });
+
+    expect(formatCourseDisplayName(singleGroup)).toBe("Calidad de Software B");
+    expect(formatCourseGroupSubtitle(singleGroup)).toBe("Grupo B");
+    expect(formatCourseDisplayName(dualGroup)).toBe("Desarrollo de Software para Juegos A");
+    expect(formatCourseGroupSubtitle(dualGroup)).toBe("Teoría A · Lab A");
   });
 });

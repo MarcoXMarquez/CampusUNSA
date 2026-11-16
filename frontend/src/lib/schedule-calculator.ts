@@ -1,6 +1,7 @@
 import type { AcademicCourse } from "../hooks/useAcademicBoard";
 import type { CourseScheduleBlock } from "./api-client";
 import { horarioMessages as messages } from "./messages/task-board-messages";
+import { formatAcademicTitle } from "./text-format";
 
 export const COURSE_COLORS = [
   "#3b82f6",
@@ -249,4 +250,313 @@ export function buildWeeklySchedule(courses: AcademicCourse[]): WeeklyScheduleDa
     days.push({ dayOfWeek: day, sessions });
   }
   return days;
+}
+
+const LIMA_SHORT_DAYS: Record<number, string> = {
+  1: "Lun",
+  2: "Mar",
+  3: "Mié",
+  4: "Jue",
+  5: "Vie",
+  6: "Sáb",
+  7: "Dom",
+};
+
+const LIMA_SHORT_MONTHS = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
+] as const;
+
+export interface LimaDateParts {
+  year: number;
+  month: number;
+  day: number;
+  dayOfWeek: number;
+  hour: number;
+  minute: number;
+}
+
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+export function getLimaDateParts(date: Date): LimaDateParts {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Lima",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+
+  const lookup = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  const rawHour = Number.parseInt(lookup("hour") || "0", 10);
+  return {
+    year: Number.parseInt(lookup("year") || "2026", 10),
+    month: Number.parseInt(lookup("month") || "1", 10),
+    day: Number.parseInt(lookup("day") || "1", 10),
+    dayOfWeek: WEEKDAY_MAP[lookup("weekday") || "Mon"] ?? 1,
+    hour: rawHour === 24 ? 0 : rawHour,
+    minute: Number.parseInt(lookup("minute") || "0", 10),
+  };
+}
+
+function addDaysToLimaCalendar(
+  year: number,
+  month: number,
+  day: number,
+  deltaDays: number
+): { year: number; month: number; day: number } {
+  const utc = new Date(Date.UTC(year, month - 1, day + deltaDays));
+  return {
+    year: utc.getUTCFullYear(),
+    month: utc.getUTCMonth() + 1,
+    day: utc.getUTCDate(),
+  };
+}
+
+export function buildLimaDueDateIso(
+  year: number,
+  month: number,
+  day: number,
+  hour = 23,
+  minute = 59
+): string {
+  return `${year}-${pad2(month)}-${pad2(day)}T${pad2(hour)}:${pad2(minute)}:00-05:00`;
+}
+
+export function getLimaQuickDueDate(preset: "today" | "tomorrow", now = new Date()): string {
+  const current = getLimaDateParts(now);
+  const target = addDaysToLimaCalendar(
+    current.year,
+    current.month,
+    current.day,
+    preset === "tomorrow" ? 1 : 0
+  );
+  return buildLimaDueDateIso(target.year, target.month, target.day, 23, 59);
+}
+
+export function resolveNextCourseSessionIso(
+  course: AcademicCourse | null | undefined,
+  componentType: "TEORIA" | "LABORATORIO",
+  now = new Date()
+): string | null {
+  if (!course) {
+    return null;
+  }
+  const allBlocks = course.schedule_blocks ?? [];
+  if (allBlocks.length === 0) {
+    return null;
+  }
+
+  const typedBlocks = allBlocks.filter(
+    (block) => (block.component_type || "TEORIA").toUpperCase() === componentType
+  );
+  const candidates = typedBlocks.length > 0 ? typedBlocks : allBlocks;
+  const lima = getLimaDateParts(now);
+  const minutesOfDay = lima.hour * 60 + lima.minute;
+
+  const ranked = candidates
+    .map((block) => {
+      const startMin = parseMinutes(block.start_time);
+      const rawDelta = (block.day_of_week - lima.dayOfWeek + 7) % 7;
+      const dayDelta = rawDelta === 0 && startMin <= minutesOfDay ? 7 : rawDelta;
+      return {
+        block,
+        startMin,
+        dayDelta,
+        minutesAway: dayDelta * 1440 + (startMin - minutesOfDay),
+      };
+    })
+    .sort((a, b) => a.minutesAway - b.minutesAway || a.startMin - b.startMin);
+
+  const next = ranked[0];
+  if (!next) {
+    return null;
+  }
+
+  const targetDate = addDaysToLimaCalendar(lima.year, lima.month, lima.day, next.dayDelta);
+  const hour = Math.floor(next.startMin / 60);
+  const minute = next.startMin % 60;
+  return buildLimaDueDateIso(targetDate.year, targetDate.month, targetDate.day, hour, minute);
+}
+
+export function formatLimaDueDateTimeInput(iso: string | null): string {
+  if (!iso) {
+    return "";
+  }
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+  const parts = getLimaDateParts(parsed);
+  return `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}T${pad2(parts.hour)}:${pad2(parts.minute)}`;
+}
+
+export function parseLimaDateTimeInput(value: string): string | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value.trim());
+  if (!match) {
+    return null;
+  }
+  const year = Number.parseInt(match[1], 10);
+  const month = Number.parseInt(match[2], 10);
+  const day = Number.parseInt(match[3], 10);
+  const hour = Number.parseInt(match[4], 10);
+  const minute = Number.parseInt(match[5], 10);
+  return buildLimaDueDateIso(year, month, day, hour, minute);
+}
+
+export function formatLimaDueDisplay(iso: string | null, emptyLabel = "Sin fecha"): string {
+  if (!iso) {
+    return emptyLabel;
+  }
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) {
+    return emptyLabel;
+  }
+  const parts = getLimaDateParts(parsed);
+  const dayName = LIMA_SHORT_DAYS[parts.dayOfWeek] ?? "Lun";
+  const monthName = LIMA_SHORT_MONTHS[parts.month - 1] ?? "ene";
+  return `${dayName} ${parts.day} ${monthName}, ${pad2(parts.hour)}:${pad2(parts.minute)}`;
+}
+
+export function formatShortWeekdayDay(iso: string | null): string | null {
+  if (!iso) {
+    return null;
+  }
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  const parts = getLimaDateParts(parsed);
+  const dayName = LIMA_SHORT_DAYS[parts.dayOfWeek] ?? "Lun";
+  return `${dayName} ${parts.day}`;
+}
+
+export function formatRelativeDueSummary(
+  targetIso: string | null,
+  now = new Date(),
+  emptySummary = "Sin fecha de entrega"
+): string {
+  if (!targetIso) {
+    return emptySummary;
+  }
+  const parsed = new Date(targetIso);
+  if (Number.isNaN(parsed.getTime())) {
+    return emptySummary;
+  }
+  const target = getLimaDateParts(parsed);
+  const today = getLimaDateParts(now);
+  const targetUtc = Date.UTC(target.year, target.month - 1, target.day);
+  const todayUtc = Date.UTC(today.year, today.month - 1, today.day);
+  const diffDays = Math.round((targetUtc - todayUtc) / 86_400_000);
+
+  if (diffDays === 0) {
+    return "Hoy";
+  }
+  if (diffDays === 1) {
+    return "Mañana";
+  }
+  if (diffDays > 1) {
+    return `En ${diffDays} días`;
+  }
+  if (diffDays === -1) {
+    return "Ayer";
+  }
+  return `Hace ${Math.abs(diffDays)} días`;
+}
+
+export interface CalendarDayCell {
+  day: number | null;
+  dayOfWeek: number;
+  isPast: boolean;
+  isToday: boolean;
+  dateKey: string | null;
+}
+
+export function buildCalendarMonthGrid(
+  year: number,
+  month: number,
+  now = new Date()
+): CalendarDayCell[] {
+  const firstUtcDay = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const leadingBlanks = (firstUtcDay + 6) % 7;
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const today = getLimaDateParts(now);
+  const todayKeyNum = today.year * 10000 + today.month * 100 + today.day;
+
+  const cells: CalendarDayCell[] = [];
+  for (let i = 0; i < leadingBlanks; i += 1) {
+    cells.push({
+      day: null,
+      dayOfWeek: (i % 7) + 1,
+      isPast: false,
+      isToday: false,
+      dateKey: null,
+    });
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const colIndex = (leadingBlanks + day - 1) % 7;
+    const cellKeyNum = year * 10000 + month * 100 + day;
+    cells.push({
+      day,
+      dayOfWeek: colIndex + 1,
+      isPast: cellKeyNum < todayKeyNum,
+      isToday: cellKeyNum === todayKeyNum,
+      dateKey: `${year}-${pad2(month)}-${pad2(day)}`,
+    });
+  }
+
+  return cells;
+}
+
+export function formatCourseDisplayName(course: AcademicCourse): string {
+  const formatted = formatAcademicTitle(course.name) || course.name;
+  const primaryGroup =
+    course.theory_group?.trim() ||
+    course.lab_group?.trim() ||
+    course.section?.trim() ||
+    "";
+  if (!primaryGroup) {
+    return formatted;
+  }
+  const escaped = primaryGroup.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const endsWithGroup = new RegExp(`(?:\\(|\\b)${escaped}\\)?$`, "i");
+  return endsWithGroup.test(formatted) ? formatted : `${formatted} ${primaryGroup}`;
+}
+
+export function formatCourseGroupSubtitle(course: AcademicCourse): string {
+  const theory = course.theory_group?.trim() ?? "";
+  const lab = course.lab_group?.trim() ?? "";
+  const section = course.section?.trim() ?? "";
+
+  if (theory && lab) {
+    return `Teoría ${theory} · Lab ${lab}`;
+  }
+  if (theory) {
+    return `Grupo ${theory}`;
+  }
+  if (lab) {
+    return `Lab ${lab}`;
+  }
+  if (section) {
+    return `Grupo ${section}`;
+  }
+  return course.course_code ?? "";
 }

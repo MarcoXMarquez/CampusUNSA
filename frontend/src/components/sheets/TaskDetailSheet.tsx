@@ -9,7 +9,8 @@ import { taskBoardMessages as messages } from "@/lib/messages/task-board-message
 
 export interface AcademicAssignment {
   id: string;
-  course_id: string;
+  course_id?: string | null;
+  source_id?: string | null;
   course_code?: string | null;
   classroom_assignment_id: string;
   title: string;
@@ -18,6 +19,9 @@ export interface AcademicAssignment {
   max_points?: number | null;
   state: string;
   is_completed?: boolean;
+  priority?: string | null;
+  component_type?: string | null;
+  group_code?: string | null;
   alternate_link?: string | null;
   origin: string;
   created_at: string;
