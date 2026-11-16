@@ -225,6 +225,11 @@
       "category": "architecture_and_core",
       "target_page": "User-Story-115-Feature.md",
       "title": "User Story #115 Architecture"
+    },
+    "117": {
+      "category": "testing_and_qa",
+      "target_page": "Backend-Tests-Guide.md",
+      "title": "Module Testing And Qa (Issue #117)"
     }
   },
   "dynamic_heuristics": {
