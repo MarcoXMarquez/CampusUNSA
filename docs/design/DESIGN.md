@@ -1,6 +1,6 @@
 ---
 name: CampusUNSA Apple iOS 18 HIG Design System
-version: 3.0.0
+version: 3.1.0
 stitch_project_id: "4575327637306768444"
 stitch_design_system_id: "b2254f7922514144afffe91677ad283f"
 workflow: Stitch-First -> Apple iOS HIG Semantic Token Mapping -> Adaptive Light & Dark Components
@@ -35,6 +35,11 @@ tokens:
   typography:
     font-family: "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"SF Pro Display\", system-ui, sans-serif"
     scale: "text-ios-large-title (34px) .. text-ios-caption-2 (11px)"
+  liquid_glass_dock:
+    filter_id: "#campus-liquid-glass-dock"
+    tint: "rgb(var(--lg-dock-tint) / var(--lg-dock-opacity)) -> Light 255 255 255 / 0.58 | Dark 28 28 32 / 0.9 (50% intensity default)"
+    backdrop_chromium: "url(#campus-liquid-glass-dock) blur(var(--lg-dock-blur)) saturate(var(--lg-dock-saturate))"
+    backdrop_webkit: "blur(var(--lg-dock-blur-fallback)) saturate(var(--lg-dock-saturate))"
 ---
 
 # CampusUNSA Design System

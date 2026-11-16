@@ -220,6 +220,11 @@
       "category": "architecture_and_core",
       "target_page": "Frontend-Architecture-and-PWA.md",
       "title": "Module Architecture And Core (Issue #113)"
+    },
+    "115": {
+      "category": "architecture_and_core",
+      "target_page": "User-Story-115-Feature.md",
+      "title": "User Story #115 Architecture"
     }
   },
   "dynamic_heuristics": {

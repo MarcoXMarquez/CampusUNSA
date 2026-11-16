@@ -26,6 +26,7 @@ import {
   type UserProfile,
 } from "@/lib/api-client";
 import { ServicesIntegrationsSection } from "./ajustes/ServicesIntegrationsSection";
+import { AppearanceSettingsSection } from "./ajustes/AppearanceSettingsSection";
 import { CampusLocationsSection } from "./ajustes/CampusLocationsSection";
 import { SystemDiagnosticsSection } from "./ajustes/SystemDiagnosticsSection";
 
@@ -153,7 +154,7 @@ export function AjustesView({
   };
 
   return (
-    <div className="pb-24">
+    <div className="pb-28">
       <Navbar title="Ajustes" large />
 
       {actionMessage && (
@@ -231,6 +232,8 @@ export function AjustesView({
         onLinkClassroom={onLinkClassroom}
         onOpenIcalDialog={() => setIcalDialogOpened(true)}
       />
+
+      <AppearanceSettingsSection />
 
       <BlockTitle>Pruebas y Depuración</BlockTitle>
       <List strong inset className="my-0">

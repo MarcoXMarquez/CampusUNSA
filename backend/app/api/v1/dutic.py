@@ -103,7 +103,6 @@ def subscribe_moodle_ical(
     current_user.moodle_calendar_url = encrypt_token(canonical_url)
     current_user.moodle_calendar_connected_at = now
     current_user.moodle_calendar_sync_status = "CONNECTED"
-    db.flush()
 
     try:
         DuticIcalService.sync_student_moodle_ical(

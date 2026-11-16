@@ -10,7 +10,7 @@ class RequestCapacityMiddleware:
         if max_inflight < 1:
             raise ValueError("Request capacity must be positive")
         self.app = app
-        # Avoid thread oversubscription; leave headroom below the 30-connection pool.
+        # Avoid thread oversubscription on 4-vCPU hosts while leaving headroom below the 30-connection pool.
         self.capacity = asyncio.Semaphore(max_inflight)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:

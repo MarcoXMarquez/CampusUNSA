@@ -2,10 +2,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.core.config import settings
 
-# Engine configuration with connection pre-ping to handle reconnections
+# Engine configuration with connection recycling to prevent stale idle sockets without per-request pre-ping overhead
 engine = create_engine(
     settings.DATABASE_URL,
-    pool_pre_ping=True,
+    pool_pre_ping=False,
+    pool_recycle=300,
     pool_size=10,
     max_overflow=20,
 )
