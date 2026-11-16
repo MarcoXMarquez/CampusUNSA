@@ -16,8 +16,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-async def get_db():
-    """Async dependency that yields a database session without extra threadpool context hops."""
+def get_db():
+    """Dependency that yields a database session and ensures closure after request."""
     db = SessionLocal()
     try:
         yield db

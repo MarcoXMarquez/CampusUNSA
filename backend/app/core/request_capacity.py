@@ -6,11 +6,11 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 
 class RequestCapacityMiddleware:
-    def __init__(self, app: ASGIApp, max_inflight: int = 15) -> None:
+    def __init__(self, app: ASGIApp, max_inflight: int = 5) -> None:
         if max_inflight < 1:
             raise ValueError("Request capacity must be positive")
         self.app = app
-        # Bound per-worker admission safely below the 30-connection pool and 4x25 Postgres budget.
+        # Avoid thread oversubscription on 4-vCPU hosts while leaving headroom below the 30-connection pool.
         self.capacity = asyncio.Semaphore(max_inflight)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
