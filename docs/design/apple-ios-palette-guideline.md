@@ -71,6 +71,20 @@ CampusUNSA uses the native Apple system font stack (`-apple-system, BlinkMacSyst
 
 *(Eliminates non-standard sizes previously present in components: `10px`, `13.5px`, `23px`, and `26px`.)*
 
+### Floating Liquid Glass Dock Tokens (`frontend/src/app/globals.css`)
+
+| Token | Light (`:root`) | Dark (`prefers-color-scheme: dark`) | Purpose |
+| :--- | :--- | :--- | :--- |
+| `--lg-dock-tint` | `255 255 255` | `28 28 32` | Translucent capsule base RGB tint |
+| `--lg-dock-opacity` | `0.58` | `0.9` | Frosted glass fill opacity (`::before` layer, default 50% intensity) |
+| `--lg-dock-blur` | `8px` | `12px` | Chromium backdrop blur paired with SVG refraction |
+| `--lg-dock-blur-fallback` | `14px` | `20px` | WebKit/Safari backdrop blur fallback |
+| `--lg-dock-saturate` | `190%` | `180%` | Backdrop color saturation boost |
+| `--lg-dock-border` | `255 255 255 / 0.85` | `255 255 255 / 0.1` | Outer floating capsule hairline rim |
+| `--lg-dock-highlight` | `255 255 255 / 0.92` | `255 255 255 / 0.24` | Top specular refraction highlight |
+| `--lg-dock-edge` | `0 0 0 / 0.1` | `255 255 255 / 0.08` | Inner perimeter glass edge bevel |
+| `--lg-dock-shadow` | `0 12px 32px rgb(0 0 0 / 0.14)` | `0 16px 40px rgb(0 0 0 / 0.65)` | Floating dock elevation above safe area |
+
 ---
 
 ## 5. Governance & Migration Path
