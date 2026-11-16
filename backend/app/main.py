@@ -48,7 +48,7 @@ def redirect_docs():
 
 
 @app.get("/", tags=["Root"])
-def root():
+async def root():
     return {
         "project": settings.PROJECT_NAME,
         "environment": settings.ENVIRONMENT,

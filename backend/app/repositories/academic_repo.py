@@ -1219,15 +1219,12 @@ class AcademicSyncRepository:
         )
         db.add(assignment)
         db.commit()
-        return (
-            db.query(ClassroomAssignment)
-            .options(
-                joinedload(ClassroomAssignment.source),
-                joinedload(ClassroomAssignment.enrollment),
-            )
-            .filter(ClassroomAssignment.id == assignment.id)
-            .one()
+        query = db.query(ClassroomAssignment).filter(
+            ClassroomAssignment.id == assignment.id
         )
+        if enrollment is not None:
+            query = query.options(joinedload(ClassroomAssignment.enrollment))
+        return query.one()
 
     @staticmethod
     def clear_assignments(

@@ -6,10 +6,20 @@ with optional fallback decryption for legacy tokens encrypted under SECRET_KEY.
 """
 
 import base64
+from functools import lru_cache
 import hashlib
 from cryptography.fernet import Fernet, MultiFernet
 
 from app.core.config import settings
+
+
+@lru_cache(maxsize=8)
+def _build_fernet_cipher(encryption_key: str, legacy_secret: str) -> MultiFernet:
+    """Derives and caches a MultiFernet cipher keyed by the supplied secret values."""
+    ciphers = [_derive_fernet(encryption_key)]
+    if legacy_secret and legacy_secret != encryption_key:
+        ciphers.append(_derive_fernet(legacy_secret))
+    return MultiFernet(ciphers)
 
 
 def _derive_fernet(secret: str) -> Fernet:
@@ -24,11 +34,8 @@ def _get_fernet_cipher() -> MultiFernet:
     encryption_key = settings.ENCRYPTION_KEY.strip()
     if not encryption_key:
         raise ValueError("ENCRYPTION_KEY must not be empty")
-    ciphers = [_derive_fernet(encryption_key)]
     legacy_secret = settings.SECRET_KEY.strip()
-    if legacy_secret and legacy_secret != encryption_key:
-        ciphers.append(_derive_fernet(legacy_secret))
-    return MultiFernet(ciphers)
+    return _build_fernet_cipher(encryption_key, legacy_secret)
 
 
 def encrypt_token(plain_token: str) -> str:

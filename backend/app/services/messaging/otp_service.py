@@ -206,16 +206,17 @@ class OTPService:
                 "attempts": 0,
             }
         )
-        redis_client.setex(
-            name=cls._user_key(user.id, channel),
-            time=ttl_seconds,
-            value=state_payload,
-        )
-        redis_client.setex(
-            name=cls._lookup_key(channel, code_hash),
-            time=ttl_seconds,
-            value=str(user.id),
-        )
+        user_key = cls._user_key(user.id, channel)
+        lookup_key = cls._lookup_key(channel, code_hash)
+        pipeline_factory = getattr(redis_client, "pipeline", None)
+        if callable(pipeline_factory):
+            pipe = pipeline_factory(transaction=False)
+            pipe.setex(name=user_key, time=ttl_seconds, value=state_payload)
+            pipe.setex(name=lookup_key, time=ttl_seconds, value=str(user.id))
+            pipe.execute()
+        else:
+            redis_client.setex(name=user_key, time=ttl_seconds, value=state_payload)
+            redis_client.setex(name=lookup_key, time=ttl_seconds, value=str(user.id))
 
         expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)
         deep_link_url = cls._build_deep_link(channel, otp_code)
@@ -327,8 +328,19 @@ class OTPService:
 
     @classmethod
     def get_status(cls, redis_client: Any, *, user: User) -> dict[str, Any]:
-        wa_ttl = max(0, int(redis_client.ttl(cls._user_key(user.id, "whatsapp"))))
-        tg_ttl = max(0, int(redis_client.ttl(cls._user_key(user.id, "telegram"))))
+        wa_key = cls._user_key(user.id, "whatsapp")
+        tg_key = cls._user_key(user.id, "telegram")
+        pipeline_factory = getattr(redis_client, "pipeline", None)
+        if callable(pipeline_factory):
+            pipe = pipeline_factory(transaction=False)
+            pipe.ttl(wa_key)
+            pipe.ttl(tg_key)
+            raw_wa_ttl, raw_tg_ttl = pipe.execute()
+            wa_ttl = max(0, int(raw_wa_ttl))
+            tg_ttl = max(0, int(raw_tg_ttl))
+        else:
+            wa_ttl = max(0, int(redis_client.ttl(wa_key)))
+            tg_ttl = max(0, int(redis_client.ttl(tg_key)))
         return {
             "whatsapp_connected": bool(user.phone_number),
             "whatsapp_phone": user.phone_number,
