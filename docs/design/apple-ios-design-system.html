@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CampusUNSA - Apple iOS Design System Visual Guideline</title>
+  <style>
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+      /* Light Mode Apple HIG + UNSA Semantic Tokens */
+      --bg-outer: #e5e5ea;
+      --bg-canvas: #f2f2f7;
+      --surface-sheet: #f2f2f7;
+      --surface-card: #ffffff;
+      --surface-elevated: #f9f9fb;
+      --surface-inset: #e5e5ea;
+      --surface-hero: #fdf2f2;
+      --surface-urgent: #fef2f2;
+      --border-subtle: rgba(60, 60, 67, 0.16);
+      --border-control: rgba(60, 60, 67, 0.28);
+      --border-urgent: rgba(211, 47, 47, 0.28);
+      --ink-primary: #000000;
+      --ink-secondary: #6e6e73;
+      --ink-muted: #71767e;
+      --ink-disabled: rgba(60, 60, 67, 0.32);
+
+      --brand-cta: #8b0000;
+      --brand-cta-hover: #a51c30;
+      --brand-action: #d32f2f;
+      --brand-tint: #b91c1c;
+
+      --status-urgent: #ff3b30;
+      --status-soon: #ffcc00;
+      --status-success: #34c759;
+    }
+
+    html[data-theme="dark"] {
+      --bg-outer: #09090b;
+      --bg-canvas: #000000;
+      --surface-sheet: #161618;
+      --surface-card: #1c1c1e;
+      --surface-elevated: #2c2c2e;
+      --surface-inset: #19191b;
+      --surface-hero: #1d0f12;
+      --surface-urgent: #241717;
+      --border-subtle: #2a2a2e;
+      --border-control: #38383a;
+      --border-urgent: #3e1f20;
+      --ink-primary: #ffffff;
+      --ink-secondary: #8e8e93;
+      --ink-muted: #7c7c82;
+      --ink-disabled: #55555a;
+
+      --brand-cta: #8b0000;
+      --brand-cta-hover: #a51c30;
+      --brand-action: #ea4345;
+      --brand-tint: #eb5353;
+
+      --status-urgent: #ff453a;
+      --status-soon: #ffd60a;
+      --status-success: #30d158;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-outer);
+      color: var(--ink-primary);
+      padding: 28px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .board {
+      max-width: 1380px;
+      margin: 0 auto;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+      gap: 16px;
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: var(--brand-cta);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .topbar h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink-primary);
+    }
+
+    .topbar p {
+      font-size: 13px;
+      color: var(--ink-secondary);
+      margin-top: 2px;
+    }
+
+    .mode-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-primary);
+      cursor: pointer;
+    }
+
+    .mode-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--brand-action);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.05fr 1.05fr 0.95fr 1.15fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 16px;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .panel-title span:last-child {
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .swatch-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .swatch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .swatch-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .chip {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      border: 1px solid var(--border-control);
+      flex-shrink: 0;
+    }
+
+    .token-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-primary);
+    }
+
+    .token-role {
+      font-size: 11px;
+      color: var(--ink-secondary);
+      margin-top: 1px;
+    }
+
+    .hex-code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-muted);
+      flex-shrink: 0;
+    }
+
+    .layer-stack {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 10px;
+    }
+
+    .layer-sheet {
+      background: var(--surface-sheet);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .layer-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .layer-elevated {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-control);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-primary);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .layer-caption {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--ink-secondary);
+      margin-bottom: 6px;
+    }
+
+    .brand-hero {
+      border-radius: 14px;
+      padding: 14px;
+      color: #ffffff;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      min-height: 76px;
+    }
+
+    .brand-hero .label {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .brand-hero .sub {
+      font-size: 11px;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .brand-hero .hex {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0.92;
+    }
+
+    .course-dots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .course-dot-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-subtle);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-secondary);
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+    }
+
+    .type-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .type-row:last-child {
+      border-bottom: none;
+    }
+
+    .type-meta {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-secondary);
+      flex-shrink: 0;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn-cta {
+      background: var(--brand-cta);
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .btn-text {
+      background: transparent;
+      color: var(--brand-action);
+      border: none;
+      padding: 8px 10px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .btn-pill {
+      background: var(--surface-elevated);
+      color: var(--ink-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .btn-pill-active {
+      background: var(--brand-action);
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .segmented {
+      background: var(--surface-inset);
+      padding: 3px;
+      border-radius: 10px;
+      display: inline-flex;
+      gap: 3px;
+      width: 100%;
+    }
+
+    .seg-item {
+      flex: 1;
+      text-align: center;
+      padding: 7px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-secondary);
+      border-radius: 8px;
+    }
+
+    .seg-active {
+      background: var(--surface-elevated);
+      color: var(--ink-primary);
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+    }
+
+    .search-mock {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 11px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink-muted);
+      font-size: 14px;
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .switch-track {
+      width: 46px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--brand-action);
+      padding: 2px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .switch-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: #ffffff;
+    }
+
+    .hero-preview {
+      background: var(--surface-hero);
+      border: 1px solid var(--border-urgent);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .hero-eyebrow {
+      color: var(--brand-tint);
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .hero-time {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--ink-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .hero-time span {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-secondary);
+    }
+
+    .urgent-preview {
+      background: var(--surface-urgent);
+      border: 1px solid var(--border-urgent);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .radio-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 2px solid var(--ink-muted);
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .tabbar-mock {
+      background: var(--surface-sheet);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      position: relative;
+    }
+
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      color: var(--ink-secondary);
+    }
+
+    .tab-active {
+      color: var(--brand-action);
+      font-weight: 600;
+    }
+
+    .fab-plus {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: var(--brand-cta);
+      color: #ffffff;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <header class="topbar">
+      <div class="title-wrap">
+        <div class="logo-badge" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="13.5" cy="6.5" r="0.5" fill="currentColor"></circle>
+            <circle cx="17.5" cy="10.5" r="0.5" fill="currentColor"></circle>
+            <circle cx="8.5" cy="7.5" r="0.5" fill="currentColor"></circle>
+            <circle cx="6.5" cy="12.5" r="0.5" fill="currentColor"></circle>
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>CampusUNSA - Apple iOS Design System</h1>
+          <p>Semantic Layering, Institutional Crimson Palette, and SF Pro Dynamic Type Scale</p>
+        </div>
+      </div>
+      <button id="theme-toggle" class="mode-pill" type="button">
+        <span class="mode-dot" aria-hidden="true"></span>
+        <span id="theme-label">Dark Mode (OLED)</span>
+      </button>
+    </header>
+
+    <section class="grid">
+      <!-- Column 1: Apple Layered Surfaces & Text/Borders -->
+      <div class="col">
+        <article class="panel">
+          <div class="panel-title">
+            <span>1. Surface Layering (Apple HIG)</span>
+            <span>4 Tiers</span>
+          </div>
+          <div class="layer-stack">
+            <div class="layer-caption">bg-canvas · #000000 / #F2F2F7</div>
+            <div class="layer-sheet">
+              <div class="layer-caption">surface-sheet · #161618 / #F2F2F7</div>
+              <div class="layer-card">
+                <div class="layer-caption">surface-card · #1C1C1E / #FFFFFF</div>
+                <div class="layer-elevated">
+                  <span>surface-elevated</span>
+                  <span class="hex-code">#2C2C2E / #F9F9FB</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-title">
+            <span>2. Labels &amp; Separators</span>
+            <span>Contrast</span>
+          </div>
+          <div class="swatch-list">
+            <div class="swatch-row">
+              <div class="swatch-left">
+                <span class="chip" style="background: var(--ink-primary);"></span>
+                <div>
+                  <div class="token-name">ink-primary</div>
+                  <div class="token-role">Headlines, task titles</div>
+                </div>
+              </div>
+              <span class="hex-code">#FFFFFF / #000000</span>
+            </div>
+            <div class="swatch-row">
+              <div class="swatch-left">
+                <span class="chip" style="background: var(--ink-secondary);"></span>
+                <div>
+                  <div class="token-name">ink-secondary</div>
+                  <div class="token-role">Metadata, dates, tabs</div>
+                </div>
+              </div>
+              <span class="hex-code">#8E8E93 / #6E6E73</span>
+            </div>
+            <div class="swatch-row">
+              <div class="swatch-left">
+                <span class="chip" style="background: var(--ink-muted);"></span>
+                <div>
+                  <div class="token-name">ink-muted</div>
+                  <div class="token-role">Placeholders, captions</div>
+                </div>
+              </div>
+              <span class="hex-code">#7C7C82 / #71767E</span>
+            </div>
+            <div class="swatch-row">
+              <div class="swatch-left">
+                <span class="chip" style="background: var(--ink-disabled);"></span>
+                <div>
+                  <div class="token-name">ink-disabled</div>
+                  <div class="token-role">Past calendar days</div>
+                </div>
+              </div>
+              <span class="hex-code">#55555A / 32%</span>
+            </div>
+            <div class="swatch-row">
+              <div class="swatch-left">
+                <span class="chip" style="background: var(--border-subtle);"></span>
+                <div>
+                  <div class="token-name">border-subtle</div>
+                  <div class="token-role">1px grouped dividers</div>
+                </div>
+              </div>
+              <span class="hex-code">#2A2A2E / 16%</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Column 2: UNSA Crimson & Semantic Status -->
+      <div class="col">
+        <article class="panel">
+          <div class="panel-title">
+            <span>3. UNSA Institutional Reds</span>
+            <span>3 Consolidated Roles</span>
+          </div>
+          <div class="brand-hero" style="background: var(--brand-cta);">
+            <div>
+              <div class="label">brand-cta (Primary Fill)</div>
+              <div class="sub">Solid CTA pills, + FAB, Submit, Hover #A51C30</div>
+            </div>
+            <div class="hex">#8B0000</div>
+          </div>
+          <div class="brand-hero" style="background: var(--brand-action);">
+            <div>
+              <div class="label">brand-action (iOS Interactive Tint)</div>
+              <div class="sub">Navbar Cancel/Done, active tab, switches, selected day</div>
+            </div>
+            <div class="hex" id="hex-brand-action">#EA4345</div>
+          </div>
+          <div class="brand-hero" style="background: var(--surface-hero); border: 1px solid var(--border-urgent); color: var(--brand-tint);">
+            <div>
+              <div class="label">brand-tint on surface-hero</div>
+              <div class="sub">Next class countdown, overdue due dates</div>
+            </div>
+            <div class="hex" id="hex-brand-tint">#EB5353</div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-title">
+            <span>4. Apple System Status &amp; Course Dots</span>
+          </div>
+          <div class="swatch-list">
+            <div class="swatch-row">
+              <div class="swatch-left">
+                <span class="chip" style="background: var(--status-urgent);"></span>
+                <div>
+                  <div class="token-name">status-urgent</div>
+                  <div class="token-role">Deadlines &lt; 24h &amp; errors</div>
+                </div>
+              </div>
+              <span class="hex-code">#FF453A / #FF3B30</span>
+            </div>
+            <div class="swatch-row">
+              <div class="swatch-left">
+                <span class="chip" style="background: var(--status-success);"></span>
+                <div>
+                  <div class="token-name">status-success</div>
+                  <div class="token-role">Connected platform dot</div>
+                </div>
+              </div>
+              <span class="hex-code">#30D158 / #34C759</span>
+            </div>
+          </div>
+          <div style="margin-top: 12px; font-size: 11px; color: var(--ink-secondary); font-weight: 600;">
+            Course Identity Dots (Domain Exception - 7 Colors)
+          </div>
+          <div class="course-dots">
+            <span class="course-dot-pill"><span class="dot" style="background:#3b82f6"></span>#3B82F6</span>
+            <span class="course-dot-pill"><span class="dot" style="background:#d946ef"></span>#D946EF</span>
+            <span class="course-dot-pill"><span class="dot" style="background:#f59e0b"></span>#F59E0B</span>
+            <span class="course-dot-pill"><span class="dot" style="background:#10b981"></span>#10B981</span>
+            <span class="course-dot-pill"><span class="dot" style="background:#06b6d4"></span>#06B6D4</span>
+            <span class="course-dot-pill"><span class="dot" style="background:#f43f5e"></span>#F43F5E</span>
+            <span class="course-dot-pill"><span class="dot" style="background:#8b5cf6"></span>#8B5CF6</span>
+          </div>
+        </article>
+      </div>
+
+      <!-- Column 3: Typography Scale (SF Pro Display + Text) -->
+      <div class="col">
+        <article class="panel">
+          <div class="panel-title">
+            <span>5. Typography Scale (SF Pro)</span>
+            <span>Apple HIG</span>
+          </div>
+
+          <div class="type-row">
+            <span style="font-size: 34px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em;">Aa</span>
+            <div class="type-meta">
+              <div><strong>Large Title</strong></div>
+              <div>34px / 700 · Display</div>
+            </div>
+          </div>
+          <div class="type-row">
+            <span style="font-size: 28px; font-weight: 700; line-height: 1.1;">Aa</span>
+            <div class="type-meta">
+              <div><strong>Title 1</strong></div>
+              <div>28px / 700 · Display</div>
+            </div>
+          </div>
+          <div class="type-row">
+            <span style="font-size: 22px; font-weight: 700; line-height: 1.2;">Aa</span>
+            <div class="type-meta">
+              <div><strong>Title 2</strong></div>
+              <div>22px / 700 · Display</div>
+            </div>
+          </div>
+          <div class="type-row">
+            <span style="font-size: 20px; font-weight: 600; line-height: 1.2;">Aa</span>
+            <div class="type-meta">
+              <div><strong>Title 3</strong></div>
+              <div>20px / 600 · Display</div>
+            </div>
+          </div>
+          <div class="type-row">
+            <span style="font-size: 17px; font-weight: 600;">Headline</span>
+            <div class="type-meta">17px / 600 · Text</div>
+          </div>
+          <div class="type-row">
+            <span style="font-size: 17px; font-weight: 400;">Body</span>
+            <div class="type-meta">17px / 400 · Text</div>
+          </div>
+          <div class="type-row">
+            <span style="font-size: 16px; font-weight: 400;">Callout</span>
+            <div class="type-meta">16px / 400 · Text</div>
+          </div>
+          <div class="type-row">
+            <span style="font-size: 15px; font-weight: 400;">Subheadline</span>
+            <div class="type-meta">15px / 400 · Text</div>
+          </div>
+          <div class="type-row">
+            <span style="font-size: 13px; font-weight: 400;">Footnote</span>
+            <div class="type-meta">13px / 400 · Text</div>
+          </div>
+          <div class="type-row">
+            <span style="font-size: 12px; font-weight: 500;">Caption 1</span>
+            <div class="type-meta">12px / 500 · Text</div>
+          </div>
+          <div class="type-row">
+            <span style="font-size: 11px; font-weight: 600;">Caption 2</span>
+            <div class="type-meta">11px / 600 · Text</div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Column 4: Live Component Specimens -->
+      <div class="col">
+        <article class="panel">
+          <div class="panel-title">
+            <span>6. Controls &amp; Navigation</span>
+            <span>Specimens</span>
+          </div>
+          <div class="swatch-list" style="gap: 12px;">
+            <div class="btn-row">
+              <button class="btn-cta" type="button">Connect</button>
+              <button class="btn-text" type="button">Done</button>
+              <span class="btn-pill-active">Today</span>
+              <span class="btn-pill">Tomorrow</span>
+            </div>
+
+            <div class="segmented">
+              <div class="seg-item seg-active">Theory</div>
+              <div class="seg-item">Laboratory</div>
+            </div>
+
+            <div class="search-mock">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span>Search among 8 courses</span>
+            </div>
+
+            <div class="switch-row">
+              <span>High priority</span>
+              <div class="switch-track"><div class="switch-thumb"></div></div>
+            </div>
+
+            <div class="tabbar-mock">
+              <div class="tab-item tab-active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M9 12l2 2 4-4"></path></svg>
+                <span>Tasks</span>
+              </div>
+              <div class="tab-item">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path></svg>
+                <span>Schedule</span>
+              </div>
+              <div class="fab-plus">+</div>
+              <div class="tab-item">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="7" width="14" height="12" rx="3"></rect><circle cx="9.5" cy="12.5" r="1"></circle><circle cx="14.5" cy="12.5" r="1"></circle></svg>
+                <span>Hugo</span>
+              </div>
+              <div class="tab-item">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3m0 14v3M2 12h3m14 0h3"></path></svg>
+                <span>Settings</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-title">
+            <span>7. Academic Surfaces</span>
+            <span>Hero &amp; Overdue</span>
+          </div>
+          <div class="swatch-list" style="gap: 10px;">
+            <div class="hero-preview">
+              <div class="hero-eyebrow">Next class · in 25 min</div>
+              <div class="hero-time">08:40 <span>- 10:20</span></div>
+              <div style="font-size: 14px; font-weight: 600; margin-top: 2px;">Software Engineering Lab</div>
+            </div>
+            <div class="urgent-preview">
+              <div class="radio-circle"></div>
+              <div style="min-width: 0; flex: 1;">
+                <div style="font-size: 14px; font-weight: 600;">Sprint 04 Deliverable</div>
+                <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">Software Quality A</div>
+                <div style="font-size: 12px; color: var(--brand-tint); margin-top: 4px;">Yesterday · 23:59</div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const btn = document.getElementById("theme-toggle");
+      const label = document.getElementById("theme-label");
+      const hexAction = document.getElementById("hex-brand-action");
+      const hexTint = document.getElementById("hex-brand-tint");
+
+      function applyTheme(mode) {
+        if (mode === "light") {
+          root.removeAttribute("data-theme");
+          label.textContent = "Light Mode (iOS)";
+          hexAction.textContent = "#D32F2F";
+          hexTint.textContent = "#B91C1C";
+        } else {
+          root.setAttribute("data-theme", "dark");
+          label.textContent = "Dark Mode (OLED)";
+          hexAction.textContent = "#EA4345";
+          hexTint.textContent = "#EB5353";
+        }
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const initial = params.get("theme") === "light" ? "light" : "dark";
+      applyTheme(initial);
+
+      btn.addEventListener("click", function () {
+        const current = root.getAttribute("data-theme") === "dark" ? "dark" : "light";
+        applyTheme(current === "dark" ? "light" : "dark");
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -171,11 +171,11 @@ export function NewTaskSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-[#f2f2f7] dark:bg-[#161618] text-black dark:text-white shadow-2xl border border-black/10 dark:border-white/10 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]"
+        className="w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-surface-sheet text-ink-primary shadow-2xl border border-subtle pb-[calc(env(safe-area-inset-bottom)+1.25rem)]"
       >
         <div
           aria-hidden="true"
-          className="w-10 h-1.5 bg-black/20 dark:bg-[#444448] rounded-full mx-auto mt-3 mb-1"
+          className="w-10 h-1.5 bg-control rounded-full mx-auto mt-3 mb-1"
         />
 
         <form onSubmit={handleFormSubmit} className="px-4 pt-1 space-y-3">
@@ -184,17 +184,17 @@ export function NewTaskSheet({
               type="button"
               disabled={isBusy}
               onClick={onClose}
-              className="min-h-[44px] px-2 text-[15px] font-normal text-[#e23b3b] disabled:opacity-40"
+              className="min-h-[44px] px-2 text-ios-subhead font-normal text-brand-action disabled:opacity-40"
             >
               {newTaskMessages.cancelAction}
             </button>
-            <h2 id={titleId} className="text-[17px] font-semibold text-black dark:text-white">
+            <h2 id={titleId} className="text-ios-headline font-semibold text-ink-primary">
               {newTaskMessages.sheetTitle}
             </h2>
             <button
               type="submit"
               disabled={!canSubmit}
-              className="min-h-[44px] px-2 text-[15px] font-semibold text-[#e23b3b] disabled:opacity-40"
+              className="min-h-[44px] px-2 text-ios-subhead font-semibold text-brand-action disabled:opacity-40"
             >
               {isBusy ? newTaskMessages.submittingAction : newTaskMessages.submitAction}
             </button>
@@ -203,7 +203,7 @@ export function NewTaskSheet({
           {!isOnline && (
             <p
               role="status"
-              className="rounded-xl bg-amber-500/15 border border-amber-500/30 px-3 py-2 text-[13px] text-amber-900 dark:text-amber-200"
+              className="rounded-xl bg-amber-500/15 border border-amber-500/30 px-3 py-2 text-ios-footnote text-amber-900 dark:text-amber-200"
             >
               {newTaskMessages.offlineNotice}
             </p>
@@ -212,7 +212,7 @@ export function NewTaskSheet({
           {(hasNoCourses || !allSourcesSynced) && (
             <p
               role="alert"
-              className="rounded-xl bg-black/5 dark:bg-[#222225] border border-black/10 dark:border-white/10 px-3 py-2 text-[13px] text-black/80 dark:text-white/80"
+              className="rounded-xl bg-surface-card border border-subtle px-3 py-2 text-ios-footnote text-ink-secondary"
             >
               {hasNoCourses ? newTaskMessages.noCoursesNotice : newTaskMessages.syncRequiredNotice}
             </p>
@@ -221,7 +221,7 @@ export function NewTaskSheet({
           {submitError && (
             <p
               role="alert"
-              className="rounded-xl bg-red-500/15 border border-red-500/30 px-3 py-2 text-[13px] text-red-700 dark:text-red-200"
+              className="rounded-xl bg-surface-urgent border border-urgent-edge px-3 py-2 text-ios-footnote text-brand-tint"
             >
               {submitError}
             </p>
@@ -234,17 +234,17 @@ export function NewTaskSheet({
             value={title}
             maxLength={300}
             onChange={(event) => setTitle(event.target.value)}
-            className="w-full min-h-[48px] bg-white dark:bg-[#242427] rounded-xl px-4 py-3.5 text-[15px] text-black dark:text-white placeholder:text-black/40 dark:placeholder:text-[#7c7c82] outline-none focus:ring-1 focus:ring-[#e23b3b]/60"
+            className="w-full min-h-[48px] bg-surface-card rounded-xl px-4 py-3.5 text-ios-subhead text-ink-primary placeholder:text-ink-muted outline-none focus:ring-1 focus:ring-brand-action/60"
           />
 
-          <div className="bg-white dark:bg-[#222225] rounded-2xl p-3.5 space-y-3">
+          <div className="bg-surface-card rounded-2xl p-3.5 space-y-3 border border-subtle">
             <button
               type="button"
               aria-label={newTaskMessages.courseSelectAria}
               onClick={() => setCoursePickerOpened(true)}
               className="w-full flex items-center justify-between gap-3 min-h-[44px] text-left"
             >
-              <span className="text-[15px] font-medium text-black dark:text-white shrink-0">
+              <span className="text-ios-subhead font-medium text-ink-primary shrink-0">
                 {newTaskMessages.courseLabel}
               </span>
               <span className="flex items-center gap-2 min-w-0">
@@ -255,7 +255,7 @@ export function NewTaskSheet({
                 />
                 <span
                   data-testid="selected-course-display"
-                  className="max-w-[210px] truncate text-right text-[14px] text-black/80 dark:text-[#d1d1d6]"
+                  className="max-w-[210px] truncate text-right text-ios-subhead text-ink-secondary"
                 >
                   {selectedCourseLabel}
                 </span>
@@ -263,26 +263,26 @@ export function NewTaskSheet({
                   size={16}
                   weight="bold"
                   aria-hidden="true"
-                  className="text-black/40 dark:text-[#7c7c82] shrink-0"
+                  className="text-ink-muted shrink-0"
                 />
               </span>
             </button>
 
-            <div className="h-px bg-black/10 dark:bg-[#2a2a2e]" />
+            <div className="h-px bg-subtle" />
 
             <div className="flex items-center justify-between gap-3 min-h-[44px]">
-              <span className="text-[15px] font-medium text-black dark:text-white">
+              <span className="text-ios-subhead font-medium text-ink-primary">
                 {newTaskMessages.typeLabel}
               </span>
-              <div className="bg-black/5 dark:bg-[#19191b] p-1 rounded-xl flex items-center gap-1">
+              <div className="bg-surface-inset p-1 rounded-xl flex items-center gap-1">
                 <button
                   type="button"
                   aria-pressed={componentType === "TEORIA"}
                   onClick={() => setComponentType("TEORIA")}
-                  className={`min-h-[44px] px-3.5 rounded-lg text-[13px] font-medium transition-colors ${
+                  className={`min-h-[44px] px-3.5 rounded-lg text-ios-footnote font-medium transition-colors ${
                     componentType === "TEORIA"
-                      ? "bg-white dark:bg-[#3a3a3e] text-black dark:text-white shadow-sm"
-                      : "text-black/60 dark:text-[#9a9aa0]"
+                      ? "bg-surface-elevated text-ink-primary shadow-sm"
+                      : "text-ink-secondary"
                   }`}
                 >
                   {newTaskMessages.typeTheory}
@@ -291,10 +291,10 @@ export function NewTaskSheet({
                   type="button"
                   aria-pressed={componentType === "LABORATORIO"}
                   onClick={() => setComponentType("LABORATORIO")}
-                  className={`min-h-[44px] px-3.5 rounded-lg text-[13px] font-medium transition-colors ${
+                  className={`min-h-[44px] px-3.5 rounded-lg text-ios-footnote font-medium transition-colors ${
                     componentType === "LABORATORIO"
-                      ? "bg-white dark:bg-[#3a3a3e] text-black dark:text-white shadow-sm"
-                      : "text-black/60 dark:text-[#9a9aa0]"
+                      ? "bg-surface-elevated text-ink-primary shadow-sm"
+                      : "text-ink-secondary"
                   }`}
                 >
                   {newTaskMessages.typeLab}
@@ -303,20 +303,20 @@ export function NewTaskSheet({
             </div>
           </div>
 
-          <div className="bg-white dark:bg-[#222225] rounded-2xl p-3.5 space-y-3">
+          <div className="bg-surface-card rounded-2xl p-3.5 space-y-3 border border-subtle">
             <button
               type="button"
               aria-label={newTaskMessages.dueDateInputAria}
               onClick={() => setDueDatePickerOpened(true)}
               className="w-full flex items-center justify-between gap-2 min-h-[44px] text-left"
             >
-              <span className="text-[15px] font-medium text-black dark:text-white shrink-0">
+              <span className="text-ios-subhead font-medium text-ink-primary shrink-0">
                 {newTaskMessages.dueLabel}
               </span>
               <span className="flex items-center gap-1.5">
                 <span
                   data-testid="due-date-display"
-                  className="text-[14px] text-black/80 dark:text-[#d1d1d6]"
+                  className="text-ios-subhead text-ink-secondary"
                 >
                   {dueDateDisplay}
                 </span>
@@ -324,7 +324,7 @@ export function NewTaskSheet({
                   size={16}
                   weight="bold"
                   aria-hidden="true"
-                  className="text-black/40 dark:text-[#7c7c82] shrink-0"
+                  className="text-ink-muted shrink-0"
                 />
               </span>
             </button>
@@ -333,10 +333,10 @@ export function NewTaskSheet({
               <button
                 type="button"
                 onClick={() => setDueDateIso(getLimaQuickDueDate("today"))}
-                className={`min-h-[44px] rounded-full text-[13px] px-3.5 py-1.5 font-medium transition-colors ${
+                className={`min-h-[44px] rounded-full text-ios-footnote px-3.5 py-1.5 font-medium transition-colors ${
                   dueDateIso === todayQuickIso
-                    ? "bg-[#e23b3b]/20 text-[#b91c1c] dark:text-white border border-[#e23b3b]/50"
-                    : "bg-black/5 dark:bg-[#2e2e33] text-black/80 dark:text-[#d1d1d6]"
+                    ? "bg-brand-action/20 text-brand-tint dark:text-white border border-brand-action/50"
+                    : "bg-surface-elevated text-ink-secondary border border-subtle"
                 }`}
               >
                 {newTaskMessages.quickToday}
@@ -344,10 +344,10 @@ export function NewTaskSheet({
               <button
                 type="button"
                 onClick={() => setDueDateIso(getLimaQuickDueDate("tomorrow"))}
-                className={`min-h-[44px] rounded-full text-[13px] px-3.5 py-1.5 font-medium transition-colors ${
+                className={`min-h-[44px] rounded-full text-ios-footnote px-3.5 py-1.5 font-medium transition-colors ${
                   dueDateIso === tomorrowQuickIso
-                    ? "bg-[#e23b3b]/20 text-[#b91c1c] dark:text-white border border-[#e23b3b]/50"
-                    : "bg-black/5 dark:bg-[#2e2e33] text-black/80 dark:text-[#d1d1d6]"
+                    ? "bg-brand-action/20 text-brand-tint dark:text-white border border-brand-action/50"
+                    : "bg-surface-elevated text-ink-secondary border border-subtle"
                 }`}
               >
                 {newTaskMessages.quickTomorrow}
@@ -360,20 +360,20 @@ export function NewTaskSheet({
                     setDueDateIso(nextClassIso);
                   }
                 }}
-                className={`min-h-[44px] rounded-full text-[13px] px-3.5 py-1.5 font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                className={`min-h-[44px] rounded-full text-ios-footnote px-3.5 py-1.5 font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                   nextClassIso && dueDateIso === nextClassIso
-                    ? "bg-[#e23b3b]/20 text-[#b91c1c] dark:text-white border border-[#e23b3b]/50"
-                    : "bg-black/5 dark:bg-[#2e2e33] text-black/80 dark:text-[#d1d1d6]"
+                    ? "bg-brand-action/20 text-brand-tint dark:text-white border border-brand-action/50"
+                    : "bg-surface-elevated text-ink-secondary border border-subtle"
                 }`}
               >
                 {newTaskMessages.quickNextClass}
               </button>
             </div>
 
-            <div className="h-px bg-black/10 dark:bg-[#2a2a2e]" />
+            <div className="h-px bg-subtle" />
 
             <div className="flex items-center justify-between min-h-[44px]">
-              <span className="text-[15px] font-medium text-black dark:text-white">
+              <span className="text-ios-subhead font-medium text-ink-primary">
                 {newTaskMessages.highPriorityLabel}
               </span>
               <button
@@ -383,7 +383,7 @@ export function NewTaskSheet({
                 aria-label={newTaskMessages.highPriorityLabel}
                 onClick={() => setIsHighPriority((prev) => !prev)}
                 className={`relative inline-flex h-8 w-[52px] shrink-0 items-center rounded-full transition-colors p-0.5 ${
-                  isHighPriority ? "bg-[#dc2626]" : "bg-black/20 dark:bg-[#38383a]"
+                  isHighPriority ? "bg-brand-action" : "bg-control"
                 }`}
               >
                 <span
@@ -402,7 +402,7 @@ export function NewTaskSheet({
             value={notes}
             maxLength={2000}
             onChange={(event) => setNotes(event.target.value)}
-            className="w-full bg-white dark:bg-[#222225] rounded-2xl p-3.5 min-h-[95px] text-[14px] text-black dark:text-white placeholder:text-black/40 dark:placeholder:text-[#7c7c82] outline-none resize-none focus:ring-1 focus:ring-[#e23b3b]/60"
+            className="w-full bg-surface-card border border-subtle rounded-2xl p-3.5 min-h-[95px] text-ios-subhead text-ink-primary placeholder:text-ink-muted outline-none resize-none focus:ring-1 focus:ring-brand-action/60"
           />
         </form>
       </div>

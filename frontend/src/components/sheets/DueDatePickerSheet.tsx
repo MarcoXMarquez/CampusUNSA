@@ -170,23 +170,23 @@ export function DueDatePickerSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-[430px] max-h-[93dvh] bg-[#f2f2f7] dark:bg-[#17171a] rounded-t-[34px] sm:rounded-[34px] flex flex-col shadow-2xl overflow-hidden border border-black/10 dark:border-[#2e2e33] pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+        className="w-full max-w-[430px] max-h-[93dvh] bg-surface-sheet rounded-t-[34px] sm:rounded-[34px] flex flex-col shadow-2xl overflow-hidden border border-subtle pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
       >
         <div className="w-full pt-3 pb-1 flex justify-center items-center" aria-hidden="true">
-          <div className="w-9 h-[5px] bg-black/20 dark:bg-[#444448] rounded-full" />
+          <div className="w-9 h-[5px] bg-control rounded-full" />
         </div>
 
         <header className="px-5 py-2 flex items-center justify-between">
           <button
             type="button"
             onClick={onClose}
-            className="min-h-[44px] px-1 text-[17px] tracking-tight font-normal text-[#ea4345] hover:opacity-80 active:opacity-60 transition"
+            className="min-h-[44px] px-1 text-ios-headline font-normal text-brand-action hover:opacity-80 active:opacity-60 transition"
           >
             {messages.cancelAction}
           </button>
           <h2
             id={titleId}
-            className="text-[17px] font-semibold text-black dark:text-white tracking-tight"
+            className="text-ios-headline font-semibold text-ink-primary"
           >
             {messages.sheetTitle}
           </h2>
@@ -196,7 +196,7 @@ export function DueDatePickerSheet({
               onConfirm(draftIso);
               onClose();
             }}
-            className="min-h-[44px] px-1 text-[17px] tracking-tight font-medium text-[#ea4345] hover:opacity-80 active:opacity-60 transition"
+            className="min-h-[44px] px-1 text-ios-headline font-medium text-brand-action hover:opacity-80 active:opacity-60 transition"
           >
             {messages.doneAction}
           </button>
@@ -204,10 +204,10 @@ export function DueDatePickerSheet({
 
         <div className="flex-1 overflow-y-auto px-5 pt-1 pb-4 space-y-4">
           <div className="space-y-0.5">
-            <p className="text-[26px] leading-tight font-bold tracking-tight text-black dark:text-white">
+            <p className="text-ios-title-2 font-bold text-ink-primary">
               {headlineDate}
             </p>
-            <p className="text-[14px] text-black/55 dark:text-[#8e8e93] font-normal">
+            <p className="text-ios-subhead text-ink-secondary font-normal">
               {relativeSummary}
             </p>
           </div>
@@ -219,10 +219,10 @@ export function DueDatePickerSheet({
                 setDraftIso(todayQuickIso);
                 syncVisibleMonthToIso(todayQuickIso);
               }}
-              className={`min-h-[44px] px-4 py-2 text-[14px] font-medium rounded-full transition whitespace-nowrap ${
+              className={`min-h-[44px] px-4 py-2 text-ios-footnote font-medium rounded-full transition whitespace-nowrap ${
                 draftIso === todayQuickIso
-                  ? "bg-[#ea4345] text-white"
-                  : "bg-white dark:bg-[#26262b] text-black dark:text-white"
+                  ? "bg-brand-action text-white"
+                  : "bg-surface-card border border-subtle text-ink-primary"
               }`}
             >
               {messages.quickToday}
@@ -233,10 +233,10 @@ export function DueDatePickerSheet({
                 setDraftIso(tomorrowQuickIso);
                 syncVisibleMonthToIso(tomorrowQuickIso);
               }}
-              className={`min-h-[44px] px-4 py-2 text-[14px] font-medium rounded-full transition whitespace-nowrap ${
+              className={`min-h-[44px] px-4 py-2 text-ios-footnote font-medium rounded-full transition whitespace-nowrap ${
                 draftIso === tomorrowQuickIso
-                  ? "bg-[#ea4345] text-white"
-                  : "bg-white dark:bg-[#26262b] text-black dark:text-white"
+                  ? "bg-brand-action text-white"
+                  : "bg-surface-card border border-subtle text-ink-primary"
               }`}
             >
               {messages.quickTomorrow}
@@ -251,10 +251,10 @@ export function DueDatePickerSheet({
                 setDraftIso(nextClassIso);
                 syncVisibleMonthToIso(nextClassIso);
               }}
-              className={`min-h-[44px] px-4 py-2 text-[14px] font-medium rounded-full transition whitespace-nowrap flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed ${
+              className={`min-h-[44px] px-4 py-2 text-ios-footnote font-medium rounded-full transition whitespace-nowrap flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed ${
                 nextClassIso && draftIso === nextClassIso
-                  ? "bg-[#ea4345] text-white"
-                  : "bg-white dark:bg-[#26262b] text-black/85 dark:text-[#dededf]"
+                  ? "bg-brand-action text-white"
+                  : "bg-surface-card border border-subtle text-ink-primary"
               }`}
             >
               <span>{messages.quickNextClass}</span>
@@ -263,7 +263,7 @@ export function DueDatePickerSheet({
                   className={
                     nextClassIso && draftIso === nextClassIso
                       ? "text-white/85"
-                      : "text-black/50 dark:text-[#8e8e93]"
+                      : "text-ink-secondary"
                   }
                 >
                   · {nextClassShortLabel}
@@ -272,9 +272,9 @@ export function DueDatePickerSheet({
             </button>
           </div>
 
-          <div className="bg-white dark:bg-[#1f1f23] rounded-2xl p-4 shadow-sm">
+          <div className="bg-surface-card border border-subtle rounded-2xl p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[17px] font-semibold text-black dark:text-white tracking-tight">
+              <span className="text-ios-headline font-semibold text-ink-primary">
                 {monthHeading}
               </span>
               <div className="flex items-center gap-2">
@@ -283,7 +283,7 @@ export function DueDatePickerSheet({
                   aria-label={messages.prevMonthAria}
                   disabled={!canGoPrevMonth}
                   onClick={() => shiftMonth(-1)}
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#ea4345] disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-brand-action disabled:opacity-30 disabled:cursor-not-allowed transition"
                 >
                   <CaretLeft size={18} weight="bold" aria-hidden="true" />
                 </button>
@@ -291,20 +291,20 @@ export function DueDatePickerSheet({
                   type="button"
                   aria-label={messages.nextMonthAria}
                   onClick={() => shiftMonth(1)}
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#ea4345] hover:opacity-75 transition"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-brand-action hover:opacity-75 transition"
                 >
                   <CaretRight size={18} weight="bold" aria-hidden="true" />
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-7 text-center text-[13px] font-medium text-black/45 dark:text-[#7c7c82] mb-2">
+            <div className="grid grid-cols-7 text-center text-ios-footnote font-medium text-ink-muted mb-2">
               {messages.weekdayInitials.map((label, idx) => (
                 <div key={idx}>{label}</div>
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-y-1 text-center text-[15px] items-center">
+            <div className="grid grid-cols-7 gap-y-1 text-center text-ios-subhead items-center">
               {calendarCells.map((cell, idx) => {
                 if (cell.day === null || !cell.dateKey) {
                   return <div key={`blank-${idx}`} className="min-h-[44px]" />;
@@ -323,19 +323,19 @@ export function DueDatePickerSheet({
                     onClick={() => handleSelectDay(cell.day as number)}
                     className={`min-h-[44px] w-full flex flex-col items-center justify-center relative rounded-lg transition ${
                       cell.isPast
-                        ? "text-black/25 dark:text-[#55555a] cursor-not-allowed"
+                        ? "text-ink-disabled cursor-not-allowed"
                         : "cursor-pointer"
                     }`}
                   >
                     <span
                       className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         isSelected
-                          ? "bg-[#ea4345] text-white font-semibold shadow-md"
+                          ? "bg-brand-action text-white font-semibold shadow-md"
                           : cell.isToday
-                            ? "text-[#ea4345] font-semibold"
+                            ? "text-brand-action font-semibold"
                             : cell.isPast
                               ? ""
-                              : "text-black dark:text-white"
+                              : "text-ink-primary"
                       }`}
                     >
                       {cell.day}
@@ -345,7 +345,7 @@ export function DueDatePickerSheet({
                         data-testid={`calendar-class-dot-${cell.dateKey}`}
                         aria-hidden="true"
                         className={`w-[3.5px] h-[3.5px] rounded-full mt-0.5 ${
-                          isSelected ? "bg-white/80" : "bg-[#9ca3af]"
+                          isSelected ? "bg-white/80" : "bg-ink-secondary"
                         }`}
                       />
                     )}
@@ -355,8 +355,8 @@ export function DueDatePickerSheet({
             </div>
           </div>
 
-          <div className="bg-white dark:bg-[#1f1f23] rounded-2xl px-4 py-2 flex items-center justify-between min-h-[56px]">
-            <span className="text-[17px] text-black/85 dark:text-[#dededf] font-normal">
+          <div className="bg-surface-card border border-subtle rounded-2xl px-4 py-2 flex items-center justify-between min-h-[56px]">
+            <span className="text-ios-body text-ink-primary font-normal">
               {messages.timeLabel}
             </span>
             <input
@@ -364,7 +364,7 @@ export function DueDatePickerSheet({
               aria-label={messages.timeInputAria}
               value={timeInputValue}
               onChange={(event) => handleTimeChange(event.target.value)}
-              className="min-h-[44px] bg-black/5 dark:bg-[#2c2c31] hover:bg-black/10 dark:hover:bg-[#38383f] px-3.5 py-1.5 rounded-lg text-black dark:text-white font-medium text-[16px] tracking-tight outline-none"
+              className="min-h-[44px] bg-surface-elevated border border-subtle px-3.5 py-1.5 rounded-lg text-ink-primary font-medium text-ios-callout outline-none"
             />
           </div>
 
@@ -375,7 +375,7 @@ export function DueDatePickerSheet({
                 onConfirm(null);
                 onClose();
               }}
-              className="min-h-[44px] px-4 text-[17px] font-normal text-[#ea4345] hover:opacity-80 active:opacity-60 transition"
+              className="min-h-[44px] px-4 text-ios-headline font-normal text-brand-action hover:opacity-80 active:opacity-60 transition"
             >
               {messages.clearDateAction}
             </button>

@@ -47,13 +47,19 @@ const FAKE_STATUS_REGEX = /\b(9:41|status-bar-battery|fake-status-bar)\b/i;
 // Rule 3.2.3.3: Prohibited Web Font imports (Inter, Roboto, Google Fonts)
 const FONT_IMPORT_REGEX = /(from\s+['"]next\/font\/google['"]|@import\s+url\(['"]https:\/\/fonts\.googleapis\.com)/;
 
+// Rule 3.2.5: Prohibited raw hex color literals in UI components
+const RAW_HEX_REGEX = /#[0-9a-fA-F]{3,8}\b/;
+
+// Rule 3.2.6: Prohibited arbitrary pixel/rem/em font sizes in UI components
+const ARBITRARY_FONT_SIZE_REGEX = /\btext-\[\d+(?:\.\d+)?(?:px|rem|em)\]/;
+
 scanDirectory(
   frontendSrc,
   (name) => /\.(tsx|jsx|css)$/.test(name) && !name.includes(".test."),
   (filePath) => {
     const content = fs.readFileSync(filePath, "utf-8");
     const lines = content.split("\n");
-    const isComponent = filePath.includes("/components/");
+    const isComponent = filePath.includes(`${path.sep}components${path.sep}`) || filePath.includes("/components/");
 
     lines.forEach((line, idx) => {
       const lineNum = idx + 1;
@@ -98,6 +104,26 @@ scanDirectory(
           lineNum,
           "Rule-3.2.3.3",
           "Prohibited network web font import detected. Use system font stack for offline PWA resilience."
+        );
+      }
+
+      // 4. Check prohibited raw hex literals inside components
+      if (isComponent && RAW_HEX_REGEX.test(line)) {
+        reportViolation(
+          filePath,
+          lineNum,
+          "Rule-3.2.5",
+          "Raw hex color literal detected in component. Map to semantic tokens in globals.css/tailwind.config.js (see docs/design/apple-ios-palette-guideline.md)."
+        );
+      }
+
+      // 5. Check prohibited arbitrary font sizes inside components
+      if (isComponent && ARBITRARY_FONT_SIZE_REGEX.test(line)) {
+        reportViolation(
+          filePath,
+          lineNum,
+          "Rule-3.2.6",
+          "Arbitrary text-[...px|rem|em] font size detected in component. Use Apple Dynamic Type tokens (text-ios-*) in tailwind.config.js."
         );
       }
     });

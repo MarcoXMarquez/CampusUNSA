@@ -78,11 +78,12 @@ Every AI agent modifying or generating code in this repository MUST strictly fol
 
 Every AI agent that creates or modifies code under `frontend/` MUST follow the Stitch-First directives in this section. **Google Stitch (project `4575327637306768444`) and `docs/design/DESIGN.md` are the authoritative visual source of truth.** Agents MUST NOT override or flatten Stitch visual tokens (colors, elevation shadows, card surfaces, radii, or layout geometry) in the name of generic templates.
 
-#### 3.2.1 Stitch-First Visual Authority
+#### 3.2.1 Stitch-First Visual Authority & Token Mapping
 
-* **Design Source of Truth:** When implementing or updating any screen designed in Stitch, agents MUST inspect the Stitch design via the `stitch` MCP (`stitch_find`, `stitch_get`) or `docs/design/DESIGN.md`, and reproduce its palette, surfaces, shadows, border radii, and visual hierarchy 1:1.
+* **Design Source of Truth:** When implementing or updating any screen designed in Stitch, agents MUST inspect the Stitch design via the `stitch` MCP (`stitch_find`, `stitch_get`) or `docs/design/DESIGN.md`, and reproduce its layout geometry, visual hierarchy, elevation, and surface contrast 1:1.
+* **Stitch-to-Palette Mapping Rule (Mandatory):** Agents MUST NOT copy raw hex literals or arbitrary pixel font sizes directly from Stitch HTML/Tailwind exports into `frontend/src/components/`. Every Stitch color, surface, border, and font size MUST be compared against `docs/design/apple-ios-palette-guideline.md` and mapped to the canonical semantic CSS/Tailwind tokens in `frontend/src/app/globals.css` (`bg-canvas`, `bg-surface-*`, `border-subtle`, `border-control`, `text-ink-*`, `bg-brand-cta`, `text-brand-action`, `text-status-*`) and the 11-tier Apple Dynamic Type scale (`text-ios-large-title` through `text-ios-caption-2`) in `frontend/tailwind.config.js`.
+* **Adaptive Light & Dark Mode Everywhere:** Every view and modal sheet MUST adapt cleanly to both system light and dark presentations (`@media (prefers-color-scheme: dark)` in `globals.css`) through semantic tokens rather than hardcoded `bg-black` or `text-white` overrides (except white labels on solid crimson CTA fills).
 * **Asset Optimization Strategy:** Raster illustrations exported from Stitch MUST be saved as optimized local Retina WebP files (`< 30 KB` per asset, e.g., `frontend/public/images/onboarding/`), and minimalist marks or icons MUST use SVG rather than heavy PNG bundles.
-* **Color Schemes:** Components SHOULD support both light and dark presentations consistent with the corresponding Stitch screen and system preferences.
 
 #### 3.2.2 Frontend Baseline & Architecture
 
@@ -98,6 +99,8 @@ The following technical defects are strictly prohibited under `frontend/`:
 2. **Fake mobile status bars (`Rule-3.2.3.2`):** Never render synthetic mobile status bars (`9:41`, drawn battery/signal chrome). Use native `safeAreas` and `viewportFit: "cover"`.
 3. **External web-font imports (`Rule-3.2.3.3`):** Importing Google Fonts (`next/font/google`, `fonts.googleapis.com`) is prohibited so offline-first PWA rendering never degrades or stalls on missing external font requests.
 4. **Unverifiable upload controls:** Assignment detail sheets MUST NOT render simulated file upload inputs the platform cannot fulfill; provide verified deep links (`Abrir en Moodle`, `Abrir en Classroom`) instead.
+5. **Raw hex literals in components (`Rule-3.2.5`):** Do not use raw hex color literals (`#...`) inside `frontend/src/components/`. Map colors to semantic tokens in `globals.css` / `tailwind.config.js`. Third-party trademarked SVG artwork (such as official Google Identity colors) may opt out per line with `// ui-gate-ignore: Google Identity brand logo`.
+6. **Arbitrary pixel/rem font sizes in components (`Rule-3.2.6`):** Do not use arbitrary classes such as `text-[15px]` or `text-[13.5px]` inside `frontend/src/components/`. Use the `text-ios-*` Apple Dynamic Type scale defined in `tailwind.config.js`.
 
 #### 3.2.4 Mandatory Functional States, Localization (`es-PE`), Auth/WhatsApp Rules & Verification
 
