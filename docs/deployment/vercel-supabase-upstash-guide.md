@@ -73,8 +73,8 @@ openssl rand -hex 32   # ENCRYPTION_KEY
    - **Root Directory:** `backend`
    - **Runtime:** `Docker`
    - **Docker Command (overrides dev `--reload`):**
-     ```bash
-     sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+     ```text
+     /app/start.sh
      ```
 3. Configure Environment Variables:
 
