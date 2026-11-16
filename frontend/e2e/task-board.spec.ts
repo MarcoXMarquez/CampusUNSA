@@ -123,7 +123,7 @@ test("renders Stitch Tareas board, filters, saves inline completion with undo, a
   for (const group of ["Vencidas", "Hoy", "Esta semana"]) {
     await expect(page.getByRole("region", { name: group, exact: true })).toBeVisible();
   }
-  await expect(page.getByText("Alta")).toBeVisible();
+  await expect(page.getByText("Alta", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
     true
   );
