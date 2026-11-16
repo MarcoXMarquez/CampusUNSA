@@ -131,16 +131,16 @@ test("renders Stitch Tareas board, filters, saves inline completion with undo, a
   await page.screenshot({ path: testInfo.outputPath("board.png"), fullPage: true });
 
   // Filter by Lab and back to Todas
-  await page.getByRole("button", { name: "Lab" }).click();
+  await page.getByRole("button", { name: "Lab", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Laboratorio 4" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Tarea 3" })).toBeHidden();
-  await page.getByRole("button", { name: "Todas" }).click();
+  await page.getByRole("button", { name: "Todas", exact: true }).click();
 
   // Open pending modal on card tap
   await page.getByRole("button", { name: /^Laboratorio 4/ }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByText("Pendiente de implementación.")).toBeVisible();
-  await page.getByRole("button", { name: "Cerrar" }).click();
+  await page.getByRole("button", { name: "Cerrar", exact: true }).click();
 
   // Complete inline + Undo toast + reload persistence
   await page.getByRole("button", { name: "Marcar como completada: Laboratorio 4" }).click();
