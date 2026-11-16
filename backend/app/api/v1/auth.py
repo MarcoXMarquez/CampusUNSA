@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import _resolve_authenticated_user, get_current_user  # noqa: F401
 from app.core.database import get_db
+from app.core.redis import get_redis
 from app.core.security import (
     create_access_token,
     hash_password,
@@ -21,8 +22,18 @@ from app.schemas.classroom import (
     ClassroomConsentResponse,
     ClassroomStatusResponse,
 )
+from app.schemas.otp import (
+    OtpChannel,
+    OtpGenerateRequest,
+    OtpGenerateResponse,
+    OtpStatusResponse,
+    OtpUnlinkResponse,
+    OtpVerifyRequest,
+    OtpVerifyResponse,
+)
 from app.services.classroom.classroom_sync import ClassroomSyncService, GoogleClassroomError
 from app.services.classroom.google_oauth import GoogleOAuthService
+from app.services.messaging.otp_service import InvalidOtpError, OTPService, OtpError
 from app.core.token_encryption import encrypt_token
 
 logger = logging.getLogger(__name__)
@@ -288,4 +299,102 @@ def handle_classroom_oauth_callback(
         status="CONNECTED",
         connected_at=now,
         message="Google Classroom successfully connected",
+    )
+
+
+@router.post("/otp/generate", response_model=OtpGenerateResponse)
+def generate_messaging_otp(
+    payload: OtpGenerateRequest,
+    current_user: User = Depends(_resolve_authenticated_user),
+    redis_client: Any = Depends(get_redis),
+) -> OtpGenerateResponse:
+    """Generates a 6-digit single-use OTP with strict 300-second Redis TTL."""
+    try:
+        otp_code, expires_in_seconds, expires_at, deep_link_url = OTPService.generate_otp(
+            redis_client=redis_client,
+            user=current_user,
+            channel=payload.channel,
+        )
+    except OtpError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"code": exc.code, "message": exc.message},
+        ) from exc
+
+    return OtpGenerateResponse(
+        channel=payload.channel,
+        otp_code=otp_code,
+        expires_in_seconds=expires_in_seconds,
+        expires_at=expires_at,
+        deep_link_url=deep_link_url,
+    )
+
+
+@router.post("/otp/verify", response_model=OtpVerifyResponse)
+def verify_messaging_otp(
+    payload: OtpVerifyRequest,
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+    redis_client: Any = Depends(get_redis),
+) -> OtpVerifyResponse:
+    """Verifies a 6-digit OTP against Redis and binds WhatsApp or Telegram to the user."""
+    try:
+        _, normalized_identifier, welcome_message = OTPService.verify_and_bind(
+            db=db,
+            redis_client=redis_client,
+            channel=payload.channel,
+            identifier=payload.identifier,
+            submitted_code=payload.code,
+            user=current_user,
+        )
+    except InvalidOtpError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={
+                "code": exc.code,
+                "message": exc.message,
+                "attempts_remaining": exc.attempts_remaining,
+            },
+        ) from exc
+    except OtpError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"code": exc.code, "message": exc.message},
+        ) from exc
+
+    return OtpVerifyResponse(
+        channel=payload.channel,
+        identifier=normalized_identifier,
+        linked=True,
+        message=welcome_message,
+    )
+
+
+@router.get("/otp/status", response_model=OtpStatusResponse)
+def get_messaging_otp_status(
+    current_user: User = Depends(_resolve_authenticated_user),
+    redis_client: Any = Depends(get_redis),
+) -> OtpStatusResponse:
+    """Returns WhatsApp and Telegram linkage status plus active OTP countdowns."""
+    return OtpStatusResponse(**OTPService.get_status(redis_client=redis_client, user=current_user))
+
+
+@router.delete("/otp/link/{channel}", response_model=OtpUnlinkResponse)
+def unlink_messaging_channel(
+    channel: OtpChannel,
+    current_user: User = Depends(_resolve_authenticated_user),
+    db: Session = Depends(get_db),
+    redis_client: Any = Depends(get_redis),
+) -> OtpUnlinkResponse:
+    """Removes the bound WhatsApp phone number or Telegram chat ID from the user account."""
+    OTPService.unlink_channel(
+        db=db,
+        redis_client=redis_client,
+        user=current_user,
+        channel=channel,
+    )
+    return OtpUnlinkResponse(
+        channel=channel,
+        linked=False,
+        message=f"{channel.capitalize()} unlinked successfully.",
     )

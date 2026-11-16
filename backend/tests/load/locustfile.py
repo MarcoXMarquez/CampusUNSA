@@ -111,6 +111,7 @@ class StudentBrowser(FastHttpUser):
             assignment_id=dataset["completion_assignment_id"],
             source_id=dataset.get("completion_source_id", ""),
             course_code=dataset.get("completion_course_code", "1705275"),
+            channel="whatsapp",
         )
         payload = None
         if case.path.endswith("/completion"):
@@ -169,6 +170,14 @@ class StudentBrowser(FastHttpUser):
         elif case.path.endswith("/dutic/ical/sync"):
             payload = {
                 "calendar_url": "https://aulavirtual.unsa.edu.pe/2026B/calendar/export_execute.php?userid=1&authtoken=perf"
+            }
+        elif case.path.endswith("/auth/otp/generate"):
+            payload = {"channel": "whatsapp"}
+        elif case.path.endswith("/auth/otp/verify"):
+            payload = {
+                "channel": "whatsapp",
+                "code": "000000",
+                "identifier": "+51900000000",
             }
         elif case.path.endswith("/nlp/parse-task"):
             payload = {
@@ -251,6 +260,15 @@ class StudentBrowser(FastHttpUser):
                         and body["user"]["email"]
                         == self.account["identity"] + "@unsa.edu.pe"
                     )
+                elif case.path.endswith("/auth/otp/generate"):
+                    assert len(body["otp_code"]) == 6 and body["expires_in_seconds"] == 300
+                elif case.path.endswith("/auth/otp/verify"):
+                    assert body["detail"]["code"] in ("OTP_EXPIRED", "INVALID_OTP")
+                    response.success()
+                elif case.path.endswith("/auth/otp/status"):
+                    assert "whatsapp_connected" in body and "telegram_connected" in body
+                elif case.method == "DELETE" and case.path.endswith("/auth/otp/link/{channel}"):
+                    assert body["channel"] == "whatsapp" and body["linked"] is False
                 elif case.path.endswith("/nlp/parse-task"):
                     assert body["status"] == "parsed" and body["task"]["course"] == "SO"
             except (AssertionError, KeyError, TypeError, ValueError):
