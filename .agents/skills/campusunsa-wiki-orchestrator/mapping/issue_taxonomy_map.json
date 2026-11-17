@@ -240,6 +240,11 @@
       "target_page": "IOS-PWA-Design-and-Task-Board.md",
       "category": "academic_hub",
       "title": "iOS PWA Design and Task Board"
+    },
+    "123": {
+      "target_page": "Mobile-Task-Detail-and-Assignment-Links.md",
+      "category": "academic_hub",
+      "title": "Mobile Task Detail and Assignment Links"
     }
   },
   "dynamic_heuristics": {
