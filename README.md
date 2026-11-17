@@ -2,8 +2,9 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: light)" srcset="docs/assets/campusunsa-banner-dark.png">
-    <img src="docs/assets/campusunsa-banner-dark.png" alt="CampusUNSA — Academic Flow Without Friction">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/campusunsa-banner-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/assets/campusunsa-banner-light.png">
+    <img src="docs/assets/campusunsa-banner-light.png" alt="CampusUNSA — Academic Flow Without Friction">
   </picture>
 </p>
 
