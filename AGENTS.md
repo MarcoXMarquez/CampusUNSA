@@ -78,6 +78,8 @@ Every AI agent modifying or generating code in this repository MUST strictly fol
 
 Every AI agent that creates or modifies code under `frontend/` MUST follow the Stitch-First directives in this section. **Google Stitch (project `4575327637306768444`) and `docs/design/DESIGN.md` are the authoritative visual source of truth.** Agents MUST NOT override or flatten Stitch visual tokens (colors, elevation shadows, card surfaces, radii, or layout geometry) in the name of generic templates.
 
+Apply the [surface, elevation, and interaction guideline](docs/design/surface-elevation-guideline.md) to new and updated presentation components.
+
 #### 3.2.1 Stitch-First Visual Authority & Token Mapping
 
 * **Design Source of Truth:** When implementing or updating any screen designed in Stitch, agents MUST inspect the Stitch design via the `stitch` MCP (`stitch_find`, `stitch_get`) or `docs/design/DESIGN.md`, and reproduce its layout geometry, visual hierarchy, elevation, and surface contrast 1:1.
@@ -233,4 +235,6 @@ Before assuming requirements or designing contracts, consult formal documents in
 * **Agile Sprint Plan & Team Matrix:** [docs/planning/agile-sprint-plan.md](docs/planning/agile-sprint-plan.md)
 * **Agentic Engineering Standard:** [docs/planning/agentic-engineering-standard.md](docs/planning/agentic-engineering-standard.md)
 * **Contribution Guidelines:** [CONTRIBUTING.md](CONTRIBUTING.md)
-* **iOS Design System:** [docs/design/ios-design-system.md](docs/design/ios-design-system.md)
+* **Design System:** [docs/design/DESIGN.md](docs/design/DESIGN.md)
+* **Palette and Typography:** [docs/design/apple-ios-palette-guideline.md](docs/design/apple-ios-palette-guideline.md)
+* **Surface and Elevation:** [docs/design/surface-elevation-guideline.md](docs/design/surface-elevation-guideline.md)
