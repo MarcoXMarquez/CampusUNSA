@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date("2026-11-16T00:00:00Z"));
@@ -9,9 +9,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test("renders Stitch Tareas board, filters, saves inline completion with undo, and handles errors", async ({
-  page,
-}, testInfo) => {
+async function mockAcademicBoard(page: Page): Promise<{ failNextSave: () => void }> {
   const courses = [
     {
       id: "course-1",
@@ -80,6 +78,17 @@ test("renders Stitch Tareas board, filters, saves inline completion with undo, a
       group_code: "A",
       due_date: "2026-11-19T04:59:00Z",
       origin: "moodle",
+      description: [
+        "Lee las indicaciones de la entrega [1].",
+        ...Array.from({ length: 16 }, () => "Revisa los requisitos del trabajo final."),
+        "",
+        "Links:",
+        "------",
+        "[1]",
+        "https://aulavirtual.unsa.edu.pe/2026B/mod/assign/view.php?id=354694",
+        "[2]",
+        "https://example.com/material/" + "a".repeat(160),
+      ].join("\n"),
     },
   ];
 
@@ -118,6 +127,13 @@ test("renders Stitch Tareas board, filters, saves inline completion with undo, a
     }
   });
 
+  return { failNextSave: () => { failNextSave = true; } };
+}
+
+test("renders Stitch Tareas board, filters, saves inline completion with undo, and handles errors", async ({
+  page,
+}, testInfo) => {
+  const board = await mockAcademicBoard(page);
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "Tareas" })).toBeVisible();
@@ -187,10 +203,37 @@ test("renders Stitch Tareas board, filters, saves inline completion with undo, a
   await expect(page.getByRole("heading", { name: "Laboratorio 4" })).toBeHidden();
 
   // Error rollback preserves task visibility
-  failNextSave = true;
+  board.failNextSave();
   await page.getByRole("button", { name: "Marcar como completada: Tarea 3" }).click();
   await expect(
     page.getByRole("alert").filter({ hasText: "No se pudo guardar el cambio" })
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Tarea 3" })).toBeVisible();
+});
+
+test("fits the Moodle task detail and its long links in a narrow mobile viewport", async ({ page }, testInfo) => {
+  await mockAcademicBoard(page);
+  await page.setViewportSize({ width: 320, height: 520 });
+  await page.goto("/");
+  await page.getByRole("button", { name: /^Proyecto de investigaci/ }).click();
+  const moodleDetail = page.getByRole("dialog");
+  const bounds = await moodleDetail.boundingBox();
+  expect(bounds?.x).toBeGreaterThanOrEqual(0);
+  expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(320);
+  expect(await moodleDetail.evaluate((dialog) => dialog.scrollWidth)).toBeLessThanOrEqual(320);
+
+  const moodleLink = moodleDetail.getByRole("link", { name: "Abrir en Moodle" });
+  await expect(moodleLink).toHaveAttribute(
+    "href", "https://aulavirtual.unsa.edu.pe/2026B/mod/assign/view.php?id=354694"
+  );
+  await moodleLink.scrollIntoViewIfNeeded();
+  await expect(moodleLink).toBeInViewport();
+  await expect(moodleDetail.getByRole("button", { name: "Cerrar" })).toBeInViewport();
+  await expect(moodleDetail.getByText("Links:", { exact: true })).toHaveCount(0);
+  const resource = moodleDetail.getByRole("link", { name: /example.com/ });
+  await resource.scrollIntoViewIfNeeded();
+  await expect(resource).toBeInViewport();
+  await expect(moodleLink).toBeInViewport();
+  await expect(moodleDetail.getByRole("button", { name: "Cerrar" })).toBeInViewport();
+  await page.screenshot({ path: testInfo.outputPath("moodle-detail-320.png") });
 });

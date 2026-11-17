@@ -49,7 +49,9 @@ export const taskBoardMessages = {
     instructions: "Instrucciones",
     openMoodle: "Abrir en Moodle",
     openClassroom: "Abrir en Classroom",
-    noLink: "No hay enlace web disponible para esta actividad.",
+    resources: "Enlaces de la tarea",
+    openResource: (host: string) => `Abrir enlace en ${host}`,
+    noLink: "No hay un enlace directo disponible para esta actividad.",
   },
   countLabel: (count: number): string =>
     count === 1 ? "1 tarea" : `${count} tareas`,
