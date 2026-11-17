@@ -1,5 +1,6 @@
 "use client";
 
+import { settingsMessages as messages } from "@/lib/messages/settings-messages";
 import React, { useEffect, useState } from "react";
 import {
   Navbar,
@@ -48,7 +49,7 @@ interface AjustesViewProps {
 }
 
 /**
- * Settings view ("Ajustes") managing institutional account, platform integrations, data reset, and diagnostics.
+ * Settings view (messages.title) managing institutional account, platform integrations, data reset, and diagnostics.
  */
 export function AjustesView({
   user,
@@ -123,9 +124,9 @@ export function AjustesView({
     try {
       await onSubscribeMoodleIcal(icalUrl.trim());
       setIcalDialogOpened(false);
-      showNotice("Calendario Moodle suscrito correctamente");
+      showNotice(messages.moodleSubscribed);
     } catch (err: unknown) {
-      showError(err, "No se pudo suscribir el calendario Moodle");
+      showError(err, messages.moodleError);
     }
   };
 
@@ -133,9 +134,9 @@ export function AjustesView({
     setCleaningTasks(true);
     try {
       await onClearTasks();
-      showNotice("Tareas borradas correctamente");
+      showNotice(messages.tasksRemoved);
     } catch (err: unknown) {
-      showError(err, "No se pudieron borrar las tareas");
+      showError(err, messages.taskRemovalError);
     } finally {
       setCleaningTasks(false);
     }
@@ -145,17 +146,17 @@ export function AjustesView({
     setCleaningCourses(true);
     try {
       await onClearCourses();
-      showNotice("Cursos borrados correctamente");
+      showNotice(messages.coursesRemoved);
     } catch (err: unknown) {
-      showError(err, "No se pudieron borrar los cursos");
+      showError(err, messages.courseRemovalError);
     } finally {
       setCleaningCourses(false);
     }
   };
 
   return (
-    <div className="pb-28">
-      <Navbar title="Ajustes" large />
+    <div className="pb-dock-content">
+      <Navbar title={messages.title} large />
 
       {actionMessage && (
         <div
@@ -197,11 +198,11 @@ export function AjustesView({
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={user.profile.avatar_url}
-                  alt="Avatar"
+                  alt={messages.avatarAlt}
                   className="w-10 h-10 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-brand-primary-tint text-brand-action flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-full bg-surface-elevated text-ink-primary flex items-center justify-center font-bold">
                   {avatarInitial}
                 </div>
               )
@@ -211,8 +212,8 @@ export function AjustesView({
           <ListItem
             link
             chevron
-            title="Iniciar Sesión Institucional"
-            subtitle="Acceso exclusivo con cuenta @unsa.edu.pe"
+            title={messages.signIn}
+            subtitle={messages.institutionalAccess}
             media={
               <User size={22} weight="regular" className="text-brand-action" />
             }
@@ -238,8 +239,8 @@ export function AjustesView({
       <BlockTitle>Pruebas y Depuración</BlockTitle>
       <List strong inset className="my-0">
         <ListItem
-          title="Modo Sandbox / Opciones Avanzadas"
-          subtitle="Habilita herramientas de desarrollo local"
+          title={messages.sandbox}
+          subtitle={messages.sandboxHint}
           after={
             <Toggle
               checked={showSandbox}
@@ -249,12 +250,12 @@ export function AjustesView({
         />
         <ListItem
           link
-          title="Borrar Tareas"
-          subtitle="Limpia la base de datos de actividades sincronizadas"
+          title={messages.removeTasks}
+          subtitle={messages.removeTasksHint}
           after={
             cleaningTasks ? (
               <span className="text-ios-footnote text-ink-secondary">
-                Borrando...
+                {messages.removing}
               </span>
             ) : undefined
           }
@@ -265,12 +266,12 @@ export function AjustesView({
         />
         <ListItem
           link
-          title="Borrar Cursos"
-          subtitle="Limpia la lista de cursos sincronizados"
+          title={messages.removeCourses}
+          subtitle={messages.removeCoursesHint}
           after={
             cleaningCourses ? (
               <span className="text-ios-footnote text-ink-secondary">
-                Borrando...
+                {messages.removing}
               </span>
             ) : undefined
           }
@@ -294,7 +295,7 @@ export function AjustesView({
           <List strong inset className="my-0">
             <ListItem
               link
-              title="Cerrar Sesión"
+              title={messages.signOut}
               media={
                 <SignOut
                   size={22}
@@ -311,7 +312,7 @@ export function AjustesView({
 
       <div className="pt-6 pb-4 text-center">
         <p className="text-ios-footnote text-ink-secondary">
-          CampusUNSA Mobile PWA · v1.0.0
+          {messages.version}
         </p>
       </div>
 
@@ -327,25 +328,25 @@ export function AjustesView({
       <Dialog
         opened={icalDialogOpened}
         onBackdropClick={() => setIcalDialogOpened(false)}
-        title="Suscripción iCal DUTIC"
+        title={messages.moodleSubscription}
         buttons={
           <>
             <DialogButton onClick={() => setIcalDialogOpened(false)}>
-              Cancelar
+              {messages.cancel}
             </DialogButton>
             <DialogButton strong onClick={handleIcalSubmit}>
-              Guardar
+              {messages.save}
             </DialogButton>
           </>
         }
       >
         <div className="py-2">
           <p className="text-ios-footnote text-ink-secondary mb-3">
-            Pega tu URL de exportación de calendario de Moodle DUTIC:
+            {messages.moodleUrlPrompt}
           </p>
           <input
             type="url"
-            placeholder="https://aulavirtual.unsa.edu.pe/..."
+            placeholder={messages.moodleUrlPlaceholder}
             value={icalUrl}
             onChange={(e) => setIcalUrl(e.target.value)}
             className="w-full px-3 py-2 text-ios-subhead rounded-lg border border-control bg-surface-card text-ink-primary placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-brand-action"

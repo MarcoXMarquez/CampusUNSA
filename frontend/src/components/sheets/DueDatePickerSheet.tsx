@@ -170,7 +170,7 @@ export function DueDatePickerSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-[430px] max-h-[93dvh] bg-surface-sheet rounded-t-[34px] sm:rounded-[34px] flex flex-col shadow-2xl overflow-hidden border border-subtle pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+        className="w-full max-w-[430px] max-h-[93dvh] bg-surface-sheet rounded-t-[34px] sm:rounded-[34px] flex flex-col shadow-layer-overlay overflow-hidden border border-subtle pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
       >
         <div className="w-full pt-3 pb-1 flex justify-center items-center" aria-hidden="true">
           <div className="w-9 h-[5px] bg-control rounded-full" />
@@ -221,7 +221,7 @@ export function DueDatePickerSheet({
               }}
               className={`min-h-[44px] px-4 py-2 text-ios-footnote font-medium rounded-full transition whitespace-nowrap ${
                 draftIso === todayQuickIso
-                  ? "bg-brand-action text-white"
+                  ? "bg-brand-cta text-white"
                   : "bg-surface-card border border-subtle text-ink-primary"
               }`}
             >
@@ -235,7 +235,7 @@ export function DueDatePickerSheet({
               }}
               className={`min-h-[44px] px-4 py-2 text-ios-footnote font-medium rounded-full transition whitespace-nowrap ${
                 draftIso === tomorrowQuickIso
-                  ? "bg-brand-action text-white"
+                  ? "bg-brand-cta text-white"
                   : "bg-surface-card border border-subtle text-ink-primary"
               }`}
             >
@@ -253,7 +253,7 @@ export function DueDatePickerSheet({
               }}
               className={`min-h-[44px] px-4 py-2 text-ios-footnote font-medium rounded-full transition whitespace-nowrap flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed ${
                 nextClassIso && draftIso === nextClassIso
-                  ? "bg-brand-action text-white"
+                  ? "bg-brand-cta text-white"
                   : "bg-surface-card border border-subtle text-ink-primary"
               }`}
             >
@@ -272,7 +272,7 @@ export function DueDatePickerSheet({
             </button>
           </div>
 
-          <div className="bg-surface-card border border-subtle rounded-2xl p-4 shadow-sm">
+          <div className="bg-surface-card border border-subtle rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-ios-headline font-semibold text-ink-primary">
                 {monthHeading}
@@ -330,7 +330,7 @@ export function DueDatePickerSheet({
                     <span
                       className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         isSelected
-                          ? "bg-brand-action text-white font-semibold shadow-md"
+                          ? "bg-brand-cta text-white font-semibold"
                           : cell.isToday
                             ? "text-brand-action font-semibold"
                             : cell.isPast

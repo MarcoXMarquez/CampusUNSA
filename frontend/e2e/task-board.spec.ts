@@ -64,6 +64,7 @@ test("renders Stitch Tareas board, filters, saves inline completion with undo, a
       course_code: "1704258",
       classroom_assignment_id: "a2",
       title: "Laboratorio 4",
+      alternate_link: "https://classroom.google.com/c/example",
       component_type: "LABORATORIO",
       group_code: "B",
       due_date: "2026-11-16T04:59:00Z",
@@ -129,6 +130,30 @@ test("renders Stitch Tareas board, filters, saves inline completion with undo, a
   );
 
   await page.screenshot({ path: testInfo.outputPath("board.png"), fullPage: true });
+  const lastTask = page.getByRole("button", { name: /^Proyecto de investigaci/ });
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const lastTaskBounds = await lastTask.boundingBox();
+  const dockBounds = await page.locator("footer .liquid-glass-dock").boundingBox();
+  expect(lastTaskBounds).not.toBeNull();
+  expect(dockBounds).not.toBeNull();
+  expect(lastTaskBounds!.y + lastTaskBounds!.height).toBeLessThanOrEqual(dockBounds!.y);
+  expect(await lastTask.locator("..").evaluate((row) => getComputedStyle(row).boxShadow)).toBe("none");
+
+  await page.getByRole("button", { name: "Horario", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Horario", exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("schedule.png") });
+
+  await page.getByRole("button", { name: "Hugo", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Hugo", exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("hugo.png") });
+
+  await page.getByRole("button", { name: "Crear nueva tarea" }).click();
+  await expect(page.getByRole("dialog", { name: "Nueva tarea" })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("new-task.png") });
+  await page.getByRole("dialog", { name: "Nueva tarea" })
+    .getByRole("button", { name: "Cancelar", exact: true }).click();
+
+  await page.getByRole("button", { name: "Tareas", exact: true }).click();
 
   // Filter by Lab and back to Todas
   await page.getByRole("button", { name: "Lab", exact: true }).click();
@@ -136,11 +161,18 @@ test("renders Stitch Tareas board, filters, saves inline completion with undo, a
   await expect(page.getByRole("heading", { name: "Tarea 3" })).toBeHidden();
   await page.getByRole("button", { name: "Todas", exact: true }).click();
 
-  // Open pending modal on card tap
-  await page.getByRole("button", { name: /^Laboratorio 4/ }).click();
+  // Open assignment details and verify its provider link.
+  const taskDetails = page.getByRole("button", { name: /^Laboratorio 4/ });
+  await taskDetails.click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(page.getByText("Pendiente de implementación.")).toBeVisible();
-  await page.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Laboratorio 4" })
+    .getByRole("link", { name: "Abrir en Classroom" }))
+    .toHaveAttribute("href", "https://classroom.google.com/c/example");
+  await page.screenshot({ path: testInfo.outputPath("detail.png") });
+  await expect(page.getByRole("button", { name: "Cerrar", exact: true })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Laboratorio 4" })).toBeHidden();
+  await expect(taskDetails).toBeFocused();
 
   // Complete inline + Undo toast + reload persistence
   const patchCompletionPromise = page.waitForResponse(

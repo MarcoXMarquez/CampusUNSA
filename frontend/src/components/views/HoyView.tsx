@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowClockwise } from "@phosphor-icons/react";
-import type { AcademicAssignment } from "@/components/sheets/TaskDetailSheet";
+import { TaskDetailSheet, type AcademicAssignment } from "@/components/sheets/TaskDetailSheet";
 import type { AcademicCourse } from "@/hooks/useAcademicBoard";
 import { groupTasksBySchedule } from "@/lib/task-urgency";
 import { formatAcademicTitle } from "@/lib/text-format";
@@ -51,6 +51,7 @@ export function HoyView({
   onRefresh,
   onReconnectMoodle,
   onCompletionChange,
+  completionPending = false,
   completionError = null,
 }: HoyViewProps): React.JSX.Element {
   const [componentFilter, setComponentFilter] = useState<ComponentFilter>("all");
@@ -228,6 +229,10 @@ export function HoyView({
     [isOnline, onCompletionChange]
   );
 
+  const detailAssignment = detailModalTask
+    ? assignments.find(({ id }) => id === detailModalTask.id) ?? detailModalTask
+    : null;
+
   const handleUndoComplete = useCallback(() => {
     if (!undoToast) return;
     const targetId = undoToast.id;
@@ -280,7 +285,7 @@ export function HoyView({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="w-full min-h-dvh bg-canvas text-ink-primary safe-areas pb-28 overflow-x-hidden"
+      className="w-full min-h-dvh bg-canvas text-ink-primary safe-areas pb-dock-content overflow-x-hidden"
     >
       <div className="w-full max-w-md mx-auto px-5 pt-6">
         {(pullDistance > 12 || syncing) && (
@@ -381,40 +386,26 @@ export function HoyView({
 
       <TaskUndoToast toast={undoToast} onUndo={handleUndoComplete} />
 
-      {detailModalTask && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50 dark:bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-          onClick={() => setDetailModalTask(null)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="task-detail-placeholder-title"
-            onClick={(event) => event.stopPropagation()}
-            className="w-full max-w-md rounded-2xl bg-surface-sheet border border-subtle p-5 text-ink-primary shadow-2xl space-y-4"
-          >
-            <div>
-              <h2
-                id="task-detail-placeholder-title"
-                className="text-ios-headline font-bold text-ink-primary line-clamp-2"
-              >
-                {formatAcademicTitle(detailModalTask.title) || detailModalTask.title}
-              </h2>
-              <p className="text-ios-subhead text-ink-secondary mt-2 leading-relaxed">
-                {messages.detailPlaceholder.description}
-              </p>
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setDetailModalTask(null)}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-cta hover:bg-brand-cta-hover text-ios-caption-1 font-semibold text-white cursor-pointer"
-              >
-                {messages.detailPlaceholder.close}
-              </button>
-            </div>
-          </div>
-        </div>
+      {detailAssignment && (
+        <TaskDetailSheet
+          assignment={{
+            ...detailAssignment,
+            courseName: metadataById.get(detailAssignment.id)?.courseLabel,
+          }}
+          opened
+          onClose={() => setDetailModalTask(null)}
+          onCompletionChange={onCompletionChange && ((id, completed) => {
+            if (completed) {
+              handleCompleteInline(detailAssignment);
+              setDetailModalTask(null);
+            } else {
+              onCompletionChange(id, false);
+            }
+          })}
+          completionPending={completionPending}
+          completionError={completionError ? messages.completionError : null}
+          isOnline={isOnline}
+        />
       )}
     </div>
   );

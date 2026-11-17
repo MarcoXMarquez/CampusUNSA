@@ -63,7 +63,7 @@ export function TareasSyncView({
 
   return (
     <div className="w-full min-h-dvh bg-canvas text-ink-primary select-none safe-areas">
-      <div className="w-full max-w-md mx-auto px-5 pt-4 pb-28 flex flex-col gap-6">
+      <div className="w-full max-w-md mx-auto px-5 pt-4 pb-dock-content flex flex-col gap-6">
         <header className="pt-1">
           <h1 className="text-ios-large-title font-extrabold tracking-tight text-ink-primary">
             {messages.headerTitle}
@@ -75,7 +75,7 @@ export function TareasSyncView({
           aria-label={messages.bannerTitle}
           className="flex flex-col items-center text-center pt-1 pb-1"
         >
-          <div className="w-20 h-20 mb-5 rounded-2xl bg-surface-elevated p-1 flex items-center justify-center border border-subtle shadow-sm overflow-hidden">
+          <div className="w-20 h-20 mb-5 rounded-2xl bg-surface-elevated p-1 flex items-center justify-center border border-subtle overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/onboarding/step-2-courses.webp"
@@ -107,7 +107,7 @@ export function TareasSyncView({
             </span>
           </div>
 
-          <div className="bg-surface-card rounded-2xl border border-subtle divide-y divide-subtle overflow-hidden shadow-sm">
+          <div className="bg-surface-card rounded-2xl border border-subtle divide-y divide-subtle overflow-hidden">
             {/* Item 1: Google Classroom */}
             <article className="p-4 flex flex-col">
               <div className="flex items-start justify-between gap-3">
@@ -143,7 +143,7 @@ export function TareasSyncView({
                   type="button"
                   onClick={onLinkClassroom}
                   disabled={classroomConnected}
-                  className="self-start shrink-0 min-h-[44px] px-4 py-2 rounded-full bg-brand-cta hover:bg-brand-cta-hover disabled:bg-surface-elevated disabled:text-ink-secondary text-white text-ios-caption-1 font-semibold tracking-wide transition-all duration-150 active:scale-95 shadow-sm cursor-pointer disabled:cursor-default"
+                  className="self-start shrink-0 min-h-[44px] px-4 py-2 rounded-full bg-brand-cta interactive-cta disabled:bg-surface-elevated disabled:text-ink-secondary text-white text-ios-caption-1 font-semibold tracking-wide transition-all duration-150 active:scale-95 cursor-pointer disabled:cursor-default"
                 >
                   {classroomConnected
                     ? messages.classroomConnectedButton
@@ -190,7 +190,7 @@ export function TareasSyncView({
                 <button
                   type="button"
                   onClick={openIcalModal}
-                  className="self-start shrink-0 min-h-[44px] px-4 py-2 rounded-full bg-brand-cta hover:bg-brand-cta-hover text-white text-ios-caption-1 font-semibold tracking-wide transition-all duration-150 active:scale-95 shadow-sm cursor-pointer"
+                  className="self-start shrink-0 min-h-[44px] px-4 py-2 rounded-full bg-brand-cta interactive-cta text-white text-ios-caption-1 font-semibold tracking-wide transition-all duration-150 active:scale-95 cursor-pointer"
                 >
                   {moodleIcalConnected
                     ? messages.duticConnectedButton
@@ -227,7 +227,7 @@ export function TareasSyncView({
             aria-modal="true"
             aria-labelledby="dutic-ical-modal-title"
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-2xl bg-surface-sheet border border-subtle p-5 text-ink-primary shadow-2xl space-y-4"
+            className="w-full max-w-md rounded-2xl bg-surface-sheet border border-subtle p-5 text-ink-primary shadow-layer-overlay space-y-4"
           >
             <div>
               <h2 id="dutic-ical-modal-title" className="text-ios-headline font-bold text-ink-primary">
@@ -278,7 +278,7 @@ export function TareasSyncView({
                 <button
                   type="submit"
                   disabled={icalSubmitting || !icalUrl.trim()}
-                  className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-cta hover:bg-brand-cta-hover disabled:opacity-50 text-ios-caption-1 font-semibold text-white cursor-pointer"
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-cta interactive-cta disabled:opacity-50 text-ios-caption-1 font-semibold text-white cursor-pointer"
                 >
                   {icalSubmitting
                     ? messages.icalSubmittingButton
@@ -301,7 +301,7 @@ export function TareasSyncView({
             aria-modal="true"
             aria-labelledby="dutic-tutorial-modal-title"
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-2xl bg-surface-sheet border border-subtle p-5 text-ink-primary shadow-2xl space-y-4"
+            className="w-full max-w-md rounded-2xl bg-surface-sheet border border-subtle p-5 text-ink-primary shadow-layer-overlay space-y-4"
           >
             <div>
               <h2
@@ -319,7 +319,7 @@ export function TareasSyncView({
               <button
                 type="button"
                 onClick={() => setTutorialModalOpen(false)}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-cta hover:bg-brand-cta-hover text-ios-caption-1 font-semibold text-white cursor-pointer"
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-cta interactive-cta text-ios-caption-1 font-semibold text-white cursor-pointer"
               >
                 {messages.tutorialCloseButton}
               </button>

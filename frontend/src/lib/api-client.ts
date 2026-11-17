@@ -1,3 +1,5 @@
+import { AUTH_MESSAGES } from "./messages/auth-messages";
+import { taskBoardMessages } from "./messages/task-board-messages";
 import type { components } from "../types/api";
 
 export type UserResponse = components["schemas"]["UserResponse"];
@@ -445,4 +447,60 @@ export async function createManualAssignment(
     );
   }
   return (await res.json()) as ApiAcademicAssignmentResponse;
+}
+
+export async function loginWithCredentials(
+  payload: components["schemas"]["EmailLoginRequest"]
+): Promise<TokenResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/auth/login`, {
+    method: "POST",
+    headers: buildHeaders(null, true),
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new ApiRequestError(
+      await parseErrorMessage(response, AUTH_MESSAGES.authenticationError),
+      response.status
+    );
+  }
+  return response.json();
+}
+
+export async function fetchAcademicBoard(token: string, signal: AbortSignal): Promise<{
+  courses: ApiAcademicCourseResponse[];
+  assignments: ApiAcademicAssignmentResponse[];
+  moodleSessionExpired: boolean;
+}> {
+  const base = getApiBaseUrl();
+  const options = { headers: buildHeaders(token), signal };
+  const [coursesResponse, assignmentsResponse, statusResponse] = await Promise.all([
+    fetch(`${base}/courses/enrolled`, options),
+    fetch(`${base}/courses/assignments`, options),
+    fetch(`${base}/dutic/ical/status`, options).catch(() => null),
+  ]);
+  if (!coursesResponse.ok || !assignmentsResponse.ok) {
+    throw new Error(taskBoardMessages.syncError);
+  }
+  const courses: ApiAcademicCourseResponse[] = await coursesResponse.json();
+  const assignments: ApiAcademicAssignmentResponse[] = await assignmentsResponse.json();
+  if (!Array.isArray(courses) || !Array.isArray(assignments)) {
+    throw new Error(taskBoardMessages.syncError);
+  }
+  const status: Partial<MoodleIcalStatusResponse> = statusResponse?.ok
+    ? await statusResponse.json()
+    : {};
+  return { courses, assignments, moodleSessionExpired: status.sync_status === "NEEDS_REAUTH" };
+}
+
+export async function updateAssignmentCompletion(
+  token: string,
+  id: string,
+  payload: components["schemas"]["AssignmentCompletionRequest"]
+): Promise<ApiAcademicAssignmentResponse> {
+  const response = await fetch(
+    `${getApiBaseUrl()}/classroom/assignments/${encodeURIComponent(id)}/completion`,
+    { method: "PATCH", headers: buildHeaders(token, true), body: JSON.stringify(payload) }
+  );
+  if (!response.ok) throw new Error(taskBoardMessages.completionError);
+  return response.json();
 }

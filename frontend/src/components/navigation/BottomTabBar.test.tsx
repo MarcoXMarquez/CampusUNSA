@@ -40,7 +40,7 @@ describe("BottomTabBar liquid glass navigation dock", () => {
     expect(createBtn.className).toContain("-translate-y-4");
     expect(createBtn.className).toContain("rounded-full");
     expect(createBtn.className).toContain("bg-brand-cta");
-    expect(createBtn.className).toContain("shadow-lg");
+    expect(createBtn.className).toContain("shadow-layer-fab");
     expect(createBtn.className).toContain("active:scale-95");
 
     fireEvent.click(horarioBtn);

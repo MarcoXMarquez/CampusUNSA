@@ -9,6 +9,14 @@ module.exports = konstaConfig({
   darkMode: "media",
   theme: {
     extend: {
+      boxShadow: {
+        "layer-segment": "var(--effect-shadow-segment)",
+        "layer-overlay": "var(--effect-shadow-overlay)",
+        "layer-fab": "var(--effect-shadow-fab)",
+      },
+      padding: {
+        "dock-content": "calc(env(safe-area-inset-bottom) + 7rem)",
+      },
       colors: {
         // Unified Apple HIG + UNSA semantic tokens
         canvas: "rgb(var(--bg-canvas) / <alpha-value>)",

@@ -219,12 +219,13 @@ describe("Stitch Tareas board (HoyView)", () => {
     expect(screen.queryByText("Tarea completada")).toBeNull();
   });
 
-  it("opens the pending implementation modal when tapping the task card body", () => {
+  it("opens the real task detail sheet when tapping the task card body", () => {
     render(<HoyView {...baseProps} />);
     fireEvent.click(screen.getByRole("button", { name: /^Deliver sprint report/i }));
 
     const dialog = screen.getByRole("dialog");
-    expect(within(dialog).getByText("Pendiente de implementación.")).toBeDefined();
+    expect(within(dialog).getByRole("heading", { name: "Deliver sprint report" })).toBeDefined();
+    expect(within(dialog).getByRole("button", { name: "Marcar como completada" })).toBeDefined();
     fireEvent.click(within(dialog).getByRole("button", { name: "Cerrar" }));
     expect(screen.queryByRole("dialog")).toBeNull();
   });

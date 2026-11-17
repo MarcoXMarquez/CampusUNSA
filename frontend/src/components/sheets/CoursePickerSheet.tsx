@@ -102,7 +102,7 @@ export function CoursePickerSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-[430px] max-h-[88dvh] flex flex-col bg-surface-sheet rounded-t-[24px] sm:rounded-[24px] pt-2.5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] px-4 text-ink-primary shadow-2xl border border-subtle"
+        className="w-full max-w-[430px] max-h-[88dvh] flex flex-col bg-surface-sheet rounded-t-[24px] sm:rounded-[24px] pt-2.5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] px-4 text-ink-primary shadow-layer-overlay border border-subtle"
       >
         <div
           aria-hidden="true"

@@ -53,6 +53,9 @@ const RAW_HEX_REGEX = /#[0-9a-fA-F]{3,8}\b/;
 // Rule 3.2.6: Prohibited arbitrary pixel/rem/em font sizes in UI components
 const ARBITRARY_FONT_SIZE_REGEX = /\btext-\[\d+(?:\.\d+)?(?:px|rem|em)\]/;
 
+const RAW_SHADOW_REGEX = /(?:^|[\s"'`:])(?:shadow(?:-(?:sm|md|lg|xl|2xl|\[[^\]]+\]))?|drop-shadow(?:-[^\s"'`]+)?)(?=$|[\s"'`])/;
+const INLINE_SHADOW_REGEX = /\bboxShadow\s*:/;
+
 scanDirectory(
   frontendSrc,
   (name) => /\.(tsx|jsx|css)$/.test(name) && !name.includes(".test."),
@@ -115,6 +118,10 @@ scanDirectory(
           "Rule-3.2.5",
           "Raw hex color literal detected in component. Map to semantic tokens in globals.css/tailwind.config.js (see docs/design/apple-ios-palette-guideline.md)."
         );
+      }
+
+      if (isComponent && (RAW_SHADOW_REGEX.test(line) || INLINE_SHADOW_REGEX.test(line))) {
+        reportViolation(filePath, lineNum, "Surface elevation", "Use a semantic layer shadow.");
       }
 
       // 5. Check prohibited arbitrary font sizes inside components

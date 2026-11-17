@@ -137,7 +137,7 @@ export function CredentialsForm({
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-[48px] bg-brand-cta hover:bg-brand-cta-hover active:scale-[0.99] text-white font-bold rounded-[14px] shadow-sm transition-all flex items-center justify-center text-ios-subhead cursor-pointer disabled:opacity-60"
+          className="w-full h-[48px] bg-brand-cta interactive-cta active:scale-[0.99] text-white font-bold rounded-[14px] transition-all flex items-center justify-center text-ios-subhead cursor-pointer disabled:opacity-60"
         >
           {loading
             ? AUTH_MESSAGES.submitting

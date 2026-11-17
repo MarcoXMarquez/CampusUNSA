@@ -47,6 +47,9 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
 ] as const;
 
 export const AUTH_MESSAGES = {
+  authenticationError: "Error de autenticación",
+  signInError: "Error al iniciar sesión",
+  googleUnavailable: "Google OAuth no está configurado en este entorno",
   welcomeBadge: "CAMPUS UNSA",
   welcomeTitle: "CampusUNSA",
   welcomeSubtitle:

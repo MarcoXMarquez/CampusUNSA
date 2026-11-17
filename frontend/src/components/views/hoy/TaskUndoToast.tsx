@@ -20,7 +20,7 @@ export function TaskUndoToast({ toast, onUndo }: TaskUndoToastProps): React.JSX.
     <div className="fixed bottom-24 inset-x-0 z-40 px-4 pointer-events-none">
       <div
         role="status"
-        className="w-full max-w-md mx-auto pointer-events-auto rounded-2xl bg-surface-elevated border border-control px-4 py-2.5 shadow-2xl flex items-center justify-between gap-3"
+        className="w-full max-w-md mx-auto pointer-events-auto rounded-2xl bg-surface-elevated border border-control px-4 py-2.5 shadow-layer-overlay flex items-center justify-between gap-3"
       >
         <div className="min-w-0">
           <p className="text-ios-caption-1 font-semibold text-ink-primary">

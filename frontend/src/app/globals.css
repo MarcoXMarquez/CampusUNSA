@@ -4,31 +4,39 @@
 
 :root {
   --bg-canvas: 242 242 247;
-  --surface-sheet: 242 242 247;
+  --surface-sheet: 255 255 255;
   --surface-card: 255 255 255;
-  --surface-elevated: 249 249 251;
+  --surface-elevated: 229 229 234;
   --surface-inset: 229 229 234;
-  --surface-hero: 253 242 242;
-  --surface-urgent: 254 242 242;
+  --surface-hero: 252 235 236;
+  --surface-urgent: 253 232 232;
 
-  --border-subtle: 216 216 220;
-  --border-control: 198 198 202;
-  --border-urgent: 245 194 194;
+  --border-subtle: 229 229 234;
+  --border-control: 199 199 204;
+  --border-urgent: 245 194 196;
 
   --ink-primary: 0 0 0;
-  --ink-secondary: 110 110 115;
-  --ink-muted: 113 118 126;
-  --ink-disabled: 169 173 181;
+  --ink-secondary: 96 96 101;
+  --ink-muted: 102 102 108;
+  --ink-disabled: 174 174 178;
 
   --brand-cta: 139 0 0;
   --brand-cta-hover: 165 28 48;
-  --brand-action: 211 47 47;
-  --brand-tint: 185 28 28;
+  --brand-action: 186 19 26;
+  --brand-tint: 199 44 65;
   --brand-primary-tint: 139 0 0;
 
-  --status-urgent: 255 59 48;
-  --status-soon: 255 204 0;
-  --status-success: 52 199 89;
+  --status-urgent: 186 0 19;
+  --status-soon: 128 80 0;
+  --status-success: 31 111 50;
+
+  --effect-shadow-overlay: 0 14px 36px rgb(0 0 0 / 0.18);
+  --effect-shadow-fab: 0 8px 22px rgb(0 0 0 / 0.24);
+  --effect-shadow-raised: 0 1px 3px rgb(0 0 0 / 0.10);
+  --effect-bevel-selected: inset 0 1px 0 rgb(255 255 255 / 0.72);
+  --effect-shadow-segment: var(--effect-shadow-raised), var(--effect-bevel-selected);
+  --effect-hover-overlay: 0 0 0 / 0.04;
+  --effect-pressed-overlay: 0 0 0 / 0.08;
 
   /* Floating Liquid Glass Bottom Dock (adapted from MIT dpawlikowski/liquid-glass) */
   --lg-dock-tint: 255 255 255;
@@ -45,31 +53,38 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-canvas: 0 0 0;
-    --surface-sheet: 22 22 24;
+    --surface-sheet: 18 18 20;
     --surface-card: 28 28 30;
     --surface-elevated: 44 44 46;
-    --surface-inset: 25 25 27;
+    --surface-inset: 44 44 46;
     --surface-hero: 29 15 18;
     --surface-urgent: 36 23 23;
 
-    --border-subtle: 42 42 46;
-    --border-control: 56 56 58;
-    --border-urgent: 62 31 32;
+    --border-subtle: 44 44 46;
+    --border-control: 58 58 60;
+    --border-urgent: 74 28 33;
 
     --ink-primary: 255 255 255;
-    --ink-secondary: 142 142 147;
-    --ink-muted: 124 124 130;
-    --ink-disabled: 85 85 90;
+    --ink-secondary: 174 174 178;
+    --ink-muted: 153 153 158;
+    --ink-disabled: 99 99 102;
 
-    --brand-cta: 139 0 0;
-    --brand-cta-hover: 165 28 48;
-    --brand-action: 234 67 69;
-    --brand-tint: 235 83 83;
+    --brand-cta: 153 0 0;
+    --brand-cta-hover: 178 24 43;
+    --brand-action: 245 107 112;
+    --brand-tint: 255 59 92;
     --brand-primary-tint: 229 87 91;
 
     --status-urgent: 255 69 58;
     --status-soon: 255 214 10;
     --status-success: 48 209 88;
+
+    --effect-shadow-overlay: 0 18px 44px rgb(0 0 0 / 0.56);
+    --effect-shadow-fab: 0 8px 22px rgb(0 0 0 / 0.52);
+    --effect-shadow-raised: 0 1px 3px rgb(0 0 0 / 0.28);
+    --effect-bevel-selected: inset 0 1px 0 rgb(255 255 255 / 0.12);
+    --effect-hover-overlay: 255 255 255 / 0.06;
+    --effect-pressed-overlay: 255 255 255 / 0.10;
 
     --lg-dock-tint: 28 28 32;
     --lg-dock-opacity: 0.9;
@@ -163,5 +178,36 @@ body {
   .liquid-glass-dock *,
   .liquid-glass-filter-root * {
     animation: none !important;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .interactive-surface:not(:disabled):hover {
+    background-color: rgb(var(--effect-hover-overlay));
+  }
+
+  .interactive-cta:not(:disabled):hover {
+    background-color: rgb(var(--brand-cta-hover));
+  }
+}
+
+.interactive-surface:not(:disabled):active {
+  background-color: rgb(var(--effect-pressed-overlay));
+}
+
+.interactive-cta:not(:disabled):active {
+  background-color: rgb(var(--brand-cta-hover));
+}
+
+.interactive-surface:focus-visible,
+.interactive-cta:focus-visible {
+  outline: 2px solid rgb(var(--brand-action));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interactive-surface,
+  .interactive-cta {
+    transition: none;
   }
 }

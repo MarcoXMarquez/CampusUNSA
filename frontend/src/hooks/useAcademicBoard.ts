@@ -1,11 +1,13 @@
 "use client";
 
+import { taskBoardMessages } from "@/lib/messages/task-board-messages";
 import { useCallback, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AcademicAssignment } from "@/components/sheets/TaskDetailSheet";
 import {
   createManualAssignment,
-  getApiBaseUrl,
+  fetchAcademicBoard,
+  updateAssignmentCompletion,
   type CourseScheduleBlock,
   type CreateManualAssignmentPayload,
 } from "../lib/api-client";
@@ -14,7 +16,6 @@ import {
   readBoardSnapshotSync,
   writeBoardSnapshot,
 } from "../lib/offline-db";
-import { taskBoardMessages } from "@/lib/messages/task-board-messages";
 
 export interface AcademicCourseSource {
   source_id: string;
@@ -68,20 +69,7 @@ function writeCache(token: string | null, data: AcademicBoardData): void {
 }
 
 async function loadBoard(token: string, signal: AbortSignal): Promise<AcademicBoardData> {
-  const apiUrl = getApiBaseUrl();
-  const headers = { Authorization: `Bearer ${token}` };
-  // Fetch deduplicated curriculum enrollments (+ pending sources) and normalized assignments.
-  const [coursesResponse, assignmentsResponse, statusResponse] = await Promise.all([
-    fetch(`${apiUrl}/courses/enrolled`, { headers, signal }),
-    fetch(`${apiUrl}/courses/assignments`, { headers, signal }),
-    fetch(`${apiUrl}/dutic/ical/status`, { headers, signal }).catch(() => null),
-  ]);
-  if (!coursesResponse.ok || !assignmentsResponse.ok) throw new Error(taskBoardMessages.syncError);
-  const courses: AcademicCourse[] = await coursesResponse.json();
-  const assignments: AcademicAssignment[] = await assignmentsResponse.json();
-  if (!Array.isArray(courses) || !Array.isArray(assignments)) throw new Error(taskBoardMessages.syncError);
-  const status: { sync_status?: string } = statusResponse?.ok ? await statusResponse.json() : {};
-  const data = { courses, assignments, moodleSessionExpired: status.sync_status === "NEEDS_REAUTH" };
+  const data = await fetchAcademicBoard(token, signal);
   writeCache(token, data);
   return data;
 }
@@ -116,15 +104,8 @@ export function useAcademicBoard(token: string | null) {
   }, [client, key, token]);
 
   const mutation = useMutation({
-    mutationFn: async ({ id, completed, token: sessionToken }: CompletionChange): Promise<AcademicAssignment> => {
-      const response = await fetch(`${getApiBaseUrl()}/classroom/assignments/${id}/completion`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionToken}` },
-        body: JSON.stringify({ is_completed: completed }),
-      });
-      if (!response.ok) throw new Error(taskBoardMessages.completionError);
-      return response.json();
-    },
+    mutationFn: ({ id, completed, token: sessionToken }: CompletionChange) =>
+      updateAssignmentCompletion(sessionToken, id, { is_completed: completed }),
     networkMode: "always",
     retry: false,
     onMutate: async (change) => {

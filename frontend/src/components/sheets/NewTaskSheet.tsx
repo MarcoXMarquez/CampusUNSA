@@ -120,7 +120,7 @@ export function NewTaskSheet({
 
   const isBusy = submitting || localSubmitting;
   const hasNoCourses = courses.length === 0;
-  const canSubmit = Boolean(title.trim()) && !hasNoCourses && isOnline && !isBusy;
+  const canSubmit = Boolean(title.trim()) && isOnline && !isBusy;
   const dotColor = getCourseColor(selectedCourseCode || "personal");
   const dueDateDisplay = formatLimaDueDisplay(dueDateIso, newTaskMessages.noDueDateLabel);
 
@@ -171,7 +171,7 @@ export function NewTaskSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-surface-sheet text-ink-primary shadow-2xl border border-subtle pb-[calc(env(safe-area-inset-bottom)+1.25rem)]"
+        className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-t-[28px] sm:rounded-[28px] bg-surface-sheet text-ink-primary shadow-layer-overlay border border-subtle pb-[calc(env(safe-area-inset-bottom)+1.25rem)]"
       >
         <div
           aria-hidden="true"
@@ -281,7 +281,7 @@ export function NewTaskSheet({
                   onClick={() => setComponentType("TEORIA")}
                   className={`min-h-[44px] px-3.5 rounded-lg text-ios-footnote font-medium transition-colors ${
                     componentType === "TEORIA"
-                      ? "bg-surface-elevated text-ink-primary shadow-sm"
+                      ? "bg-surface-elevated text-ink-primary shadow-layer-segment"
                       : "text-ink-secondary"
                   }`}
                 >
@@ -293,7 +293,7 @@ export function NewTaskSheet({
                   onClick={() => setComponentType("LABORATORIO")}
                   className={`min-h-[44px] px-3.5 rounded-lg text-ios-footnote font-medium transition-colors ${
                     componentType === "LABORATORIO"
-                      ? "bg-surface-elevated text-ink-primary shadow-sm"
+                      ? "bg-surface-elevated text-ink-primary shadow-layer-segment"
                       : "text-ink-secondary"
                   }`}
                 >
@@ -335,7 +335,7 @@ export function NewTaskSheet({
                 onClick={() => setDueDateIso(getLimaQuickDueDate("today"))}
                 className={`min-h-[44px] rounded-full text-ios-footnote px-3.5 py-1.5 font-medium transition-colors ${
                   dueDateIso === todayQuickIso
-                    ? "bg-brand-action/20 text-brand-tint dark:text-white border border-brand-action/50"
+                    ? "bg-brand-action/20 text-ink-primary border border-brand-action/50"
                     : "bg-surface-elevated text-ink-secondary border border-subtle"
                 }`}
               >
@@ -346,7 +346,7 @@ export function NewTaskSheet({
                 onClick={() => setDueDateIso(getLimaQuickDueDate("tomorrow"))}
                 className={`min-h-[44px] rounded-full text-ios-footnote px-3.5 py-1.5 font-medium transition-colors ${
                   dueDateIso === tomorrowQuickIso
-                    ? "bg-brand-action/20 text-brand-tint dark:text-white border border-brand-action/50"
+                    ? "bg-brand-action/20 text-ink-primary border border-brand-action/50"
                     : "bg-surface-elevated text-ink-secondary border border-subtle"
                 }`}
               >
@@ -362,7 +362,7 @@ export function NewTaskSheet({
                 }}
                 className={`min-h-[44px] rounded-full text-ios-footnote px-3.5 py-1.5 font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                   nextClassIso && dueDateIso === nextClassIso
-                    ? "bg-brand-action/20 text-brand-tint dark:text-white border border-brand-action/50"
+                    ? "bg-brand-action/20 text-ink-primary border border-brand-action/50"
                     : "bg-surface-elevated text-ink-secondary border border-subtle"
                 }`}
               >
@@ -388,7 +388,7 @@ export function NewTaskSheet({
               >
                 <span
                   aria-hidden="true"
-                  className={`inline-block h-7 w-7 rounded-full bg-white shadow transition-transform ${
+                  className={`inline-block h-7 w-7 rounded-full bg-white shadow-layer-segment transition-transform ${
                     isHighPriority ? "translate-x-5" : "translate-x-0"
                   }`}
                 />

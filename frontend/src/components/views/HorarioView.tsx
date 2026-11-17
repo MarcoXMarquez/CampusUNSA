@@ -145,7 +145,7 @@ export function HorarioView({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="w-full min-h-dvh bg-canvas text-ink-primary safe-areas pb-28 overflow-x-hidden"
+      className="w-full min-h-dvh bg-canvas text-ink-primary safe-areas pb-dock-content overflow-x-hidden"
     >
       <div className="w-full max-w-md mx-auto px-5 pt-8">
         {(pullDistance > 12 || syncing) && (

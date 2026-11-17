@@ -137,7 +137,7 @@ export function LinkCourseSourceModal({
         aria-modal="true"
         aria-labelledby="pending-link-title"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md max-h-[85dvh] overflow-y-auto rounded-2xl bg-surface-sheet border border-subtle p-5 text-ink-primary shadow-2xl space-y-4"
+        className="w-full max-w-md max-h-[85dvh] overflow-y-auto rounded-2xl bg-surface-sheet border border-subtle p-5 text-ink-primary shadow-layer-overlay space-y-4"
       >
         <div>
           <h2 id="pending-link-title" className="text-ios-headline font-bold text-ink-primary">

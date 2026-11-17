@@ -53,7 +53,7 @@ export function TaskFilterBar({
           onClick={() => onComponentFilterChange("all")}
           className={`flex-1 min-h-[38px] py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
             componentFilter === "all"
-              ? "bg-surface-card text-ink-primary shadow-sm"
+              ? "bg-surface-card text-ink-primary shadow-layer-segment"
               : "text-ink-secondary hover:text-ink-primary"
           }`}
         >
@@ -66,7 +66,7 @@ export function TaskFilterBar({
           onClick={() => onComponentFilterChange("theory")}
           className={`flex-1 min-h-[38px] py-1.5 rounded-lg font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
             componentFilter === "theory"
-              ? "bg-surface-card text-ink-primary shadow-sm"
+              ? "bg-surface-card text-ink-primary shadow-layer-segment"
               : "text-ink-secondary hover:text-ink-primary"
           }`}
         >
@@ -80,7 +80,7 @@ export function TaskFilterBar({
           onClick={() => onComponentFilterChange("lab")}
           className={`flex-1 min-h-[38px] py-1.5 rounded-lg font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
             componentFilter === "lab"
-              ? "bg-surface-card text-ink-primary shadow-sm"
+              ? "bg-surface-card text-ink-primary shadow-layer-segment"
               : "text-ink-secondary hover:text-ink-primary"
           }`}
         >
