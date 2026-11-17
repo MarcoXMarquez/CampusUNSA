@@ -38,4 +38,14 @@ describe("getTaskDetailLinks", () => {
     expect(task.resources.map(({ url }) => url.href)).toEqual([spoof]);
     expect(task.text).not.toContain("private");
   });
+  it("preserves prose when a long numbered references section is malformed", () => {
+    const lines = Array.from({ length: 2000 }, (_, index) => `[${index}] https://example.com/guide`);
+    const task = getTaskDetailLinks(
+      "moodle", null, ["Instructions", "Links:", "------", ...lines, "Keep this note."].join("\n")
+    );
+    expect(task.text).toContain("Keep this note.");
+    expect(task.resources).toHaveLength(1);
+    expect(task.assignmentUrl).toBeNull();
+  });
+
 });

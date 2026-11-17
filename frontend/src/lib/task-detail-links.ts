@@ -2,7 +2,6 @@ const MOODLE_ORIGIN = "https://aulavirtual.unsa.edu.pe";
 const CLASSROOM_ORIGIN = "https://classroom.google.com";
 const WEB_LINK = /https:\/\/[^\s<>"\[\]]+/gi;
 const LINK_TRAILING_PUNCTUATION = /[.,;!?)]+$/;
-const MOODLE_REFERENCES = /\r?\n\s*Links:\s*\r?\n-{2,}\s*\r?\n((?:\[\d+\]\s*https:\/\/[^\s]+\s*)+)$/i;
 
 function secureUrl(value: string): URL | null {
   if (!value) return null;
@@ -15,6 +14,29 @@ function secureUrl(value: string): URL | null {
   } catch {
     return null;
   }
+}
+
+// Moodle's text export appends numbered references after the instructions.
+function readMoodleReferences(body: string): { text: string; references: Map<string, string> } {
+  const lines = body.split(/\r?\n/);
+  const start = lines.findIndex((line, index) =>
+    line.trim().toLowerCase() === "links:" && /^-{2,}$/.test(lines[index + 1]?.trim() ?? "")
+  );
+  const references = new Map<string, string>();
+  if (start === -1) return { text: body, references };
+
+  for (let index = start + 2; index < lines.length; index++) {
+    const line = lines[index].trim();
+    if (!line) continue;
+    const reference = /^\[(\d+)\](.*)$/.exec(line);
+    if (!reference) return { text: body, references: new Map() };
+    const value = reference[2].trim() || lines[++index]?.trim() || "";
+    if (!/^https:\/\/\S+$/i.test(value)) return { text: body, references: new Map() };
+    const url = secureUrl(value.replace(LINK_TRAILING_PUNCTUATION, ""));
+    if (url) references.set(url.href, reference[1]);
+  }
+
+  return { text: lines.slice(0, start).join("\n"), references };
 }
 
 export function getTaskDetailLinks(
@@ -33,13 +55,9 @@ export function getTaskDetailLinks(
 
   const stored = secureUrl(alternateLink?.trim() ?? "");
   const body = description?.trim() ?? "";
-  const footer = isMoodle ? body.match(MOODLE_REFERENCES) : null;
-  const references = new Map<string, string>();
-  for (const [, reference, value] of Array.from((footer?.[1] ?? "").matchAll(/\[(\d+)\]\s*(https:\/\/[^\s]+)/gi))) {
-    const url = secureUrl(value.replace(LINK_TRAILING_PUNCTUATION, ""));
-    if (url) references.set(url.href, reference);
-  }
-
+  const { text: instructions, references } = isMoodle
+    ? readMoodleReferences(body)
+    : { text: body, references: new Map<string, string>() };
   const links = new Map<string, URL>();
   for (const [value] of Array.from(body.matchAll(WEB_LINK))) {
     const url = secureUrl(value.replace(LINK_TRAILING_PUNCTUATION, ""));
@@ -52,8 +70,6 @@ export function getTaskDetailLinks(
     : candidates.length === 1 ? candidates[0].href : null;
   if (assignmentUrl) links.delete(assignmentUrl);
 
-  // Moodle's text export appends numbered references after the actual instructions.
-  const instructions = footer ? body.slice(0, footer.index) : body;
   const text = instructions.replace(WEB_LINK, (value) => {
     const link = value.replace(LINK_TRAILING_PUNCTUATION, "");
     const url = secureUrl(link);
