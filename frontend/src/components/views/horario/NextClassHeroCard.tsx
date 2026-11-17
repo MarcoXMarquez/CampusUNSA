@@ -3,7 +3,7 @@
 import React from "react";
 import { BookOpen, Flask } from "@phosphor-icons/react";
 import type { NextClassSummary } from "@/lib/schedule-calculator";
-import { horarioMessages as messages } from "@/lib/messages/task-board-messages";
+import { horarioMessages as messages, taskBoardMessages } from "@/lib/messages/task-board-messages";
 
 export interface NextClassHeroCardProps {
   nextClass: NextClassSummary | null;
@@ -36,7 +36,7 @@ export function NextClassHeroCard({
               {nextClass.subLabel}
             </p>
             <div className="flex items-baseline space-x-2">
-              <span className="text-5xl font-extrabold tracking-tight text-ink-primary leading-none">
+              <span className="text-ios-large-title tracking-tight text-ink-primary leading-none">
                 {nextClass.block.start_time}
               </span>
               <span className="text-ios-headline font-medium text-ink-secondary">
@@ -62,8 +62,8 @@ export function NextClassHeroCard({
                   )}
                   <span className="truncate">
                     {nextClass.block.component_type === "LABORATORIO"
-                      ? "Laboratorio"
-                      : "Teoría"}
+                      ? taskBoardMessages.components.lab
+                      : taskBoardMessages.components.theory}
                   </span>
                 </div>
                 {nextClass.block.room && (
@@ -77,7 +77,7 @@ export function NextClassHeroCard({
               <button
                 type="button"
                 onClick={onOpenVerAula}
-                className="min-h-[44px] bg-brand-cta hover:bg-brand-cta-hover text-white text-ios-caption-1 font-semibold rounded-full px-5 py-2.5 shrink-0 transition-colors cursor-pointer"
+                className="min-h-[44px] bg-brand-cta interactive-cta text-white text-ios-caption-1 font-semibold rounded-full px-5 py-2.5 shrink-0 transition-colors cursor-pointer"
               >
                 {messages.verAulaButton}
               </button>
@@ -108,7 +108,7 @@ export function NextClassHeroCard({
             aria-modal="true"
             aria-labelledby="ver-aula-placeholder-title"
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-2xl bg-surface-sheet border border-subtle p-5 text-ink-primary shadow-2xl space-y-4"
+            className="w-full max-w-md rounded-2xl bg-surface-sheet border border-subtle p-5 text-ink-primary shadow-layer-overlay space-y-4"
           >
             <div>
               <h2
@@ -125,7 +125,7 @@ export function NextClassHeroCard({
               <button
                 type="button"
                 onClick={onCloseVerAula}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-cta hover:bg-brand-cta-hover text-ios-caption-1 font-semibold text-white cursor-pointer"
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-cta interactive-cta text-ios-caption-1 font-semibold text-white cursor-pointer"
               >
                 {messages.verAulaCloseButton}
               </button>

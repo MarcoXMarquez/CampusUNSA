@@ -3,13 +3,13 @@
 import React, { useState } from "react";
 import { CaretLeft, WarningCircle } from "@phosphor-icons/react";
 import { AUTH_MESSAGES, ONBOARDING_SLIDES } from "@/lib/messages/auth-messages";
-import { getApiBaseUrl, getGoogleClientId } from "@/lib/api-client";
+import { getGoogleClientId, loginWithCredentials } from "@/lib/api-client";
 import { OnboardingCarousel } from "./auth/OnboardingCarousel";
 import { CredentialsForm } from "./auth/CredentialsForm";
 import { GoogleSignInButton } from "./auth/GoogleSignInButton";
 
 export interface AuthFlowUser {
-  id?: string;
+  id?: string | null;
   email: string;
   role: string;
   is_active?: boolean;
@@ -43,7 +43,6 @@ export function AuthFlow({
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const apiUrl = getApiBaseUrl();
   const isLastSlide = slideIndex === ONBOARDING_SLIDES.length - 1;
 
   const handleNextSlide = () => {
@@ -73,36 +72,17 @@ export function AuthFlow({
     setErrorMessage(null);
 
     try {
-      const res = await fetch(`${apiUrl}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: cleanEmail,
-          password: cleanPassword,
-          full_name: authMode === "signup" ? fullName.trim() || undefined : undefined,
-        }),
+      const data = await loginWithCredentials({
+        email: cleanEmail,
+        password: cleanPassword,
+        full_name: authMode === "signup" ? fullName.trim() || undefined : undefined,
       });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        let message = "Error de autenticacion";
-        if (errorData.detail) {
-          if (typeof errorData.detail === "string") {
-            message = errorData.detail;
-          } else if (errorData.detail.message) {
-            message = errorData.detail.message;
-          }
-        }
-        throw new Error(message);
-      }
-
-      const data = await res.json();
       if (typeof window !== "undefined") {
         localStorage.setItem("campusunsa_token", data.access_token);
       }
       onSuccess(data.access_token, data.user);
     } catch (err: unknown) {
-      setErrorMessage(err instanceof Error ? err.message : "Error al iniciar sesion");
+      setErrorMessage(err instanceof Error ? err.message : AUTH_MESSAGES.signInError);
     } finally {
       setLoading(false);
     }
@@ -112,7 +92,7 @@ export function AuthFlow({
     const clientId = getGoogleClientId();
     const redirectUri = `${window.location.origin}/auth/callback`;
     if (!clientId) {
-      setErrorMessage("Google OAuth no esta configurado en este entorno");
+      setErrorMessage(AUTH_MESSAGES.googleUnavailable);
       return;
     }
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(

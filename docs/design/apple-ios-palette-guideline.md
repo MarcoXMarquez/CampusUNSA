@@ -2,7 +2,7 @@
 
 ## 1. Visual Reference Boards
 
-This guideline establishes the canonical color tokens, surface hierarchy, and typography scale for `frontend/`, reconciling the Apple Human Interface Guidelines (iOS 18 HIG) semantic layering model with the UNSA institutional crimson identity (`#8B0000`) and all Stitch screens designed for CampusUNSA.
+This guideline establishes the canonical color tokens, surface hierarchy, and typography scale for `frontend/`, reconciling the Apple Human Interface Guidelines (iOS HIG) semantic layering model with the UNSA institutional crimson identity (`#8B0000`) and all Stitch screens designed for CampusUNSA.
 
 - **Interactive HTML Specimen (Light & Dark toggle):** [apple-ios-design-system.html](apple-ios-design-system.html)
 - **Dark Mode Reference Board (OLED):** [apple-ios-design-system-dark.png](apple-ios-design-system-dark.png)
@@ -15,39 +15,44 @@ This guideline establishes the canonical color tokens, surface hierarchy, and ty
 Google's Material 3 / Stitch Theme Builder (`Academic iOS Design System`) generates numeric tonal ramps (`surface-container-low`, `high`, `highest`, `primary-10..90`). By contrast, Apple's iOS Human Interface Guidelines define **adaptive semantic roles** across four vertical layers, rather than screen-specific hex variants:
 
 1. **Canvas (`systemGroupedBackground`):** Root viewport (`#F2F2F7` light, `#000000` dark).
-2. **Sheet (`surface-sheet`):** Modal drawer backdrop (`#F2F2F7` light, `#161618` dark).
+2. **Sheet (`surface-sheet`):** Modal drawer backdrop (`#FFFFFF` light, `#121214` dark).
 3. **Grouped Card (`secondarySystemGroupedBackground`):** Inset grouped containers and rows (`#FFFFFF` light, `#1C1C1E` dark).
-4. **Elevated Control (`tertiarySystemGroupedBackground`):** Inputs, quick-date pills, active segments, and inline pickers (`#F9F9FB` light, `#2C2C2E` dark).
+4. **Elevated Control (`tertiarySystemGroupedBackground`):** Inputs, quick-date pills, active segments, and inline pickers (`#E5E5EA` light, `#2C2C2E` dark).
 
 ---
 
 ## 3. Canonical Color Token Matrix & Legacy Consolidation
 
-All ~80 scattered hex literals audited across `frontend/src` collapse into the 16 semantic tokens below:
+These values match the RGB custom properties used by the application. Small text uses contrast-adjusted secondary, muted, and status tones. Disabled labels use separate tones.
 
-| Semantic Token | Light Mode | Dark Mode | Semantic Usage | Legacy Hex Literals Replaced |
-| :--- | :--- | :--- | :--- | :--- |
-| `--bg-canvas` | `#F2F2F7` | `#000000` | Root page background | `#000000`, `#f2f2f7` |
-| `--surface-sheet` | `#F2F2F7` | `#161618` | Bottom sheets and modal overlays | `#121214`, `#141416`, `#161618`, `#17171a`, `#18181a` |
-| `--surface-card` | `#FFFFFF` | `#1C1C1E` | Grouped cards, list groups, settings panels | `#1c1c1e`, `#161719`, `#1f1f23`, `#222225`, `#242426` |
-| `--surface-elevated` | `#F9F9FB` | `#2C2C2E` | Inputs, search bars, chips, active segments | `#222226`, `#232326`, `#23252a`, `#242427`, `#252528`, `#26262b`, `#2c2c2e`, `#2c2c31`, `#2e2e33`, `#3a3a3e` |
-| `--surface-inset` | `#E5E5EA` | `#19191B` | Segmented control tracks and recessed wells | `#18181b`, `#19191b`, `#d6d8db`, `#c8cbd1` |
-| `--border-subtle` | `rgba(60,60,67,0.16)` | `#2A2A2E` | Inset dividers and card boundaries | `#232429`, `#2a2a2e`, `#2a2b2f`, `#2b2b30`, `#2d2f36`, `#323236`, `#e5e5ea` |
-| `--border-control` | `rgba(60,60,67,0.28)` | `#38383A` | Sheet grabbers, inactive switches, control edges | `#38383a`, `#38383f`, `#3a3a3c`, `#444448` |
-| `--ink-primary` | `#000000` | `#FFFFFF` | Headlines, task titles, primary inputs | `#000000`, `#111315`, `#ffffff`, `#dededf` |
-| `--ink-secondary` | `#6E6E73` | `#8E8E93` | Course tags, metadata, inactive navigation tabs | `#8e8e93`, `#9a9aa0`, `#a0a0a5`, `#d1d1d6`, `neutral-300/400` |
-| `--ink-muted` | `#71767E` | `#7C7C82` | Placeholders, footnote hints, captions | `#68686d`, `#71767e`, `#7c7c82`, `#7d828a`, `#5e5e63`, `neutral-500` |
-| `--ink-disabled` | `rgba(60,60,67,0.32)` | `#55555A` | Past calendar dates and disabled labels | `#55555a`, `#a9adb5` |
-| `--brand-cta` | `#8B0000` | `#8B0000` | Solid primary CTA pills, central `+` FAB, submit buttons | `#8b0000`, `#800000`, `#990000`, `#991b22`, `#ba131a` |
-| `--brand-cta-hover` | `#A51C30` | `#A51C30` | Active/hover fill on primary CTA controls | `#a51c30`, `#9f1016`, `#b91c1c` |
-| `--brand-action` | `#D32F2F` | `#EA4345` | Navbar text actions (`Cancel`, `Done`), active tab, switches, selected calendar circle | `#e23b3b`, `#ea4345`, `#d34545`, `#c72c41`, `#ff3b5c`, `#dc2626` |
-| `--brand-tint` | `#B91C1C` | `#EB5353` | Eyebrow labels on hero cards and overdue timestamps | `#d85858`, `#eb5353`, `#e25050`, `#e5575b`, `#e05258`, `#ff6b72`, `#f87171` |
-| `--surface-hero` / `--surface-urgent` | `#FDF2F2` / `#FEF2F2` | `#1D0F12` / `#241717` | Next-class hero card and overdue task container (`--border-urgent`: `#3E1F20`) | `#1d0f12`, `#1b080b`, `#2d1417`, `#4a1118`, `#241717`, `#3e1f20` |
+| Semantic token | Light | Dark | Usage |
+| --- | --- | --- | --- |
+| `--bg-canvas` | `#F2F2F7` | `#000000` | Overall application background |
+| `--surface-sheet` | `#FFFFFF` | `#121214` | Modal sheets and overlays |
+| `--surface-card` | `#FFFFFF` | `#1C1C1E` | Grouped lists and cards |
+| `--surface-elevated` | `#E5E5EA` | `#2C2C2E` | Controls, active cells |
+| `--surface-inset` | `#E5E5EA` | `#2C2C2E` | Recessed segmented controls |
+| `--surface-hero` | `#FCEBEC` | `#1D0F12` | Next-class feature area |
+| `--surface-urgent` | `#FDE8E8` | `#241717` | Overdue emphasis, sparingly |
+| `--border-subtle` | `#E5E5EA` | `#2C2C2E` | Grouped list separators |
+| `--border-control` | `#C7C7CC` | `#3A3A3C` | Control outlines |
+| `--border-urgent` | `#F5C2C4` | `#4A1C21` | Overdue card edge |
+| `--ink-primary` | `#000000` | `#FFFFFF` | Headlines and task titles |
+| `--ink-secondary` | `#606065` | `#AEAEB2` | Metadata, inactive navigation |
+| `--ink-muted` | `#66666C` | `#99999E` | Placeholders, helper text |
+| `--ink-disabled` | `#AEAEB2` | `#636366` | Disabled control labels |
+| `--brand-cta` | `#8B0000` | `#990000` | Primary solid action |
+| `--brand-cta-hover` | `#A51C30` | `#B2182B` | Primary action pressed |
+| `--brand-action` | `#BA131A` | `#F56B70` | Text actions and selected tabs |
+| `--brand-tint` | `#C72C41` | `#FF3B5C` | Supporting emphasis text |
+| `--status-urgent` | `#BA0013` | `#FF453A` | Urgent deadlines and errors |
+| `--status-soon` | `#805000` | `#FFD60A` | Upcoming time-sensitive items |
+| `--status-success` | `#1F6F32` | `#30D158` | Successful connection / saves |
 
 ### Domain Exceptions (Preserved Outside UI Semantic Tokens)
 
 - **Course Identity Palette (`frontend/src/lib/schedule-calculator.ts`):** 7 deterministic dot colors distinguishing enrolled courses (`#3B82F6`, `#D946EF`, `#F59E0B`, `#10B981`, `#06B6D4`, `#F43F5E`, `#8B5CF6`).
-- **Google Identity Brand (`frontend/src/components/AuthFlow.tsx`):** Official Google G glyph colors (`#4285F4`, `#34A853`, `#FBBC05`, `#EA4335`) and button chrome required by Google OAuth branding guidelines.
+- **Google Identity Brand (`frontend/src/components/auth/GoogleSignInButton.tsx`):** Official Google G glyph colors (`#4285F4`, `#34A853`, `#FBBC05`, `#EA4335`) and button chrome required by Google OAuth branding guidelines.
 
 ---
 

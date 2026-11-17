@@ -40,10 +40,16 @@ export const taskBoardMessages = {
     MEDIA: "Media",
     BAJA: "Baja",
   },
-  detailPlaceholder: {
-    title: "Detalle de tarea",
-    description: "Pendiente de implementación.",
+  detail: {
+    title: "Detalle de entrega",
     close: "Cerrar",
+    moodle: "Moodle (DUTIC)",
+    classroom: "Google Classroom",
+    personal: "Tarea personal",
+    instructions: "Instrucciones",
+    openMoodle: "Abrir en Moodle",
+    openClassroom: "Abrir en Classroom",
+    noLink: "No hay enlace web disponible para esta actividad.",
   },
   countLabel: (count: number): string =>
     count === 1 ? "1 tarea" : `${count} tareas`,
@@ -207,7 +213,7 @@ export const newTaskMessages = {
   notesLabel: "Notas opcionales",
   notesPlaceholder: "Notas (opcional)",
   syncRequiredNotice: "Conecta Google Classroom y Moodle para asociar cursos académicos.",
-  noCoursesNotice: "Sin cursos sincronizados. Conecta tus fuentes en Cuenta antes de agregar tareas.",
+  noCoursesNotice: "Sin cursos sincronizados. Puedes agregar esta tarea como personal.",
   offlineNotice: "Sin conexión · Conéctate para guardar nuevas tareas",
   submitErrorFallback: "No se pudo guardar la tarea. Intenta nuevamente.",
 } as const;

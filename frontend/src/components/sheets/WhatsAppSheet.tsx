@@ -282,7 +282,11 @@ export function WhatsAppSheet({
     <Sheet
       opened={opened}
       onBackdropClick={onClose}
-      className="rounded-t-2xl pb-safe !z-[60]"
+      role="dialog"
+      aria-modal={opened || undefined}
+      aria-hidden={!opened}
+      aria-label={MESSAGING_MESSAGES.headerTitle}
+      className={`rounded-t-2xl pb-safe !z-[60] shadow-layer-overlay ${opened ? "" : "!invisible"}`}
     >
       <div className="w-10 h-1 bg-control rounded-full mx-auto my-3" />
 

@@ -57,7 +57,7 @@ export function OnboardingCarousel({
 
         {/* Mascot Showcase Card (Floating WebP Asset) */}
         <div className="absolute top-[82px] left-1/2 -translate-x-1/2 z-20">
-          <div className="w-64 h-64 sm:w-72 sm:h-72 rounded-[32px] overflow-hidden shadow-2xl bg-neutral-950 border-[3px] border-subtle flex items-center justify-center">
+          <div className="w-64 h-64 sm:w-72 sm:h-72 rounded-[32px] overflow-hidden bg-neutral-950 border-[3px] border-subtle flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={currentSlide.imageSrc}
@@ -111,7 +111,7 @@ export function OnboardingCarousel({
           <button
             type="button"
             onClick={onNext}
-            className="w-full h-[54px] bg-brand-cta hover:bg-brand-cta-hover active:scale-[0.98] text-white rounded-2xl font-bold text-ios-subhead tracking-wider uppercase flex items-center justify-center space-x-2 transition-all duration-150 shadow-lg cursor-pointer"
+            className="w-full h-[54px] bg-brand-cta interactive-cta active:scale-[0.98] text-white rounded-2xl font-bold text-ios-subhead tracking-wider uppercase flex items-center justify-center space-x-2 transition-all duration-150 cursor-pointer"
           >
             <span>
               {isLastSlide

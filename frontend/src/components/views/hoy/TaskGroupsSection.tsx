@@ -83,13 +83,7 @@ export function TaskGroupsSection({
               </span>
             </div>
 
-            <div
-              className={
-                isOverdue
-                  ? "flex flex-col space-y-2.5"
-                  : "bg-surface-card border border-subtle rounded-xl flex flex-col divide-y divide-subtle shadow-sm overflow-hidden"
-              }
-            >
+            <div className="bg-surface-card border border-subtle rounded-xl divide-y divide-subtle overflow-hidden">
               {items.map((item) => {
                 const meta = metadataById.get(item.id);
                 if (!meta) return null;

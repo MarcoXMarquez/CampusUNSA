@@ -11,56 +11,56 @@
 
       /* Light Mode Apple HIG + UNSA Semantic Tokens */
       --bg-outer: #e5e5ea;
-      --bg-canvas: #f2f2f7;
-      --surface-sheet: #f2f2f7;
-      --surface-card: #ffffff;
-      --surface-elevated: #f9f9fb;
-      --surface-inset: #e5e5ea;
-      --surface-hero: #fdf2f2;
-      --surface-urgent: #fef2f2;
-      --border-subtle: rgba(60, 60, 67, 0.16);
-      --border-control: rgba(60, 60, 67, 0.28);
-      --border-urgent: rgba(211, 47, 47, 0.28);
+      --bg-canvas: #F2F2F7;
+      --surface-sheet: #FFFFFF;
+      --surface-card: #FFFFFF;
+      --surface-elevated: #E5E5EA;
+      --surface-inset: #E5E5EA;
+      --surface-hero: #FCEBEC;
+      --surface-urgent: #FDE8E8;
+      --border-subtle: #E5E5EA;
+      --border-control: #C7C7CC;
+      --border-urgent: #F5C2C4;
       --ink-primary: #000000;
-      --ink-secondary: #6e6e73;
-      --ink-muted: #71767e;
-      --ink-disabled: rgba(60, 60, 67, 0.32);
+      --ink-secondary: #606065;
+      --ink-muted: #66666C;
+      --ink-disabled: #AEAEB2;
 
-      --brand-cta: #8b0000;
-      --brand-cta-hover: #a51c30;
-      --brand-action: #d32f2f;
-      --brand-tint: #b91c1c;
+      --brand-cta: #8B0000;
+      --brand-cta-hover: #A51C30;
+      --brand-action: #BA131A;
+      --brand-tint: #C72C41;
 
-      --status-urgent: #ff3b30;
-      --status-soon: #ffcc00;
-      --status-success: #34c759;
+      --status-urgent: #BA0013;
+      --status-soon: #805000;
+      --status-success: #1F6F32;
     }
 
     html[data-theme="dark"] {
       --bg-outer: #09090b;
       --bg-canvas: #000000;
-      --surface-sheet: #161618;
-      --surface-card: #1c1c1e;
-      --surface-elevated: #2c2c2e;
-      --surface-inset: #19191b;
-      --surface-hero: #1d0f12;
+      --surface-sheet: #121214;
+      --surface-card: #1C1C1E;
+      --surface-elevated: #2C2C2E;
+      --surface-inset: #2C2C2E;
+      --surface-hero: #1D0F12;
       --surface-urgent: #241717;
-      --border-subtle: #2a2a2e;
-      --border-control: #38383a;
-      --border-urgent: #3e1f20;
-      --ink-primary: #ffffff;
-      --ink-secondary: #8e8e93;
-      --ink-muted: #7c7c82;
-      --ink-disabled: #55555a;
+      --border-subtle: #2C2C2E;
+      --border-control: #3A3A3C;
+      --border-urgent: #4A1C21;
+      --ink-primary: #FFFFFF;
+      --ink-secondary: #AEAEB2;
+      --ink-muted: #99999E;
+      --ink-disabled: #636366;
 
-      --brand-cta: #8b0000;
-      --brand-cta-hover: #a51c30;
-      --brand-action: #ea4345;
-      --brand-tint: #eb5353;
+      --brand-cta: #990000;
+      --brand-cta-hover: #B2182B;
+      --brand-action: #F56B70;
+      --brand-tint: #FF3B5C;
 
-      --status-urgent: #ff453a;
-      --status-soon: #ffd60a;
-      --status-success: #30d158;
+      --status-urgent: #FF453A;
+      --status-soon: #FFD60A;
+      --status-success: #30D158;
     }
 
     * {
@@ -389,7 +389,7 @@
     }
 
     .btn-pill-active {
-      background: var(--brand-action);
+      background: var(--brand-cta);
       color: #ffffff;
       border: none;
       border-radius: 999px;
@@ -581,14 +581,14 @@
             <span>4 Tiers</span>
           </div>
           <div class="layer-stack">
-            <div class="layer-caption">bg-canvas · #000000 / #F2F2F7</div>
+            <div class="layer-caption">bg-canvas · <span data-token="bg-canvas">#000000</span></div>
             <div class="layer-sheet">
-              <div class="layer-caption">surface-sheet · #161618 / #F2F2F7</div>
+              <div class="layer-caption">surface-sheet · <span data-token="surface-sheet">#121214</span></div>
               <div class="layer-card">
-                <div class="layer-caption">surface-card · #1C1C1E / #FFFFFF</div>
+                <div class="layer-caption">surface-card · <span data-token="surface-card">#1C1C1E</span></div>
                 <div class="layer-elevated">
                   <span>surface-elevated</span>
-                  <span class="hex-code">#2C2C2E / #F9F9FB</span>
+                  <span class="hex-code"><span data-token="surface-elevated">#2C2C2E</span></span>
                 </div>
               </div>
             </div>
@@ -609,7 +609,7 @@
                   <div class="token-role">Headlines, task titles</div>
                 </div>
               </div>
-              <span class="hex-code">#FFFFFF / #000000</span>
+              <span class="hex-code"><span data-token="ink-primary">#FFFFFF</span></span>
             </div>
             <div class="swatch-row">
               <div class="swatch-left">
@@ -619,7 +619,7 @@
                   <div class="token-role">Metadata, dates, tabs</div>
                 </div>
               </div>
-              <span class="hex-code">#8E8E93 / #6E6E73</span>
+              <span class="hex-code"><span data-token="ink-secondary">#AEAEB2</span></span>
             </div>
             <div class="swatch-row">
               <div class="swatch-left">
@@ -629,7 +629,7 @@
                   <div class="token-role">Placeholders, captions</div>
                 </div>
               </div>
-              <span class="hex-code">#7C7C82 / #71767E</span>
+              <span class="hex-code"><span data-token="ink-muted">#99999E</span></span>
             </div>
             <div class="swatch-row">
               <div class="swatch-left">
@@ -639,7 +639,7 @@
                   <div class="token-role">Past calendar days</div>
                 </div>
               </div>
-              <span class="hex-code">#55555A / 32%</span>
+              <span class="hex-code"><span data-token="ink-disabled">#636366</span></span>
             </div>
             <div class="swatch-row">
               <div class="swatch-left">
@@ -649,7 +649,7 @@
                   <div class="token-role">1px grouped dividers</div>
                 </div>
               </div>
-              <span class="hex-code">#2A2A2E / 16%</span>
+              <span class="hex-code"><span data-token="border-subtle">#2C2C2E</span></span>
             </div>
           </div>
         </article>
@@ -665,23 +665,23 @@
           <div class="brand-hero" style="background: var(--brand-cta);">
             <div>
               <div class="label">brand-cta (Primary Fill)</div>
-              <div class="sub">Solid CTA pills, + FAB, Submit, Hover #A51C30</div>
+              <div class="sub">Solid CTA pills, + FAB, Submit, Hover <span data-token="brand-cta-hover">#B2182B</span></div>
             </div>
-            <div class="hex">#8B0000</div>
+            <div class="hex"><span data-token="brand-cta">#990000</span></div>
           </div>
-          <div class="brand-hero" style="background: var(--brand-action);">
+          <div class="brand-hero" style="background: var(--surface-elevated); color: var(--brand-action);">
             <div>
               <div class="label">brand-action (iOS Interactive Tint)</div>
               <div class="sub">Navbar Cancel/Done, active tab, switches, selected day</div>
             </div>
-            <div class="hex" id="hex-brand-action">#EA4345</div>
+            <div class="hex" id="hex-brand-action"><span data-token="brand-action">#F56B70</span></div>
           </div>
           <div class="brand-hero" style="background: var(--surface-hero); border: 1px solid var(--border-urgent); color: var(--brand-tint);">
             <div>
               <div class="label">brand-tint on surface-hero</div>
               <div class="sub">Next class countdown, overdue due dates</div>
             </div>
-            <div class="hex" id="hex-brand-tint">#EB5353</div>
+            <div class="hex" id="hex-brand-tint"><span data-token="brand-tint">#FF3B5C</span></div>
           </div>
         </article>
 
@@ -698,7 +698,7 @@
                   <div class="token-role">Deadlines &lt; 24h &amp; errors</div>
                 </div>
               </div>
-              <span class="hex-code">#FF453A / #FF3B30</span>
+              <span class="hex-code"><span data-token="status-urgent">#FF453A</span></span>
             </div>
             <div class="swatch-row">
               <div class="swatch-left">
@@ -708,7 +708,7 @@
                   <div class="token-role">Connected platform dot</div>
                 </div>
               </div>
-              <span class="hex-code">#30D158 / #34C759</span>
+              <span class="hex-code"><span data-token="status-success">#30D158</span></span>
             </div>
           </div>
           <div style="margin-top: 12px; font-size: 11px; color: var(--ink-secondary); font-weight: 600;">
@@ -878,21 +878,21 @@
       const root = document.documentElement;
       const btn = document.getElementById("theme-toggle");
       const label = document.getElementById("theme-label");
-      const hexAction = document.getElementById("hex-brand-action");
-      const hexTint = document.getElementById("hex-brand-tint");
+
+
 
       function applyTheme(mode) {
         if (mode === "light") {
           root.removeAttribute("data-theme");
           label.textContent = "Light Mode (iOS)";
-          hexAction.textContent = "#D32F2F";
-          hexTint.textContent = "#B91C1C";
         } else {
           root.setAttribute("data-theme", "dark");
           label.textContent = "Dark Mode (OLED)";
-          hexAction.textContent = "#EA4345";
-          hexTint.textContent = "#EB5353";
         }
+        const styles = getComputedStyle(root);
+        document.querySelectorAll("[data-token]").forEach((label) => {
+          label.textContent = styles.getPropertyValue("--" + label.dataset.token).trim();
+        });
       }
 
       const params = new URLSearchParams(window.location.search);

@@ -83,7 +83,7 @@ export function CourseListSection({
                 type="button"
                 onClick={() => onEditSchedule(course)}
                 aria-label={messages.editScheduleAria(displayCourseName)}
-                className="w-full min-h-[44px] text-left bg-surface-card hover:bg-surface-elevated border border-subtle rounded-2xl p-3 space-y-3 shadow-sm transition-colors cursor-pointer"
+                className="w-full min-h-[44px] text-left bg-surface-card hover:bg-surface-elevated border border-subtle rounded-2xl p-3 space-y-3 transition-colors cursor-pointer"
               >
                 {blocks.length > 0 ? (
                   blocks.map((block) => {
@@ -156,7 +156,7 @@ export function CourseListSection({
                 <button
                   type="button"
                   onClick={() => onOpenPendingLinker(pending)}
-                  className="min-h-[44px] px-3 rounded-xl bg-brand-cta hover:bg-brand-cta-hover text-ios-caption-1 font-semibold text-white shrink-0 cursor-pointer"
+                  className="min-h-[44px] px-3 rounded-xl bg-brand-cta interactive-cta text-ios-caption-1 font-semibold text-white shrink-0 cursor-pointer"
                 >
                   {messages.linkCourseButton}
                 </button>

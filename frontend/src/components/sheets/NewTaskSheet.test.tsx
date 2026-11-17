@@ -207,28 +207,23 @@ describe("NewTaskSheet modal", () => {
     });
   });
 
-  it("shows sync guidance and blocks submission when courses are missing or user is offline", () => {
-    const { rerender } = render(
-      <NewTaskSheet
-        opened
-        courses={[]}
-        allSourcesSynced={false}
-        isOnline
-        onClose={vi.fn()}
-        onSubmit={vi.fn()}
-      />
+  it("submits a personal task with no enrolled courses", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(
+      <NewTaskSheet opened courses={[]} allSourcesSynced={false} isOnline
+        onClose={vi.fn()} onSubmit={onSubmit} />
     );
-
-    expect(screen.getByText(newTaskMessages.noCoursesNotice)).toBeTruthy();
     fireEvent.change(screen.getByPlaceholderText(newTaskMessages.titlePlaceholder), {
-      target: { value: "Tarea bloqueada" },
+      target: { value: "Tramitar constancia" },
     });
-    const submitBtn = screen.getByRole("button", {
-      name: newTaskMessages.submitAction,
-    }) as HTMLButtonElement;
-    expect(submitBtn.disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: newTaskMessages.submitAction }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Tramitar constancia", course_code: null })
+    ));
+  });
 
-    rerender(
+  it("shows sync guidance and blocks submission when offline", () => {
+    render(
       <NewTaskSheet
         opened
         courses={[makeCourse()]}

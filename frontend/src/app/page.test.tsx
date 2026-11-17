@@ -76,7 +76,9 @@ describe("HomePage Component", () => {
     });
   });
 
-  it("keeps TareasSyncView visible when only 1 of 2 platforms is connected", async () => {
+  it.each([true, false])(
+    "keeps platform setup visible when only one platform is connected (Classroom: %s)",
+    async (classroomConnected) => {
     localStorage.setItem("campusunsa_token", testToken);
     vi.stubGlobal(
       "fetch",
@@ -91,10 +93,10 @@ describe("HomePage Component", () => {
           });
         }
         if (url.endsWith("/auth/google/classroom/status")) {
-          return jsonResponse({ connected: true, sync_status: "CONNECTED" });
+          return jsonResponse({ connected: classroomConnected, sync_status: classroomConnected ? "CONNECTED" : "NOT_CONNECTED" });
         }
         if (url.endsWith("/dutic/ical/status")) {
-          return jsonResponse({ connected: false, sync_status: "NOT_CONNECTED" });
+          return jsonResponse({ connected: !classroomConnected, sync_status: classroomConnected ? "NOT_CONNECTED" : "CONNECTED" });
         }
         if (url.endsWith("/health")) {
           return jsonResponse({ status: "healthy" });

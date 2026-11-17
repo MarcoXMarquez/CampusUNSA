@@ -8,30 +8,30 @@ guideline_ref: "docs/design/apple-ios-palette-guideline.md"
 tokens:
   surfaces:
     canvas: "rgb(var(--bg-canvas)) -> Light #F2F2F7 | Dark #000000"
-    surface-sheet: "rgb(var(--bg-sheet)) -> Light #FFFFFF | Dark #121214"
-    surface-card: "rgb(var(--bg-card)) -> Light #FFFFFF | Dark #1C1C1E"
-    surface-elevated: "rgb(var(--bg-elevated)) -> Light #E5E5EA | Dark #2C2C2E"
-    surface-inset: "rgb(var(--bg-inset)) -> Light #E5E5EA | Dark #2C2C2E"
-    surface-hero: "rgb(var(--bg-hero)) -> Light #FCEBEC | Dark #1D0F12"
-    surface-urgent: "rgb(var(--bg-urgent)) -> Light #FDE8E8 | Dark #241717"
+    surface-sheet: "rgb(var(--surface-sheet)) -> Light #FFFFFF | Dark #121214"
+    surface-card: "rgb(var(--surface-card)) -> Light #FFFFFF | Dark #1C1C1E"
+    surface-elevated: "rgb(var(--surface-elevated)) -> Light #E5E5EA | Dark #2C2C2E"
+    surface-inset: "rgb(var(--surface-inset)) -> Light #E5E5EA | Dark #2C2C2E"
+    surface-hero: "rgb(var(--surface-hero)) -> Light #FCEBEC | Dark #1D0F12"
+    surface-urgent: "rgb(var(--surface-urgent)) -> Light #FDE8E8 | Dark #241717"
   borders:
     subtle: "rgb(var(--border-subtle)) -> Light #E5E5EA | Dark #2C2C2E"
     control: "rgb(var(--border-control)) -> Light #C7C7CC | Dark #3A3A3C"
     urgent-edge: "rgb(var(--border-urgent)) -> Light #F5C2C4 | Dark #4A1C21"
   ink:
     ink-primary: "rgb(var(--ink-primary)) -> Light #000000 | Dark #FFFFFF"
-    ink-secondary: "rgb(var(--ink-secondary)) -> Light #6C6C70 | Dark #AEAEB2"
-    ink-muted: "rgb(var(--ink-muted)) -> Light #8E8E93 | Dark #8E8E93"
+    ink-secondary: "rgb(var(--ink-secondary)) -> Light #606065 | Dark #AEAEB2"
+    ink-muted: "rgb(var(--ink-muted)) -> Light #66666C | Dark #99999E"
     ink-disabled: "rgb(var(--ink-disabled)) -> Light #AEAEB2 | Dark #636366"
   brand:
     brand-cta: "rgb(var(--brand-cta)) -> Light #8B0000 | Dark #990000"
     brand-cta-hover: "rgb(var(--brand-cta-hover)) -> Light #A51C30 | Dark #B2182B"
-    brand-action: "rgb(var(--brand-action)) -> Light #BA131A | Dark #E5575B"
+    brand-action: "rgb(var(--brand-action)) -> Light #BA131A | Dark #F56B70"
     brand-tint: "rgb(var(--brand-tint)) -> Light #C72C41 | Dark #FF3B5C"
   status:
-    status-urgent: "rgb(var(--status-urgent)) -> Light #D70015 | Dark #FF453A"
-    status-soon: "rgb(var(--status-soon)) -> Light #B26A00 | Dark #FFD60A"
-    status-success: "rgb(var(--status-success)) -> Light #248A3D | Dark #30D158"
+    status-urgent: "rgb(var(--status-urgent)) -> Light #BA0013 | Dark #FF453A"
+    status-soon: "rgb(var(--status-soon)) -> Light #805000 | Dark #FFD60A"
+    status-success: "rgb(var(--status-success)) -> Light #1F6F32 | Dark #30D158"
   typography:
     font-family: "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"SF Pro Display\", system-ui, sans-serif"
     scale: "text-ios-large-title (34px) .. text-ios-caption-2 (11px)"
@@ -59,3 +59,7 @@ tokens:
 - Zero network web-font imports (`next/font/google`, `fonts.googleapis.com`) and zero fake mobile status bars (`9:41`).
 - Mandatory functional states on data views: Loading, Empty, Offline, Expired Session, Sync Error, and Long Content truncation.
 - Accessibility: semantic landmarks, `aria-label` / `aria-current`, 44px minimum touch targets, and WCAG AA contrast in both Light and Dark themes.
+
+## 3. Surface Elevation and Material
+
+Follow the [surface and elevation guideline](surface-elevation-guideline.md) when choosing boundaries, shadows, and interaction states. The floating dock uses a custom PWA glass effect inspired by iOS 26 Liquid Glass.

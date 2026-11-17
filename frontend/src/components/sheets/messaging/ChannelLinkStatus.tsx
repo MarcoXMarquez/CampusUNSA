@@ -56,7 +56,7 @@ export function ChannelTabs({
             onClick={() => onSelectChannel(channel)}
             className={`min-h-[44px] rounded-lg px-3 text-ios-footnote font-semibold flex items-center justify-center gap-1.5 transition-colors ${
               selected
-                ? "bg-surface-card text-ink-primary shadow-sm"
+                ? "bg-surface-card text-ink-primary shadow-layer-segment"
                 : "text-ink-secondary hover:text-ink-primary"
             }`}
           >
