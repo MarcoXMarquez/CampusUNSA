@@ -23,6 +23,8 @@ BASE_SCENARIOS = (
     Scenario("POST", "/api/v1/auth/google"),
     Scenario("POST", "/api/v1/auth/login"),
     Scenario("GET", "/api/v1/auth/me"),
+    Scenario("POST", "/api/v1/webhooks/whatsapp"),
+    Scenario("POST", "/api/v1/webhooks/whatsapp", expected=401, suffix=" [unauthenticated]"),
     Scenario("GET", "/api/v1/tickets/all", role="secretary"),
     Scenario("GET", "/api/v1/tickets/all", expected=403, suffix=" [student denied]"),
     Scenario("GET", "/api/v1/classroom/courses"),

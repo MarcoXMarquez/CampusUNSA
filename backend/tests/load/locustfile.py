@@ -2,6 +2,8 @@
 
 import itertools
 import json
+import os
+import uuid
 import random
 import statistics
 import time
@@ -113,8 +115,22 @@ class StudentBrowser(FastHttpUser):
             course_code=dataset.get("completion_course_code", "1705275"),
             channel="whatsapp",
         )
+        headers = {"Authorization": f"Bearer {token}"}
         payload = None
-        if case.path.endswith("/completion"):
+        if case.path.endswith("/webhooks/whatsapp"):
+            headers = {"apikey": os.environ["EVOLUTION_WEBHOOK_API_KEY"]} if case.expected == 200 else {}
+            payload = {
+                "event": "messages.upsert", "instance": "campusunsa",
+                "data": {
+                    "key": {
+                        "id": uuid.uuid4().hex,
+                        "remoteJid": f"{self.account['identity']}@s.whatsapp.net",
+                        "fromMe": False,
+                    },
+                    "message": {"conversation": "Prepare the report"},
+                },
+            }
+        elif case.path.endswith("/completion"):
             payload = {"is_completed": True}
         elif case.path.endswith("/link"):
             payload = {
@@ -196,7 +212,7 @@ class StudentBrowser(FastHttpUser):
             request_path,
             name=case.name,
             json=payload,
-            headers={"Authorization": f"Bearer {token}"},
+            headers=headers,
             catch_response=True,
         ) as response:
             timing = (
@@ -213,7 +229,13 @@ class StudentBrowser(FastHttpUser):
                 return
             try:
                 body = response.json()
-                if case.expected == 403:
+                if case.path.endswith("/webhooks/whatsapp"):
+                    if case.expected == 401:
+                        assert body["detail"]["code"] == "INVALID_WEBHOOK_KEY"
+                        response.success()
+                    else:
+                        assert body["status"] == "queued"
+                elif case.expected == 403:
                     assert body["detail"]["code"] == "INSUFFICIENT_PERMISSIONS"
                     response.success()
                 elif case.path.endswith("/completion"):

@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     EVOLUTION_API_URL: str = "http://evolution:8080"
     EVOLUTION_INSTANCE_NAME: str = "campusunsa"
     EVOLUTION_API_KEY: SecretStr = SecretStr("")
+    EVOLUTION_WEBHOOK_API_KEY: SecretStr = SecretStr("")
     TELEGRAM_BOT_USERNAME: str = ""
     TELEGRAM_BOT_TOKEN: SecretStr = SecretStr("")
 

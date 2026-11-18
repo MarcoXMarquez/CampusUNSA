@@ -44,6 +44,7 @@ services:
       REDIS_HOST: perf-redis
       SECRET_KEY: isolated_performance_only_not_a_production_secret
       TASK_PARSER_PROVIDER: disabled
+      EVOLUTION_WEBHOOK_API_KEY: isolated_performance_webhook_key
       PERF_DELAY_MS: ${PERF_DELAY_MS:-0}
     command: ["uvicorn", "tests.load.perf_app:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "15", "--no-access-log"]
     deploy:
@@ -98,6 +99,7 @@ services:
     working_dir: /app
     environment:
       PYTHONPATH: /app
+      EVOLUTION_WEBHOOK_API_KEY: isolated_performance_webhook_key
     volumes:
       - ../../backend:/app:ro
       - load-identities:/load-data:ro
