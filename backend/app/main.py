@@ -1,3 +1,7 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+from redis.asyncio import Redis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -11,8 +15,31 @@ from app.api.v1.classroom import router as classroom_router
 from app.api.v1.courses import router as courses_router
 from app.api.v1.dutic import router as dutic_router
 from app.api.v1.nlp import router as nlp_router
+from app.api.v1.webhooks import router as webhooks_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    client = Redis.from_url(
+        settings.REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=0.1,
+        socket_timeout=0.1,
+    )
+    app.state.webhook_redis = client
+    try:
+        # Keep startup hooks used by existing integrations and load workers.
+        await app.router.startup()
+        try:
+            yield
+        finally:
+            await app.router.shutdown()
+    finally:
+        await client.aclose()
+
 
 app = FastAPI(
+    lifespan=lifespan,
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url=f"{settings.API_V1_STR}/docs",
@@ -40,6 +67,9 @@ app.include_router(classroom_router, prefix=f"{settings.API_V1_STR}/classroom", 
 app.include_router(courses_router, prefix=f"{settings.API_V1_STR}/courses", tags=["Curriculum Courses"])
 app.include_router(dutic_router, prefix=f"{settings.API_V1_STR}/dutic", tags=["DUTIC Moodle"])
 app.include_router(nlp_router, prefix=f"{settings.API_V1_STR}/nlp", tags=["Task Extraction"])
+
+
+app.include_router(webhooks_router, prefix=f"{settings.API_V1_STR}/webhooks", tags=["Webhooks"])
 
 
 @app.get("/docs", include_in_schema=False)
