@@ -338,3 +338,16 @@ def test_redacts_nested_authentication_metadata(
     assert json.loads(stored)["payload"]["data"]["metadata"]["attachments"] == [
         {"name": "file"}
     ]
+
+
+def test_accepts_a_persisted_event_after_a_brief_redis_scheduling_delay(
+    webhook_client: TestClient, webhook_redis: AsyncMock
+) -> None:
+    async def briefly_delayed_dispatch(*args: object) -> int:
+        await asyncio.sleep(0.16)
+        return 1
+
+    webhook_redis.eval.side_effect = briefly_delayed_dispatch
+    response = webhook_client.post(ENDPOINT, json=message_payload(), headers=HEADERS)
+    assert response.status_code == 200
+    assert response.json()["status"] == "queued"

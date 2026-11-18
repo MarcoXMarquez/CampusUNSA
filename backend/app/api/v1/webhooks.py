@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import hmac
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -25,9 +26,10 @@ from app.services.messaging.webhook_queue import (
     get_webhook_redis,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 MAX_BODY_BYTES = 256 * 1024
-QUEUE_TIMEOUT_SECONDS = 0.15
+QUEUE_TIMEOUT_SECONDS = 0.25
 _SENSITIVE_FIELDS = frozenset(
     {"apikey", "api_key", "authorization", "password", "secret", "token", "headers"}
 )
@@ -134,19 +136,20 @@ async def receive_whatsapp_webhook(
                         client,
                         QueuedWhatsAppEvent(received_at=received_at, payload=event),
                     )
-            except (RedisError, TimeoutError):
-                raise queue_unavailable() from None
+            except (RedisError, TimeoutError) as exc:
+                raise queue_unavailable(exc) from None
             return WebhookAcknowledgment(status="queued" if queued else "duplicate")
 
     try:
         async with asyncio.timeout(QUEUE_TIMEOUT_SECONDS):
             await client.lpush(DEAD_LETTER_QUEUE, dead_letter.model_dump_json())
-    except (RedisError, TimeoutError):
-        raise queue_unavailable() from None
+    except (RedisError, TimeoutError) as exc:
+        raise queue_unavailable(exc) from None
     return WebhookAcknowledgment(status="dead_lettered")
 
 
-def queue_unavailable() -> HTTPException:
+def queue_unavailable(error: Exception) -> HTTPException:
+    logger.warning("Webhook Redis admission failed (%s)", type(error).__name__)
     return HTTPException(
         503,
         headers={"Retry-After": "1"},

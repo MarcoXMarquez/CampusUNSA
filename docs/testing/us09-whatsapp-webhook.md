@@ -47,7 +47,7 @@ The key in the JSON body never authenticates a request.
   Operators must restrict Redis access and establish retention for quarantined data.
 - Redis AOF persistence is already enabled in the development Compose stack.
   A successful Redis write is the webhook admission boundary.
-- Redis dispatch has a 150ms timeout. HTTP 503 requests can safely be retried.
+- Redis dispatch has a 250ms timeout with 200ms connection/socket limits. HTTP 503 requests can safely be retried.
   The 200ms acceptance target is verified under mocked concurrent load.
 
 ## Evolution v2 setup

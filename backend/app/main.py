@@ -23,8 +23,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     client = Redis.from_url(
         settings.REDIS_URL,
         decode_responses=True,
-        socket_connect_timeout=0.1,
-        socket_timeout=0.1,
+        socket_connect_timeout=0.2,
+        socket_timeout=0.2,
     )
     app.state.webhook_redis = client
     try:
