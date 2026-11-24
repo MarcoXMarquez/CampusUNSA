@@ -11,7 +11,11 @@
       ],
       "forms": [
         {
-          "label": "Descargar ficha oficial de matrícula por excepción",
+          "label": "Descargar ficha oficial de matrícula (Excel)",
+          "url": "https://vra.unsa.edu.pe/dsa/wp-content/uploads/sites/3/2026/07/FICHA_DE_REGISTRO_DE_MATRI%CC%81CULA.xlsx"
+        },
+        {
+          "label": "Descargar ficha por excepción (PDF)",
           "url": "https://matricula.unsa.edu.pe/doc/ficha-registro-matricula_2017.pdf"
         }
       ],
@@ -65,7 +69,7 @@
         {
           "id": "forms",
           "title": "Formulario y entrega",
-          "description": "Completa la ficha y preséntala con tu constancia y el recibo a tu Escuela Profesional. Confirma con la Escuela su canal de recepción antes de enviar los documentos.",
+          "description": "Completa la ficha y preséntala con tu constancia y el recibo a tu Escuela Profesional. Confirma con tu Escuela el formato que corresponde y su canal de recepción.",
           "links": [
             {
               "label": "Consultar los formatos y requisitos publicados por la DSA",

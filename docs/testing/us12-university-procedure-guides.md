@@ -24,8 +24,10 @@ The payment code is generated in UNSAPay using the student's institution account
 and selected concept. The catalog supplies the concept and official link. The
 published term window is historical as of the review date. Current exceptions
 and later windows are controlled by the relevant UNSA school, not by the app.
-The withdrawal guide includes both the form URL published by the DSA and its
-source page for cases where the direct download is unavailable.
+The withdrawal guide links the PDF posted on the withdrawal page and the
+[Excel enrollment form](https://vra.unsa.edu.pe/dsa/wp-content/uploads/sites/3/2026/07/FICHA_DE_REGISTRO_DE_MATRI%CC%81CULA.xlsx)
+published by the DSA, which downloaded successfully during review. Confirm the
+format the school accepts. The direct PDF host timed out during verification.
 
 ## Data contract
 
