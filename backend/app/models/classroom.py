@@ -341,6 +341,7 @@ class ClassroomAssignment(Base):
         nullable=False,
         index=True,
     )
+    reported_course: Mapped[str | None] = mapped_column(String(120), nullable=True)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     due_date: Mapped[Optional[datetime]] = mapped_column(

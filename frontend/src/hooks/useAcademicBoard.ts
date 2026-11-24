@@ -85,7 +85,8 @@ export function useAcademicBoard(token: string | null) {
     initialDataUpdatedAt: 0,
     staleTime: 30_000,
     retry: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: "always",
+    refetchInterval: 15_000,
   });
 
   useEffect(() => {

@@ -61,6 +61,9 @@ END:VCALENDAR
 """
 
 
+pytestmark = pytest.mark.usefixtures("isolated_dutic_dns")
+
+
 @pytest.fixture
 def test_db_session() -> Session:
     """Provides an isolated SQLite in-memory database session."""

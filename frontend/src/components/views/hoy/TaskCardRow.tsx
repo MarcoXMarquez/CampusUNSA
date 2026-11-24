@@ -76,6 +76,11 @@ export const TaskCardRow = memo(function TaskCardRow({
             style={{ backgroundColor: meta.dotColor }}
           />
           <span className="font-normal truncate">{meta.courseLabel}</span>
+          {item.origin === "whatsapp" && (
+            <span className="shrink-0">
+              <span aria-hidden="true">· </span><span>{messages.detail.whatsapp}</span>
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 text-ios-caption-1 text-ink-muted mt-0.5">

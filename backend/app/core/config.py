@@ -52,7 +52,8 @@ class Settings(BaseSettings):
     OTP_GENERATION_RATE_LIMIT: int = 5
     OTP_GENERATION_WINDOW_SECONDS: int = 600
     WHATSAPP_BOT_NUMBER: str = ""
-    EVOLUTION_API_URL: str = "http://evolution:8080"
+    WHATSAPP_TASK_WORKER_ENABLED: bool = True
+    EVOLUTION_API_URL: str = "http://evolution-api:8080"
     EVOLUTION_INSTANCE_NAME: str = "campusunsa"
     EVOLUTION_API_KEY: SecretStr = SecretStr("")
     EVOLUTION_WEBHOOK_API_KEY: SecretStr = SecretStr("")
