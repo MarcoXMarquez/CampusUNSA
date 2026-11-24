@@ -16,7 +16,7 @@ from app.models.classroom import (
     UserCourseEnrollment,
     UserExternalCourse,
 )
-from app.models.ticket import Ticket
+from app.models.ticket import Ticket, TicketNotification
 from app.models.user import User, UserProfile
 from app.services.academic.curriculum_resolver import CurriculumResolverService, DEFAULT_TERM
 
@@ -42,6 +42,7 @@ def seed() -> None:
     require_isolation()
     perf_password_hash = hash_password("perfpassword123", iterations=1000)
     credentials: list[dict[str, str]] = []
+    faculty = "QA Engineering"
     with SessionLocal() as db:
         if db.query(User).count():
             raise RuntimeError("Refusing to seed a nonempty performance database")
@@ -74,7 +75,9 @@ def seed() -> None:
             db.add(user)
             # Ticket has a foreign key but no ORM relationship to order its insert.
             db.flush()
-            db.add(UserProfile(user_id=user.id, full_name=f"Synthetic Student {index}"))
+            db.add(UserProfile(
+                user_id=user.id, full_name=f"Synthetic Student {index}", faculty=faculty,
+            ))
             for origin, source in shared_sources:
                 db.add(
                     UserExternalCourse(
@@ -92,18 +95,29 @@ def seed() -> None:
                         due_date=datetime(2030, 1, 1, tzinfo=timezone.utc),
                     )
                 )
-            if index < 20:
-                db.add(
-                    Ticket(
-                        student_id=user.id,
-                        tracking_code=f"PERF-{index:04d}",
-                        category="QA",
-                        subject="Synthetic queue fixture",
-                    )
+            review, withdraw, resolved = (
+                Ticket(
+                    id=uuid4(), student_id=user.id, tracking_code=f"PERF-{index:04d}-{status_code}",
+                    category="QA", subject="Synthetic queue fixture", faculty=faculty, status=status,
+                    resolved_at=datetime.now(timezone.utc) if status == "RESOLVED" else None,
                 )
-            credentials.append(
-                {"identity": name, "token": create_access_token({"sub": str(user.id)})}
+                for status_code, status in (("REVIEW", "OPEN"), ("WITHDRAW", "OPEN"), ("NOTICE", "RESOLVED"))
             )
+            resolved.resolution = "Synthetic resolution."
+            db.add_all((review, withdraw, resolved))
+            db.flush()
+            notice = TicketNotification(
+                id=uuid4(), ticket_id=resolved.id, student_id=user.id, tracking_code=resolved.tracking_code,
+            )
+            db.add(notice)
+            credentials.append({
+                "identity": name,
+                "token": create_access_token({"sub": str(user.id)}),
+                "review_ticket_id": str(review.id),
+                "withdraw_ticket_id": str(withdraw.id),
+                "resolved_ticket_id": str(resolved.id),
+                "notice_id": str(notice.id),
+            })
         staff = User(
             id=uuid4(),
             email="perf-secretary@unsa.edu.pe",
@@ -111,7 +125,7 @@ def seed() -> None:
             is_active=True,
         )
         db.add(staff)
-        db.add(UserProfile(user_id=staff.id, full_name="Synthetic Secretary"))
+        db.add(UserProfile(user_id=staff.id, full_name="Synthetic Secretary", faculty=faculty))
         # Keep the completion fixture independent from the destructive cleanup scenarios.
         completion_user = User(
             id=uuid4(), email="perf-completion@unsa.edu.pe", role="student", is_active=True,
@@ -197,7 +211,7 @@ def seed() -> None:
         }
         Path("/load-data/users.json").write_text(json.dumps(payload), encoding="utf-8")
     print(
-        "Seeded 1,000 institutional students, one QA secretary, a completion identity, and 20 tickets."
+        "Seeded 1,000 institutional students, one QA secretary, a completion identity, and isolated ticket lifecycle fixtures."
     )
 
 

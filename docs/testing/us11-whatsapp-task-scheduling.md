@@ -56,6 +56,24 @@ commit after a send can cause a repeated confirmation on retry.
 - Use the existing parser settings for Gemini, Ollama or deterministic fallback.
 - Connect the Evolution instance to WhatsApp and link a student account. See [US-09 webhook setup](us09-whatsapp-webhook.md) for the inbound header.
 
+## Shared deployment with secretarial notifications
+
+The backend shares one Evolution gateway between task confirmations and ticket
+resolution notices. Ticket notifications only need the outbound API key.
+Task intake additionally requires the webhook secret and worker flag.
+
+The Compose stack uses a dedicated PostgreSQL schema for Evolution's Prisma
+tables. For an existing installation whose Evolution tables were created in
+the shared public schema, set `EVOLUTION_DATABASE_SCHEMA=public` before
+recreating the gateway to retain its linked session and data. New installations
+use the default `evolution` schema so Evolution and Alembic can initialize
+independently in either order.
+
+Revision `j67a2b3c4d5e` joins the two previously published backend revisions.
+Run `alembic upgrade head` against the CampusUNSA database before starting
+both workers. The same upgrade command applies on a fresh database and on a
+database that already has either feature revision.
+
 ## Verification
 
 ```bash

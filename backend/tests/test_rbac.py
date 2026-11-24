@@ -17,7 +17,7 @@ from app.core.database import Base, get_db
 from app.core.config import settings
 from app.core.security import create_access_token
 from app.main import app
-from app.models.user import User
+from app.models.user import User, UserProfile
 
 
 def test_staff_queue_requires_authentication(client: TestClient) -> None:
@@ -84,6 +84,7 @@ def add_user(db: Session, role: str, *, active: bool = True) -> User:
         role=role,
         is_active=active,
     )
+    user.profile = UserProfile(full_name="Test Account", faculty="Engineering")
     db.add(user)
     db.commit()
     return user

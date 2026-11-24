@@ -72,7 +72,7 @@ jobs:
         run: |
           python -m pytest tests/ -v --cov=app --cov-branch --cov-report=term-missing --cov-fail-under=80
 
-      - name: Verify PostgreSQL Migrations and RBAC Coverage
+      - name: Verify PostgreSQL Migrations, Ticket Lifecycle, and RBAC Coverage
         working-directory: ./backend
         env:
           POSTGRES_SERVER: localhost
@@ -83,6 +83,7 @@ jobs:
         run: |
           alembic upgrade head
           alembic check
+          python -m pytest tests/test_ticket_lifecycle.py -q
           python -m pytest tests/test_rbac.py -v --cov=app.api.dependencies --cov=app.core.permissions --cov-branch --cov-report=term-missing --cov-fail-under=90
 
       - name: Publish Backend Test Summary
