@@ -1,6 +1,6 @@
 import { AUTH_MESSAGES } from "./messages/auth-messages";
 import { taskBoardMessages } from "./messages/task-board-messages";
-import type { components } from "../types/api";
+import type { components, paths } from "../types/api";
 
 export type UserResponse = components["schemas"]["UserResponse"];
 export type TokenResponse = components["schemas"]["TokenResponse"];
@@ -503,4 +503,76 @@ export async function updateAssignmentCompletion(
   );
   if (!response.ok) throw new Error(taskBoardMessages.completionError);
   return response.json();
+}
+
+export type SecretarialTicket = components["schemas"]["TicketResponse"];
+export type SecretarialTicketDetail = components["schemas"]["TicketDetail"];
+export type TicketStatus = SecretarialTicket["status"];
+export type TicketNotice = components["schemas"]["TicketNotificationResponse"];
+type TicketQueueFilters = NonNullable<paths["/api/v1/tickets/all"]["get"]["parameters"]["query"]>;
+type TicketCreate = components["schemas"]["TicketCreate"];
+type TicketTransition = components["schemas"]["TicketTransition"];
+type TicketRouting = components["schemas"]["TicketRouting"];
+
+async function requestTicket<T>(
+  token: string,
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const response = await fetch(`${getApiBaseUrl()}/tickets${path}`, {
+    ...options,
+    cache: "no-store",
+    headers: buildHeaders(token, Boolean(options.body)),
+  });
+  if (!response.ok) {
+    throw new ApiRequestError("Ticket request failed", response.status);
+  }
+  return response.status === 204 ? undefined as T : response.json();
+}
+
+export function fetchTicketQueue(
+  token: string,
+  queue: "mine" | "all",
+  filters: TicketQueueFilters,
+  signal?: AbortSignal,
+): Promise<SecretarialTicket[]> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== null && value !== undefined && value !== "") {
+      params.set(key, String(value));
+    }
+  }
+  return requestTicket(token, `/${queue}?${params}`, { signal });
+}
+
+export function fetchTicketRouting(token: string, signal?: AbortSignal): Promise<TicketRouting> {
+  return requestTicket(token, "/routing", { signal });
+}
+
+export function fetchTicketDetail(
+  token: string, id: string, signal?: AbortSignal,
+): Promise<SecretarialTicketDetail> {
+  return requestTicket(token, `/${encodeURIComponent(id)}`, { signal });
+}
+
+export function createSecretarialTicket(token: string, input: TicketCreate): Promise<SecretarialTicketDetail> {
+  return requestTicket(token, "", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function transitionTicket(
+  token: string, id: string, change: TicketTransition,
+): Promise<SecretarialTicketDetail> {
+  return requestTicket(token, `/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(change) });
+}
+
+export function withdrawTicket(token: string, id: string): Promise<void> {
+  return requestTicket(token, `/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+export function fetchTicketNotifications(token: string, signal?: AbortSignal): Promise<TicketNotice[]> {
+  return requestTicket(token, "/notifications", { signal });
+}
+
+export function acknowledgeTicketNotice(token: string, id: string): Promise<void> {
+  return requestTicket(token, `/notifications/${encodeURIComponent(id)}/read`, { method: "PATCH" });
 }

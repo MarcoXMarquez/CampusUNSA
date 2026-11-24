@@ -11,6 +11,7 @@ export interface HugoAssistantViewProps {
   sheetOpened: boolean;
   onOpenSheet: () => void;
   onCloseSheet: () => void;
+  supportEntry?: React.ReactNode;
 }
 
 /**
@@ -22,6 +23,7 @@ export function HugoAssistantView({
   sheetOpened,
   onOpenSheet,
   onCloseSheet,
+  supportEntry,
 }: HugoAssistantViewProps): React.JSX.Element {
   return (
     <section className="w-full min-h-dvh bg-canvas text-ink-primary px-5 pt-6 pb-dock-content">
@@ -48,6 +50,7 @@ export function HugoAssistantView({
             {syncMessages.hugoActionButton}
           </button>
         </div>
+        {supportEntry}
       </div>
       <WhatsAppSheet
         opened={sheetOpened}

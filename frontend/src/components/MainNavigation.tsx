@@ -2,16 +2,19 @@
 
 import React, { useCallback, useRef, useState } from "react";
 import { Page } from "konsta/react";
+import { useQueryClient } from "@tanstack/react-query";
 import Script from "next/script";
 import { HoyView } from "@/components/views/HoyView";
 import { TareasSyncView } from "@/components/views/TareasSyncView";
 import { HorarioView } from "@/components/views/HorarioView";
 import { AjustesView } from "@/components/views/AjustesView";
+import { SecretarialTickets, SecretarialTicketsEntry, useTicketNotices } from "@/components/views/SecretarialTickets";
 import { HugoAssistantView } from "@/components/views/HugoAssistantView";
 import { BottomTabBar, type AppTab } from "@/components/navigation/BottomTabBar";
 import { LoginModal } from "@/components/sheets/LoginModal";
 import { NewTaskSheet } from "@/components/sheets/NewTaskSheet";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { secretarialTicketMessages as ticketMessages } from "@/lib/messages/secretarial-ticket-messages";
 import { useAcademicBoard, type AcademicCourse } from "@/hooks/useAcademicBoard";
 import { useCampusSession } from "@/hooks/useCampusSession";
 import { writeSessionSnapshot } from "@/lib/offline-db";
@@ -40,6 +43,7 @@ export function MainNavigation(): React.JSX.Element {
 function NavigationContent(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<AppTab>("tareas");
   const [loginModalOpened, setLoginModalOpened] = useState<boolean>(false);
+  const [ticketsOpen, setTicketsOpen] = useState(false);
   const [hugoSheetOpened, setHugoSheetOpened] = useState<boolean>(false);
   const [newTaskModalOpened, setNewTaskModalOpened] = useState<boolean>(false);
   const [newTaskInitialCourse, setNewTaskInitialCourse] =
@@ -74,6 +78,13 @@ function NavigationContent(): React.JSX.Element {
     hydrateSession,
     handleLogout,
   } = session;
+
+  const secretarialViewer = token && user?.id && ["student", "secretary", "admin"].includes(user.role)
+    ? { token, userId: user.id, staff: user.role !== "student", isOnline }
+    : null;
+  const ticketNotices = useTicketNotices(secretarialViewer, true);
+  const newestNotice = ticketNotices.error ? undefined : ticketNotices.data?.[0];
+  const queryClient = useQueryClient();
 
   const {
     courses,
@@ -255,6 +266,19 @@ function NavigationContent(): React.JSX.Element {
       <Script src="https://accounts.google.com/gsi/client" strategy="lazyOnload" />
 
       <main className="w-full min-h-dvh">
+        {newestNotice && secretarialViewer && !secretarialViewer.staff && !(activeTab === "hugo" && ticketsOpen) && (
+          <div className="mx-auto max-w-2xl px-5 pt-4">
+            <div className="rounded-xl border border-subtle bg-surface-card px-3" role="status">
+              <button type="button" className="interactive-surface min-h-11 w-full text-left text-ios-footnote font-semibold text-brand-action"
+                onClick={() => {
+                  setTicketsOpen(true);
+                  setActiveTab("hugo");
+                }}>
+                {ticketMessages.noticeLabel(newestNotice.tracking_code)}
+              </button>
+            </div>
+          </div>
+        )}
         {activeTab === "tareas" &&
           (!allSourcesSynced ? (
             <TareasSyncView
@@ -302,15 +326,25 @@ function NavigationContent(): React.JSX.Element {
           />
         )}
 
-        {activeTab === "hugo" && (
+        {activeTab === "hugo" && (ticketsOpen && secretarialViewer ? (
+          <SecretarialTickets
+            key={`${secretarialViewer.userId}:${secretarialViewer.staff}`}
+            {...secretarialViewer}
+            onExit={() => setTicketsOpen(false)}
+            onReconnect={() => setLoginModalOpened(true)}
+          />
+        ) : (
           <HugoAssistantView
+            supportEntry={secretarialViewer && (
+              <SecretarialTicketsEntry {...secretarialViewer} onOpen={() => setTicketsOpen(true)} />
+            )}
             token={token}
             isOnline={isOnline}
             sheetOpened={hugoSheetOpened}
             onOpenSheet={() => setHugoSheetOpened(true)}
             onCloseSheet={() => setHugoSheetOpened(false)}
           />
-        )}
+        ))}
 
         {activeTab === "ajustes" && (
           <div className="w-full max-w-lg mx-auto">
@@ -327,7 +361,11 @@ function NavigationContent(): React.JSX.Element {
               onSubscribeMoodleIcal={handleSubscribeMoodleIcal}
               onClearTasks={handleClearTasks}
               onClearCourses={handleClearCourses}
-              onLogout={handleLogout}
+              onLogout={() => {
+                queryClient.removeQueries({ queryKey: ["secretarial"] });
+                setTicketsOpen(false);
+                handleLogout();
+              }}
               onOpenLogin={() => setLoginModalOpened(true)}
             />
           </div>
