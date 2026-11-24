@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 from hashlib import sha256
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import httpx
@@ -15,8 +16,9 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.services.messaging import webhook_queue, whatsapp_worker
 from app.services.messaging.gateway import EvolutionWhatsAppGateway
-from app.services.messaging.whatsapp_worker import WhatsAppTaskQueue
+from app.services.messaging.whatsapp_worker import DeliveryClaim, WhatsAppTaskQueue
 from app.services.tasks.task_parser import NLPTaskParserService
+from app.services.tasks.whatsapp import WhatsAppConfirmationError
 import test_assignment_completion as board_tests
 import test_whatsapp_tasks as task_tests
 
@@ -132,3 +134,29 @@ def test_webhook_queue_worker_confirms_via_evolution_and_exposes_committed_task(
     assert (task["title"], task["course_code"], task["origin"]) == (
         "Compilers Lab", "COMP", "whatsapp",
     )
+
+
+def test_processing_failure_is_retried_and_invalid_job_is_quarantined() -> None:
+    queue = AsyncMock()
+    parser = NLPTaskParserService()
+    gateway = AsyncMock()
+    record = delivery().model_dump_json()
+    queue.claim.side_effect = [
+        DeliveryClaim("claim-1", record, 1),
+        DeliveryClaim("claim-2", "{invalid", 1),
+        None,
+    ]
+
+    async def verify() -> None:
+        failure = WhatsAppConfirmationError("Provider unavailable")
+        with patch.object(whatsapp_worker, "_process", side_effect=failure):
+            assert await whatsapp_worker.process_one(queue, parser, gateway)
+        assert await whatsapp_worker.process_one(queue, parser, gateway)
+        assert not await whatsapp_worker.process_one(queue, parser, gateway)
+
+    asyncio.run(verify())
+    queue.retry.assert_awaited_once_with(
+        DeliveryClaim("claim-1", record, 1), delay_seconds=2,
+    )
+    queue.discard_invalid.assert_awaited_once_with(DeliveryClaim("claim-2", "{invalid", 1))
+    queue.ack.assert_not_awaited()

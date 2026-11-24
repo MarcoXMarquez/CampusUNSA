@@ -30,7 +30,6 @@ class WhatsAppConfirmationError(RuntimeError):
     """The outbound gateway did not confirm dispatch."""
 
 
-
 def confirmation_message(title: str, due_date: datetime) -> str:
     local = due_date.astimezone(LIMA)
     month = MONTH_ABBREVIATIONS[local.month - 1]
