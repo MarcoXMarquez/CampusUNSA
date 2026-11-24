@@ -74,7 +74,7 @@ services:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
       - WHATSAPP_TASK_WORKER_ENABLED=${WHATSAPP_TASK_WORKER_ENABLED:-true}
       - EVOLUTION_API_URL=${EVOLUTION_API_URL:-http://evolution-api:8080}
-      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-dev_evolution_secret_key_12345}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-}
       - EVOLUTION_WEBHOOK_API_KEY=${EVOLUTION_WEBHOOK_API_KEY:-}
       - EVOLUTION_INSTANCE_NAME=${EVOLUTION_INSTANCE_NAME:-campusunsa}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
@@ -131,7 +131,7 @@ services:
       - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-dev_evolution_secret_key_12345}
       - DATABASE_ENABLED=true
       - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_dev_password}@postgres:5432/${POSTGRES_DB:-campusunsa}
+      - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_dev_password}@postgres:5432/${POSTGRES_DB:-campusunsa}?schema=${EVOLUTION_DATABASE_SCHEMA:-evolution}
       - CACHE_REDIS_ENABLED=true
       - CACHE_REDIS_URI=redis://redis:6379/1
     ports:

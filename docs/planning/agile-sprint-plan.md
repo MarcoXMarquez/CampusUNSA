@@ -85,9 +85,9 @@ flowchart LR
 | **#8** | `US-08` | Secure 5-Minute OTP WhatsApp Phone Binding Lifecycle | Sprint 5 | Wed Nov 11 | `@rikich3` | `@MarcoXMarquez` | Must Have | Open |
 | **#9** | `US-09` | Evolution API Inbound Webhook Ingestion Gateway | Sprint 5 | Wed Nov 11 | `@Sebastianzzzin` | `@rikich3` | Must Have | Open |
 | **#10** | `US-10` | NLP Task Extraction via Structured LLM Parsing | Sprint 6 | Wed Nov 18 | `@rikich3` | `@MarcoXMarquez` | Must Have | Closed |
-| **#11** | `US-11` | Automated Task Insertion with WhatsApp Confirmation | Sprint 6 | Wed Nov 18 | `@iccoscco` | `@Sebastianzzzin` | Must Have | Open |
-| **#12** | `US-12` | Interactive University Procedures and Bureaucracy Flowcharts | Sprint 7 | Wed Nov 25 | `@iccoscco` | `@Sebastianzzzin` | Must Have | Open |
-| **#13** | `US-13` | Human Secretarial Escalation & Ticket Management Console | Sprint 7 | Wed Nov 25 | `@MarcoXMarquez` | `@iccoscco` | Must Have | Open |
+| **#11** | `US-11` | Automated Task Insertion with WhatsApp Confirmation | Sprint 6 | Wed Nov 18 | `@iccoscco` | `@Sebastianzzzin` | Must Have | Closed |
+| **#12** | `US-12` | Interactive University Procedures and Bureaucracy Flowcharts | Sprint 7 | Wed Nov 25 | `@iccoscco` | `@Sebastianzzzin` | Must Have | Closed |
+| **#13** | `US-13` | Human Secretarial Escalation & Ticket Management Console | Sprint 7 | Wed Nov 25 | `@MarcoXMarquez` | `@iccoscco` | Must Have | Closed |
 | **#14** | `US-14` | Official Regulations Knowledge Base & RAG Query Engine | Sprint 8 | Wed Dec 02 | `@rikich3` | `@MarcoXMarquez` | Should Have | Open |
 | **#15** | `US-15` | Automated Load and Stress Verification (1,000 Users) | Sprint 8 | Wed Dec 02 | `@Sebastianzzzin` | `@iccoscco` | Should Have | Open |
 | **#16** | `US-16` | System Hardening, 30-Student Live Pilot & Release v1.0 | Sprint 9 | Wed Dec 09 | `@MarcoXMarquez` | All Team Members | Must Have | Open |

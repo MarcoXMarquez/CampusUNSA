@@ -96,6 +96,7 @@ class StudentBrowser(FastHttpUser):
         self.cases = itertools.cycle(
             SCENARIOS[index % len(SCENARIOS) :] + SCENARIOS[: index % len(SCENARIOS)]
         )
+        self.ticket_review_started = False
         gevent.sleep(random.uniform(0, 2))
 
     @task
@@ -109,14 +110,24 @@ class StudentBrowser(FastHttpUser):
         )
         if case.role == "completion":
             token = dataset["completion_token"]
+        ticket_id = {
+            "GET": self.account["resolved_ticket_id"],
+            "PATCH": self.account["review_ticket_id"],
+            "DELETE": self.account["withdraw_ticket_id"],
+        }.get(case.method, self.account["resolved_ticket_id"])
         request_path = case.path.format(
+            ticket_id=ticket_id,
+            notice_id=self.account["notice_id"],
             assignment_id=dataset["completion_assignment_id"],
             source_id=dataset.get("completion_source_id", ""),
             course_code=dataset.get("completion_course_code", "1705275"),
             channel="whatsapp",
         )
         headers = {"Authorization": f"Bearer {token}"}
+        expected = case.expected
         payload = None
+        if case.path == "/api/v1/tickets/all" and case.role == "secretary":
+            request_path += "?limit=25"
         if case.path.endswith("/webhooks/whatsapp"):
             headers = {"apikey": os.environ["EVOLUTION_WEBHOOK_API_KEY"]} if case.expected == 200 else {}
             payload = {
@@ -130,6 +141,14 @@ class StudentBrowser(FastHttpUser):
                     "message": {"conversation": "Prepare the report"},
                 },
             }
+        elif case.path == "/api/v1/tickets":
+            payload = {
+                "request_id": str(uuid.uuid4()), "confirmed": True,
+                "subject": "Synthetic faculty request", "description": "Synthetic load-test query.",
+            }
+        elif case.path == "/api/v1/tickets/{ticket_id}" and case.method == "PATCH":
+            expected = 409 if self.ticket_review_started else 200
+            payload = {"status": "IN_REVIEW"}
         elif case.path.endswith("/completion"):
             payload = {"is_completed": True}
         elif case.path.endswith("/link"):
@@ -224,8 +243,12 @@ class StudentBrowser(FastHttpUser):
                 server_timings.setdefault(case.name, []).append(float(timing))
                 worker = response.headers.get("x-perf-worker", "unknown")
                 worker_requests[worker] = worker_requests.get(worker, 0) + 1
-            if response.status_code != case.expected:
+            if response.status_code != expected:
                 response.failure(f"Unexpected HTTP status {response.status_code}")
+                return
+            if expected == 204:
+                if response.content:
+                    response.failure("Expected an empty response")
                 return
             try:
                 body = response.json()
@@ -238,6 +261,23 @@ class StudentBrowser(FastHttpUser):
                 elif case.expected == 403:
                     assert body["detail"]["code"] == "INSUFFICIENT_PERMISSIONS"
                     response.success()
+                elif case.path == "/api/v1/tickets":
+                    assert body["status"] == "OPEN" and body["tracking_code"].startswith("TICK-")
+                elif case.path == "/api/v1/tickets/{ticket_id}":
+                    if expected == 409:
+                        assert body["detail"]["code"] == "TICKET_INVALID_TRANSITION"
+                        response.success()
+                    else:
+                        assert body["id"] == ticket_id
+                        assert body["status"] == ("IN_REVIEW" if case.method == "PATCH" else "RESOLVED")
+                        if case.method == "PATCH":
+                            self.ticket_review_started = True
+                elif case.path == "/api/v1/tickets/routing":
+                    assert body["faculty"] == "QA Engineering"
+                elif case.path == "/api/v1/tickets/mine":
+                    assert isinstance(body, list) and any(row["id"] == self.account["resolved_ticket_id"] for row in body)
+                elif case.path == "/api/v1/tickets/notifications":
+                    assert isinstance(body, list) and all(row["id"] == self.account["notice_id"] for row in body)
                 elif case.path.endswith("/completion"):
                     assert body["is_completed"] is True
                     assert body["id"] == dataset["completion_assignment_id"]
