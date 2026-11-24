@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+// Routing tests run without service worker network interception.
+test.use({ serviceWorkers: "block" });
+
 test("walks through the withdrawal guide on a mobile viewport", async ({ page }, testInfo) => {
   await page.route("https://accounts.google.com/**", (route) => route.abort());
   await page.addInitScript(() => {
