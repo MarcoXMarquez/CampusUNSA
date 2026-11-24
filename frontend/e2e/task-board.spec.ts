@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
+// Routing tests run without service worker network interception.
+test.use({ serviceWorkers: "block" });
+
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date("2026-11-16T00:00:00Z"));
   await page.route("https://accounts.google.com/**", (route) => route.abort());
