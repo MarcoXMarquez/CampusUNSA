@@ -1,0 +1,259 @@
+{
+  "$schema": "./academic-procedures.schema.json",
+  "procedures": [
+    {
+      "id": "course-withdrawal",
+      "title": "Retiro de curso",
+      "summary": "Retira una asignatura mediante la modificación de matrícula.",
+      "prerequisites": [
+        "Constancia de matrícula anterior.",
+        "Recibo del pago por modificación de matrícula."
+      ],
+      "forms": [
+        {
+          "label": "Descargar ficha oficial de matrícula (Excel)",
+          "url": "https://vra.unsa.edu.pe/dsa/wp-content/uploads/sites/3/2026/07/FICHA_DE_REGISTRO_DE_MATRI%CC%81CULA.xlsx"
+        },
+        {
+          "label": "Descargar ficha por excepción (PDF)",
+          "url": "https://matricula.unsa.edu.pe/doc/ficha-registro-matricula_2017.pdf"
+        }
+      ],
+      "sources": [
+        {
+          "label": "Procedimiento de retiro · Dirección de Servicios Académicos",
+          "url": "https://vra.unsa.edu.pe/dsa/procedimientos/retiro-de-matricula-modificacion-de-matricula/"
+        },
+        {
+          "label": "Cronograma oficial 2026 (RCU 0999-2025)",
+          "url": "https://transparencia.unsa.edu.pe/handle/123456789/1727"
+        },
+        {
+          "label": "Instrucciones de pago por modificación · DSA",
+          "url": "https://vra.unsa.edu.pe/dsa/procedimientos/matricula-regular/"
+        }
+      ],
+      "steps": [
+        {
+          "id": "requirements",
+          "title": "Requisitos",
+          "description": "Identifica la asignatura que deseas retirar. Si buscas retirar todos tus cursos, consulta con tu Escuela por la anulación de matrícula.",
+          "links": []
+        },
+        {
+          "id": "calendar",
+          "title": "Plazo de presentación",
+          "description": "El cronograma 2026-B fijó del 10 al 21 de agosto de 2026 para modificación y retiro de matrícula en las Escuelas. Consulta si tu Escuela publicó una actualización antes de iniciar el trámite.",
+          "links": [
+            {
+              "label": "Cronograma oficial 2026 (RCU 0999-2025)",
+              "url": "https://transparencia.unsa.edu.pe/handle/123456789/1727"
+            },
+            {
+              "label": "Consultar el retiro excepcional por causas justificadas",
+              "url": "https://vra.unsa.edu.pe/dsa/procedimientos/retiro-excepcional/"
+            }
+          ]
+        },
+        {
+          "id": "payment",
+          "title": "Pago y código",
+          "description": "La DSA publica S/ 10,00 por modificación de matrícula. Ingresa a UNSAPay con tu correo institucional y selecciona el concepto indicado para tu Escuela. Usa el código generado allí para pagar y guarda la boleta.",
+          "links": [
+            {
+              "label": "Generar código en UNSAPay",
+              "url": "https://ouis.unsa.edu.pe/unsapay"
+            }
+          ]
+        },
+        {
+          "id": "forms",
+          "title": "Formulario y entrega",
+          "description": "Completa la ficha y preséntala con tu constancia y el recibo a tu Escuela Profesional. Confirma con tu Escuela el formato que corresponde y su canal de recepción.",
+          "links": [
+            {
+              "label": "Consultar los formatos y requisitos publicados por la DSA",
+              "url": "https://vra.unsa.edu.pe/dsa/procedimientos/retiro-de-matricula-modificacion-de-matricula/"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "enrollment-rectification",
+      "title": "Rectificación de matrícula",
+      "summary": "Corrige un error u omisión en tu matrícula.",
+      "prerequisites": [
+        "Ficha de matrícula completa y firmada.",
+        "Constancia de matrícula.",
+        "Recibo del pago por modificación de matrícula."
+      ],
+      "forms": [
+        {
+          "label": "Consultar la ficha en el portal de matrícula",
+          "url": "https://matricula.unsa.edu.pe/"
+        }
+      ],
+      "sources": [
+        {
+          "label": "Rectificación en el procedimiento de matrícula regular · DSA",
+          "url": "https://vra.unsa.edu.pe/dsa/procedimientos/matricula-regular/"
+        },
+        {
+          "label": "Cronograma oficial 2026 (RCU 0999-2025)",
+          "url": "https://transparencia.unsa.edu.pe/handle/123456789/1727"
+        }
+      ],
+      "steps": [
+        {
+          "id": "requirements",
+          "title": "Requisitos",
+          "description": "Identifica el error u omisión en la matrícula y reúne los documentos que pide la DSA.",
+          "links": []
+        },
+        {
+          "id": "calendar",
+          "title": "Plazo de presentación",
+          "description": "El cronograma 2026-B fijó del 10 al 21 de agosto de 2026 para modificaciones en las Escuelas. Verifica con tu Escuela si se publicó una actualización aplicable a tu caso.",
+          "links": [
+            {
+              "label": "Cronograma oficial 2026 (RCU 0999-2025)",
+              "url": "https://transparencia.unsa.edu.pe/handle/123456789/1727"
+            }
+          ]
+        },
+        {
+          "id": "payment",
+          "title": "Pago y código",
+          "description": "Solicita en UNSAPay el código del pago por modificación de matrícula con tu correo institucional. La DSA indica pagar a la cuenta UNSA VIRTUAL en BCP y conservar la boleta.",
+          "links": [
+            {
+              "label": "Generar código en UNSAPay",
+              "url": "https://ouis.unsa.edu.pe/unsapay"
+            }
+          ]
+        },
+        {
+          "id": "forms",
+          "title": "Formulario y entrega",
+          "description": "Presenta o envía la ficha firmada, tu constancia y el recibo a la Escuela Profesional que gestiona tu matrícula.",
+          "links": [
+            {
+              "label": "Consultar el procedimiento de rectificación",
+              "url": "https://vra.unsa.edu.pe/dsa/procedimientos/matricula-regular/"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fee-waiver",
+      "title": "Exoneración de pagos",
+      "summary": "Consulta si te corresponde una exoneración de matrícula de pregrado.",
+      "prerequisites": [
+        "Ser ingresante de pregrado procedente de un colegio nacional, según la RCU 124-2018.",
+        "Contar con la evaluación socioeconómica que realiza Bienestar Universitario."
+      ],
+      "forms": [
+        {
+          "label": "Consultar el formato vigente con Bienestar Universitario",
+          "url": "https://www.unsa.edu.pe/bienestaruniversitario/nosotros/"
+        }
+      ],
+      "sources": [
+        {
+          "label": "RCU 124-2018 sobre exoneración de matrícula",
+          "url": "https://transparencia.unsa.edu.pe/handle/123456789/412"
+        },
+        {
+          "label": "Directiva de estudio socioeconómico · RCU 0998-2025",
+          "url": "https://transparencia.unsa.edu.pe/handle/123456789/1734"
+        }
+      ],
+      "steps": [
+        {
+          "id": "requirements",
+          "title": "Requisitos",
+          "description": "Esta modalidad corresponde a la matrícula de ingresantes. La resolución prevé una evaluación para determinar si corresponde proponer una exoneración total o parcial.",
+          "links": []
+        },
+        {
+          "id": "forms",
+          "title": "Solicitud y evaluación",
+          "description": "Solicita a la Dirección de Bienestar Universitario el formato vigente, la lista de sustentos y el plazo que corresponda a tu caso. La directiva institucional detalla el estudio socioeconómico.",
+          "links": [
+            {
+              "label": "Consultar la directiva de estudio socioeconómico",
+              "url": "https://transparencia.unsa.edu.pe/handle/123456789/1734"
+            }
+          ]
+        },
+        {
+          "id": "decision",
+          "title": "Resultado",
+          "description": "Consulta el resultado con Bienestar Universitario y confirma con la oficina responsable cualquier saldo antes de generar un código de pago. La solicitud por sí sola no confirma la exoneración.",
+          "links": [
+            {
+              "label": "Consultar la resolución de exoneraciones",
+              "url": "https://transparencia.unsa.edu.pe/handle/123456789/412"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "library-access",
+      "title": "Acceso a biblioteca",
+      "summary": "Consulta el catálogo y accede a recursos de la Biblioteca Virtual.",
+      "prerequisites": [
+        "Ten a mano tu correo institucional para registrarte en los recursos que lo soliciten.",
+        "Para recursos por suscripción, revisa las condiciones de acceso de cada plataforma."
+      ],
+      "forms": [],
+      "sources": [
+        {
+          "label": "Reglamento del Sistema de Bibliotecas UNSA",
+          "url": "https://fips.unsa.edu.pe/ingenieriadesistemas/wp-content/uploads/sites/2/2021/08/REGLAMENTO-USUARIOS-SISTEMA-BIBLIOTECAS-UNSA.pdf"
+        },
+        {
+          "label": "Acceso institucional a la Biblioteca Virtual",
+          "url": "https://fggm.unsa.edu.pe/inggeofisica/biblioteca-virtual/"
+        }
+      ],
+      "steps": [
+        {
+          "id": "requirements",
+          "title": "Requisitos",
+          "description": "El reglamento indica que los usuarios ordinarios pueden registrarse con su correo para acceder a bases de datos. Algunos proveedores requieren un registro adicional.",
+          "links": []
+        },
+        {
+          "id": "access",
+          "title": "Ingreso y consulta",
+          "description": "Abre la Biblioteca Virtual o busca material en el catálogo institucional. Selecciona la base de datos o recurso y sigue las instrucciones de acceso.",
+          "links": [
+            {
+              "label": "Abrir las opciones de Biblioteca Virtual",
+              "url": "https://fggm.unsa.edu.pe/inggeofisica/biblioteca-virtual/"
+            },
+            {
+              "label": "Portal UNSA · Servicios en línea y bibliotecas",
+              "url": "https://www.unsa.edu.pe/"
+            }
+          ]
+        },
+        {
+          "id": "support",
+          "title": "Registro y ayuda",
+          "description": "Si un recurso solicita registro, usa la opción publicada por la Biblioteca Virtual o por el proveedor. El acceso ordinario a las bases de datos se presta sin costo según el reglamento.",
+          "links": [
+            {
+              "label": "Consultar el reglamento del Sistema de Bibliotecas",
+              "url": "https://fips.unsa.edu.pe/ingenieriadesistemas/wp-content/uploads/sites/2/2021/08/REGLAMENTO-USUARIOS-SISTEMA-BIBLIOTECAS-UNSA.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

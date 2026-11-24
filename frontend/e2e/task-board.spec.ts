@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
+// Routing tests run without service worker network interception.
+test.use({ serviceWorkers: "block" });
+
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date("2026-11-16T00:00:00Z"));
   await page.route("https://accounts.google.com/**", (route) => route.abort());
@@ -9,7 +12,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-async function mockAcademicBoard(page: Page): Promise<{ failNextSave: () => void }> {
+async function mockAcademicBoard(page: Page, includeWhatsApp = false): Promise<{ failNextSave: () => void }> {
   const courses = [
     {
       id: "course-1",
@@ -42,7 +45,7 @@ async function mockAcademicBoard(page: Page): Promise<{ failNextSave: () => void
     is_completed: false,
   };
 
-  let assignments = [
+  let assignments: ({ id: string; title: string; origin: string; [field: string]: unknown })[] = [
     {
       ...base,
       id: "task-1",
@@ -91,6 +94,18 @@ async function mockAcademicBoard(page: Page): Promise<{ failNextSave: () => void
       ].join("\n"),
     },
   ];
+
+  if (includeWhatsApp) {
+    assignments.push({
+      ...base,
+      id: "whatsapp-task",
+      classroom_assignment_id: "whatsapp-fixture",
+      title: "Compilers Lab",
+      origin: "whatsapp",
+      reported_course: "Compilers",
+      due_date: "2026-11-16T20:00:00Z",
+    });
+  }
 
   let failNextSave = false;
 
@@ -236,4 +251,23 @@ test("fits the Moodle task detail and its long links in a narrow mobile viewport
   await expect(moodleLink).toBeInViewport();
   await expect(moodleDetail.getByRole("button", { name: "Cerrar" })).toBeInViewport();
   await page.screenshot({ path: testInfo.outputPath("moodle-detail-320.png") });
+});
+
+test("shows a WhatsApp task and retains its reported course on the board", async ({
+  page,
+}, testInfo) => {
+  await mockAcademicBoard(page, true);
+  await page.goto("/");
+  const task = page.getByRole("button", { name: /^Compilers Lab/ });
+  await expect(task).toBeVisible();
+  await expect(task.getByText("WhatsApp", { exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("whatsapp-board.png") });
+  await task.click();
+  const detail = page.getByRole("dialog", { name: "Compilers Lab" });
+  await expect(detail).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("whatsapp-detail.png") });
+  await expect(detail.getByText("WhatsApp", { exact: true })).toBeVisible();
+  await expect(detail.getByText("Compilers", { exact: true })).toBeVisible();
+  await expect(detail.getByText("Tu progreso se guarda en CampusUNSA.", { exact: true })).toBeVisible();
+  await expect(detail.getByRole("link", { name: "Abrir en Classroom" })).toHaveCount(0);
 });

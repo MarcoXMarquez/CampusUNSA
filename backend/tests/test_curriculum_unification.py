@@ -26,6 +26,9 @@ from app.models.user import User
 from app.core.token_encryption import encrypt_token
 
 
+pytestmark = pytest.mark.usefixtures("isolated_dutic_dns")
+
+
 @pytest.fixture
 def test_db_session() -> Session:
     """Provide an isolated SQLite in-memory database session."""

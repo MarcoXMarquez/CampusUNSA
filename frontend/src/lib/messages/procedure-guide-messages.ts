@@ -1,0 +1,15 @@
+export const procedureGuideMessages = {
+  title: "Guía de trámites",
+  launcher: "Guía de trámites",
+  description: "Consulta los pasos, plazos y formularios de la UNSA.",
+  backToHugo: "Volver a Hugo",
+  backToGuides: "Volver a trámites",
+  steps: "Pasos del trámite",
+  progress: (step: number, total: number) => `Paso ${step} de ${total}`,
+  previous: "Anterior",
+  next: "Siguiente",
+  finish: "Finalizar",
+  sources: "Fuentes oficiales",
+  offline: "Sin conexión · puedes leer la guía. Los enlaces requieren internet.",
+  empty: "No hay trámites disponibles.",
+} as const;

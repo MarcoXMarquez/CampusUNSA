@@ -15,6 +15,7 @@ export interface AcademicAssignment {
   source_id?: string | null;
   course_code?: string | null;
   classroom_assignment_id: string;
+  reported_course?: string | null;
   title: string;
   description?: string | null;
   due_date?: string | null;
@@ -62,9 +63,16 @@ export function TaskDetailSheet({
   if (!opened || !assignment) return <></>;
 
   const isDutic = assignment.origin === "dutic" || assignment.origin === "moodle";
+  const isWhatsApp = assignment.origin === "whatsapp";
+  const completionNote = isWhatsApp ? messages.localCompletionNote : messages.completionNote;
+  const providers: Partial<Record<string, string>> = {
+    manual: messages.detail.personal,
+    whatsapp: messages.detail.whatsapp,
+    classroom: messages.detail.classroom,
+  };
   const sourceLabel = isDutic
     ? messages.detail.moodle
-    : assignment.origin === "manual" ? messages.detail.personal : messages.detail.classroom;
+    : providers[assignment.origin];
 
   const { text, assignmentUrl, resources } = getTaskDetailLinks(
     assignment.origin, assignment.alternate_link, assignment.description
@@ -168,7 +176,7 @@ export function TaskDetailSheet({
             {completionPending && <p role="status" className="mt-2 text-ios-footnote text-ink-secondary">{messages.saving}</p>}
             {completionError && <p role="alert" className="mt-2 text-ios-subhead text-ink-primary">{completionError}</p>}
             <p className="mt-3 text-ios-footnote text-ink-secondary">
-              {isOnline ? messages.completionNote : messages.offlineCompletion}
+              {isOnline ? completionNote : messages.offlineCompletion}
             </p>
           </div>
         )}

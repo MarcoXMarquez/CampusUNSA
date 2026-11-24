@@ -177,6 +177,7 @@ class AcademicAssignmentResponse(BaseModel):
     source_id: Optional[uuid.UUID] = None
     course_code: Optional[str] = None
     enrollment_id: Optional[uuid.UUID] = None
+    reported_course: str | None = None
     classroom_assignment_id: str
     title: str
     description: Optional[str] = None

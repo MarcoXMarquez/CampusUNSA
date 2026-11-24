@@ -1,3 +1,5 @@
+import socket
+
 import pytest
 from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
@@ -5,6 +7,24 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.core.database import get_db
 from app.core.redis import get_redis
+
+
+@pytest.fixture
+def isolated_dutic_dns(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep mocked iCal HTTP tests independent from campus split DNS."""
+    original_resolver = socket.getaddrinfo
+
+    def resolve(
+        host: str | bytes | None, port: str | int | None, family: int = 0,
+        type: int = 0, proto: int = 0, flags: int = 0,
+    ) -> list[tuple[int, int, int, str, tuple[str, int]]]:
+        if host == "aulavirtual.unsa.edu.pe" and port == 443:
+            return [
+                (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", ("1.1.1.1", 443))
+            ]
+        return original_resolver(host, port, family, type, proto, flags)
+
+    monkeypatch.setattr(socket, "getaddrinfo", resolve)
 
 
 @pytest.fixture

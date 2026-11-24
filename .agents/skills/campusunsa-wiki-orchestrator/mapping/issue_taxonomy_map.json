@@ -142,9 +142,9 @@
       "title": "Automated Board Scheduling via WhatsApp"
     },
     "12": {
-      "target_page": "Redis-Cache-and-OTP-State-Machines.md",
-      "category": "messaging_and_nlp",
-      "title": "5-Minute OTP Phone Binding"
+      "target_page": "Administrative-Procedures-Guide.md",
+      "category": "student_guidance",
+      "title": "Interactive Bureaucracy Guide"
     },
     "13": {
       "target_page": "Secretarial-Helpdesk-and-Ticketing.md",
