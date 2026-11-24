@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -14,7 +15,9 @@ from app.api.v1.tickets import router as tickets_router
 from app.api.v1.classroom import router as classroom_router
 from app.api.v1.courses import router as courses_router
 from app.api.v1.dutic import router as dutic_router
-from app.api.v1.nlp import router as nlp_router
+from app.api.v1.nlp import get_task_parser, router as nlp_router
+from app.services.messaging.gateway import EvolutionWhatsAppGateway
+from app.services.messaging.whatsapp_worker import WhatsAppTaskQueue, run_whatsapp_task_worker
 from app.api.v1.webhooks import router as webhooks_router
 
 
@@ -30,10 +33,31 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         # Keep startup hooks used by existing integrations and load workers.
         await app.router.startup()
+        stopping = asyncio.Event()
+        worker: asyncio.Task[None] | None = None
         try:
+            evolution_key = settings.EVOLUTION_API_KEY.get_secret_value()
+            if (
+                settings.WHATSAPP_TASK_WORKER_ENABLED
+                and evolution_key
+                and settings.EVOLUTION_WEBHOOK_API_KEY.get_secret_value()
+            ):
+                gateway = EvolutionWhatsAppGateway(
+                    base_url=settings.EVOLUTION_API_URL,
+                    instance_name=settings.EVOLUTION_INSTANCE_NAME,
+                    api_key=evolution_key,
+                )
+                worker = asyncio.create_task(run_whatsapp_task_worker(
+                    WhatsAppTaskQueue(client), get_task_parser(), gateway, stopping
+                ))
             yield
         finally:
-            await app.router.shutdown()
+            try:
+                if worker is not None:
+                    stopping.set()
+                    await worker
+            finally:
+                await app.router.shutdown()
     finally:
         await client.aclose()
 

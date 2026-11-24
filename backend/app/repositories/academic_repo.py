@@ -1238,7 +1238,7 @@ class AcademicSyncRepository:
         if origin:
             query = query.filter(ClassroomAssignment.origin == origin)
         else:
-            query = query.filter(ClassroomAssignment.origin != "manual")
+            query = query.filter(ClassroomAssignment.origin.not_in(("manual", "whatsapp")))
         count = query.delete(synchronize_session=False)
         db.commit()
         return count
@@ -1271,7 +1271,7 @@ class AcademicSyncRepository:
         db.query(ClassroomAssignment).filter(
             ClassroomAssignment.user_id == user_id,
             ClassroomAssignment.source_id.in_(source_ids),
-            ClassroomAssignment.origin != "manual",
+            ClassroomAssignment.origin.not_in(("manual", "whatsapp")),
         ).delete(synchronize_session=False)
 
         deleted_count = (

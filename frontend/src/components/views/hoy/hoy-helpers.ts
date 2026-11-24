@@ -62,7 +62,7 @@ export function resolveTaskMetadata(
       : messages.components.theory;
 
   const baseName =
-    formatAcademicTitle(item.courseName ?? course?.name) ||
+    formatAcademicTitle(item.courseName ?? course?.name ?? item.reported_course) ||
     (!item.course_id && !item.course_code ? "Personal" : "Curso UNSA");
   const groupCode =
     item.group_code ??

@@ -693,6 +693,8 @@ export interface components {
             course_code?: string | null;
             /** Enrollment Id */
             enrollment_id?: string | null;
+            /** Reported Course */
+            reported_course?: string | null;
             /** Classroom Assignment Id */
             classroom_assignment_id: string;
             /** Title */
@@ -844,6 +846,8 @@ export interface components {
             course_code?: string | null;
             /** Enrollment Id */
             enrollment_id?: string | null;
+            /** Reported Course */
+            reported_course?: string | null;
             /** Classroom Assignment Id */
             classroom_assignment_id: string;
             /** Title */
@@ -1101,6 +1105,8 @@ export interface components {
             course_code?: string | null;
             /** Enrollment Id */
             enrollment_id?: string | null;
+            /** Reported Course */
+            reported_course?: string | null;
             /** Classroom Assignment Id */
             classroom_assignment_id: string;
             /** Title */

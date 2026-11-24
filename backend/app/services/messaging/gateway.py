@@ -37,7 +37,7 @@ class EvolutionWhatsAppGateway:
                 response = await client.post(url, json=payload, headers=headers)
             return response.status_code in (200, 201)
         except httpx.HTTPError as exc:
-            logger.warning("Evolution API send_text failed: %s", exc)
+            logger.warning("Evolution API send_text failed (%s)", type(exc).__name__)
             return False
 
 

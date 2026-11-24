@@ -41,8 +41,9 @@ The key in the JSON body never authenticates a request.
   with exactly 86,400 seconds of TTL.
 - A Redis Lua script checks deduplication, pushes the record, and stores the marker
   in one atomic execution. A wrong queue type does not create the marker.
-- A consumer can use `BRPOP` for FIFO dispatch. Worker acknowledgment and retries
-  belong to the subsequent processing implementation in US-11.
+- The [US-11 worker](us11-whatsapp-task-scheduling.md) claims the oldest pending
+  record atomically and acknowledges it after processing. Expired claims can be
+  recovered after a restart.
 - Pending and dead-letter records have no automatic expiry or trimming.
   Operators must restrict Redis access and establish retention for quarantined data.
 - Redis AOF persistence is already enabled in the development Compose stack.
