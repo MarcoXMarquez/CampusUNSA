@@ -51,4 +51,5 @@ venv/
 frontend/coverage/
 .env.*
 !.env.example
+buffer/
 
