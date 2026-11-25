@@ -155,7 +155,7 @@ jobs:
       pull-requests: read
     steps:
       - name: Require UI compliance evidence when rendered UI changes
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const files = await github.paginate(github.rest.pulls.listFiles, {
