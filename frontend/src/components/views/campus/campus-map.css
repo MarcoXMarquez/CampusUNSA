@@ -1,0 +1,48 @@
+.campus-map .leaflet-container {
+  @apply bg-surface-inset;
+}
+
+.campus-map .leaflet-bar,
+.campus-map .leaflet-control-attribution,
+.campus-map .leaflet-tooltip {
+  @apply border-subtle bg-surface-card text-ink-primary;
+}
+
+.campus-map .leaflet-control-attribution a {
+  @apply text-brand-action;
+}
+
+.campus-map .leaflet-tooltip-top::before {
+  @apply border-t-surface-card;
+}
+
+.campus-map .leaflet-tooltip-bottom::before {
+  @apply border-b-surface-card;
+}
+
+.campus-map .leaflet-tooltip-left::before {
+  @apply border-l-surface-card;
+}
+
+.campus-map .leaflet-tooltip-right::before {
+  @apply border-r-surface-card;
+}
+
+.campus-map .campus-map-pin {
+  @apply grid place-items-center rounded-full;
+}
+
+.campus-map .campus-map-pin::before {
+  content: "";
+  @apply h-6 w-6 rounded-full border-2 border-surface-card bg-brand-cta;
+}
+
+.campus-map .campus-map-pin--school::before {
+  @apply ring-4 ring-brand-action;
+}
+
+@media (prefers-color-scheme: dark) {
+  .campus-map .leaflet-tile-pane {
+    filter: brightness(0.85);
+  }
+}
