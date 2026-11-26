@@ -1,7 +1,8 @@
-"""Run TECH-02 in a unique, disposable Compose project and preserve evidence."""
+"""Run CampusUNSA load profiles in a disposable Compose project."""
 
 import argparse
 import json
+from math import ceil
 import os
 from pathlib import Path
 import subprocess
@@ -11,10 +12,17 @@ from uuid import uuid4
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 from tests.load.gate import violations  # noqa: E402
+from tests.load.scenarios import STANDARD_STEADY_SECONDS  # noqa: E402
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--profile",
+        choices=("gate", "peak"),
+        default="gate",
+        help="Use the standard CR-01 gate or the five-minute US-15 peak workload",
+    )
     parser.add_argument(
         "--output", type=Path, help="Directory for CSV, HTML, JSON and logs"
     )
@@ -27,12 +35,21 @@ def main() -> int:
     args = parser.parse_args()
     if not 0 <= args.delay_ms <= 5000:
         parser.error("--delay-ms must be between 0 and 5000")
+    peak = args.profile == "peak"
+    if peak and args.delay_ms:
+        parser.error("The test-only profile delay applies to the standard gate")
     run_id = uuid4().hex[:12]
     project = f"campusunsa-perf-{run_id}"
     output = (args.output or ROOT / "perf-results" / run_id).resolve()
     output.mkdir(parents=True, exist_ok=True)
     environment = dict(
-        os.environ, PERF_OUTPUT_DIR=output.as_posix(), PERF_DELAY_MS=str(args.delay_ms)
+        os.environ,
+        PERF_OUTPUT_DIR=output.as_posix(),
+        PERF_DELAY_MS=str(args.delay_ms),
+        PERF_PROFILE=args.profile,
+        # Allow the 20-second ramp and headroom for the scheduled steady-state stop.
+        PERF_RUN_TIME="390s" if peak else f"{ceil(STANDARD_STEADY_SECONDS) + 40}s",
+        PERF_EXIT_CODE_ON_ERROR="0" if peak else "1",
     )
     command = [
         "docker",
@@ -117,7 +134,7 @@ def main() -> int:
                 )
             memory = []
             for replica in replica_ids:
-                peak = int(
+                replica_peak_bytes = int(
                     subprocess.check_output(
                         [
                             "docker",
@@ -144,7 +161,7 @@ def main() -> int:
                 ).strip()
                 if state != "false 0":
                     failed.append("A backend replica was OOM-killed or restarted")
-                memory.append({"replica": replica, "peak_bytes": peak})
+                memory.append({"replica": replica, "peak_bytes": replica_peak_bytes})
             memory_total = sum(item["peak_bytes"] for item in memory)
             (output / "memory.json").write_text(
                 json.dumps(
@@ -159,9 +176,33 @@ def main() -> int:
                 for line in (output / "resources.jsonl").read_text().splitlines()
                 if line.strip()
             ]
-            failed.extend(violations(report, resources))
+            pool_errors = 0
+            if peak:
+                resources = [
+                    sample for sample in resources
+                    if report["measurement_started_at"]
+                    <= sample["sampled_at"]
+                    <= report["measurement_ended_at"]
+                ]
+                database_logs = subprocess.check_output(
+                    command + ["logs", "--no-color", "backend", "perf-postgres"],
+                    cwd=ROOT,
+                    env=environment,
+                    stderr=log,
+                    text=True,
+                )
+                pool_errors = sum(
+                    any(marker in line.lower() for marker in (
+                        "queuepool limit", "remaining connection slots", "too many clients"
+                    ))
+                    for line in database_logs.splitlines()
+                )
+                if "deadlock detected" in database_logs.lower():
+                    failed.append("PostgreSQL deadlock detected in database logs")
+            failed.extend(violations(report, resources, peak=peak, pool_errors=pool_errors))
             summary = {
                 "project": project,
+                "profile": args.profile,
                 "passed": not failed,
                 "violations": failed,
                 "run": report,
@@ -173,6 +214,24 @@ def main() -> int:
                     (sample["connections"] for sample in resources), default=None
                 ),
             }
+            if peak:
+                counts = sum(entry["count"] for entry in report["metrics"])
+                failures = sum(entry["failures"] for entry in report["metrics"])
+                summary.update(
+                    requests=counts,
+                    failures=failures,
+                    failure_rate=failures / counts if counts else None,
+                    peak_active_connections=max(
+                        (sample["active_connections"] for sample in resources), default=None
+                    ),
+                    peak_lock_waiters=max(
+                        (sample["lock_waiters"] for sample in resources), default=None
+                    ),
+                    database_deadlocks=max(
+                        (sample["database_deadlocks"] for sample in resources), default=None
+                    ),
+                    pool_timeouts=pool_errors,
+                )
             (output / "summary.json").write_text(json.dumps(summary, indent=2))
         except (
             subprocess.SubprocessError,
@@ -186,7 +245,7 @@ def main() -> int:
                 json.dumps({"passed": False, "violations": failed}, indent=2)
             )
         finally:
-            run(["logs", "--no-color", "backend", "gateway"], check=False)
+            run(["logs", "--no-color", "backend", "gateway", "perf-postgres"], check=False)
             if monitor:
                 monitor.terminate()
                 try:
@@ -205,9 +264,15 @@ def main() -> int:
     for error in failed:
         print(f"PERF FAILED: {error}")
     if not failed:
-        print(
-            "PERF PASSED: 1,000 users; 50/s spawn; 60s steady load; each endpoint p50 < 100ms and p95 < 300ms; zero failures; resource bounds met."
-        )
+        if peak:
+            print(
+                "PERF PASSED: 1,000 users; 300s steady load; "
+                "each endpoint p95 and p99 < 500 ms; failures < 0.5%; no deadlocks or pool timeouts."
+            )
+        else:
+            print(
+                "PERF PASSED: 1,000 users; 50/s spawn; 60s steady load; each endpoint p50 < 100ms and p95 < 300ms; zero failures; resource bounds met."
+            )
     return 1 if failed else 0
 
 

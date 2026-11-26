@@ -151,6 +151,11 @@
       "category": "student_guidance",
       "title": "Secretarial Handoff & Ticketing"
     },
+    "15": {
+      "target_page": "Peak-Load-Verification.md",
+      "category": "testing_and_qa",
+      "title": "Five-Minute Peak Load Verification"
+    },
     "14": {
       "target_page": "Administrative-Procedures-Guide.md",
       "category": "student_guidance",

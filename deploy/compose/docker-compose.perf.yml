@@ -35,6 +35,7 @@ services:
     image: campusunsa-perf-backend
     environment: &perf-environment
       PERF_ISOLATED: "1"
+      PERF_PROFILE: ${PERF_PROFILE:-gate}
       ENVIRONMENT: performance
       DEBUG: "False"
       POSTGRES_SERVER: perf-postgres
@@ -100,13 +101,14 @@ services:
     working_dir: /app
     environment:
       PYTHONPATH: /app
+      PERF_PROFILE: ${PERF_PROFILE:-gate}
       EVOLUTION_WEBHOOK_API_KEY: isolated_performance_webhook_key
       TELEGRAM_WEBHOOK_SECRET: isolated_performance_telegram_key
     volumes:
       - ../../backend:/app:ro
       - load-identities:/load-data:ro
       - ${PERF_OUTPUT_DIR:-../../perf-results}:/results
-    command: ["-f", "tests/load/locustfile.py", "--headless", "--host", "http://gateway:8080", "--users", "1000", "--spawn-rate", "50", "--run-time", "180s", "--reset-stats", "--stop-timeout", "10", "--csv", "/results/load", "--csv-full-history", "--html", "/results/report.html"]
+    command: ["-f", "tests/load/locustfile.py", "--headless", "--host", "http://gateway:8080", "--users", "1000", "--spawn-rate", "50", "--run-time", "${PERF_RUN_TIME:-180s}", "--reset-stats", "--exit-code-on-error", "${PERF_EXIT_CODE_ON_ERROR:-1}", "--stop-timeout", "10", "--csv", "/results/load", "--csv-full-history", "--html", "/results/report.html"]
     networks: [perf]
 
 volumes:

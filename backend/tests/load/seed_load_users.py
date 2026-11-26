@@ -45,6 +45,8 @@ def seed() -> None:
     perf_password_hash = hash_password("perfpassword123", iterations=1000)
     credentials: list[dict[str, str]] = []
     faculty = "QA Engineering"
+    peak = os.environ.get("PERF_PROFILE") == "peak"
+    course_code = "1705275"
     with SessionLocal() as db:
         if db.query(User).count():
             raise RuntimeError("Refusing to seed a nonempty performance database")
@@ -95,6 +97,29 @@ def seed() -> None:
                         title="Synthetic assignment",
                         origin=origin,
                         due_date=datetime(2030, 1, 1, tzinfo=timezone.utc),
+                    )
+                )
+            if peak:
+                enrollment = UserCourseEnrollment(
+                    id=uuid4(),
+                    user_id=user.id,
+                    course_code=course_code,
+                    term=DEFAULT_TERM,
+                    theory_group="A",
+                    lab_group="B",
+                )
+                db.add(enrollment)
+                db.flush()
+                db.add(
+                    ClassroomAssignment(
+                        user_id=user.id,
+                        course_code=course_code,
+                        enrollment_id=enrollment.id,
+                        classroom_assignment_id=f"manual-{name}",
+                        title="Synthetic manual assignment",
+                        component_type_override="TEORIA",
+                        origin="manual",
+                        due_date=datetime(2026, 12, 2, tzinfo=timezone.utc),
                     )
                 )
             review, withdraw, resolved = (

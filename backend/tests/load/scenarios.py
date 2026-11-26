@@ -81,3 +81,15 @@ def scenarios_for(include_task_parser: bool) -> tuple[Scenario, ...]:
 SCENARIOS = scenarios_for(
     (Path(__file__).resolve().parents[2] / "app/api/v1/nlp.py").is_file()
 )
+
+STANDARD_STEADY_SECONDS = max(60.1, len(SCENARIOS) * 2.85)
+
+
+# Weekly schedule is 40% of reads. Three task board sources split the other 60%.
+PEAK_SCENARIOS = (
+    Scenario("GET", "/api/v1/courses/schedule/weekly"),
+    Scenario("GET", "/api/v1/classroom/assignments"),
+    Scenario("GET", "/api/v1/courses/schedule/weekly"),
+    Scenario("GET", "/api/v1/dutic/assignments"),
+    Scenario("GET", "/api/v1/courses/assignments"),
+)
