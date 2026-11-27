@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     EVOLUTION_WEBHOOK_API_KEY: SecretStr = SecretStr("")
     TELEGRAM_BOT_USERNAME: str = ""
     TELEGRAM_BOT_TOKEN: SecretStr = SecretStr("")
+    TELEGRAM_WEBHOOK_SECRET: SecretStr = SecretStr("")
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [

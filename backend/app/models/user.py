@@ -1,8 +1,8 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -21,6 +21,11 @@ class User(Base):
     Stores authentication identity, institutional email, assigned role, and phone binding.
     """
     __tablename__ = "users"
+    __table_args__ = (UniqueConstraint("calendar_feed_hash", name="uq_users_calendar_feed_hash"),)
+
+    calendar_feed_hash: Mapped[Optional[str]] = mapped_column(String(64))
+    calendar_feed_start: Mapped[Optional[date]] = mapped_column(Date)
+    calendar_feed_end: Mapped[Optional[date]] = mapped_column(Date)
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True,

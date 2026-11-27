@@ -45,6 +45,7 @@ services:
       SECRET_KEY: isolated_performance_only_not_a_production_secret
       TASK_PARSER_PROVIDER: disabled
       EVOLUTION_WEBHOOK_API_KEY: isolated_performance_webhook_key
+      TELEGRAM_WEBHOOK_SECRET: isolated_performance_telegram_key
       PERF_DELAY_MS: ${PERF_DELAY_MS:-0}
     command: ["uvicorn", "tests.load.perf_app:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "15", "--no-access-log"]
     deploy:
@@ -100,11 +101,12 @@ services:
     environment:
       PYTHONPATH: /app
       EVOLUTION_WEBHOOK_API_KEY: isolated_performance_webhook_key
+      TELEGRAM_WEBHOOK_SECRET: isolated_performance_telegram_key
     volumes:
       - ../../backend:/app:ro
       - load-identities:/load-data:ro
       - ${PERF_OUTPUT_DIR:-../../perf-results}:/results
-    command: ["-f", "tests/load/locustfile.py", "--headless", "--host", "http://gateway:8080", "--users", "1000", "--spawn-rate", "50", "--run-time", "150s", "--reset-stats", "--stop-timeout", "10", "--csv", "/results/load", "--csv-full-history", "--html", "/results/report.html"]
+    command: ["-f", "tests/load/locustfile.py", "--headless", "--host", "http://gateway:8080", "--users", "1000", "--spawn-rate", "50", "--run-time", "180s", "--reset-stats", "--stop-timeout", "10", "--csv", "/results/load", "--csv-full-history", "--html", "/results/report.html"]
     networks: [perf]
 
 volumes:

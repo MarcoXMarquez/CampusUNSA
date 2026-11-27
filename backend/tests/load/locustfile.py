@@ -8,6 +8,7 @@ import random
 import statistics
 import time
 from pathlib import Path
+from datetime import datetime, timedelta, timezone
 
 import gevent
 from locust import FastHttpUser, constant_pacing, events, task
@@ -122,6 +123,7 @@ class StudentBrowser(FastHttpUser):
             source_id=dataset.get("completion_source_id", ""),
             course_code=dataset.get("completion_course_code", "1705275"),
             channel="whatsapp",
+            token=dataset["calendar_token"],
         )
         headers = {"Authorization": f"Bearer {token}"}
         expected = case.expected
@@ -149,6 +151,11 @@ class StudentBrowser(FastHttpUser):
         elif case.path == "/api/v1/tickets/{ticket_id}" and case.method == "PATCH":
             expected = 409 if self.ticket_review_started else 200
             payload = {"status": "IN_REVIEW"}
+        elif case.path.endswith("/webhooks/telegram"):
+            headers = {"X-Telegram-Bot-Api-Secret-Token": os.environ["TELEGRAM_WEBHOOK_SECRET"]}
+            payload = {"update_id": 1}
+        elif case.method == "POST" and case.path.endswith("/calendar/subscription"):
+            payload = {"ends_on": (datetime.now(timezone.utc).date() + timedelta(days=30)).isoformat()}
         elif case.path.endswith("/completion"):
             payload = {"is_completed": True}
         elif case.path.endswith("/link"):
@@ -250,6 +257,10 @@ class StudentBrowser(FastHttpUser):
                 if response.content:
                     response.failure("Expected an empty response")
                 return
+            if case.path.endswith(".ics"):
+                if not response.content.startswith(b"BEGIN:VCALENDAR\r\n"):
+                    response.failure("Expected an iCalendar feed")
+                return
             try:
                 body = response.json()
                 if case.path.endswith("/webhooks/whatsapp"):
@@ -258,6 +269,10 @@ class StudentBrowser(FastHttpUser):
                         response.success()
                     else:
                         assert body["status"] == "queued"
+                elif case.path.endswith("/webhooks/telegram"):
+                    assert body["ok"] is True
+                elif case.path.endswith("/calendar/subscription"):
+                    assert body["path"].startswith("/courses/calendar/") and body["path"].endswith(".ics")
                 elif case.expected == 403:
                     assert body["detail"]["code"] == "INSUFFICIENT_PERMISSIONS"
                     response.success()

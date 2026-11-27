@@ -2,7 +2,8 @@
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from secrets import token_urlsafe
 from pathlib import Path
 from uuid import uuid4
 
@@ -18,6 +19,7 @@ from app.models.classroom import (
 )
 from app.models.ticket import Ticket, TicketNotification
 from app.models.user import User, UserProfile
+from app.services.academic.calendar_feed import feed_digest
 from app.services.academic.curriculum_resolver import CurriculumResolverService, DEFAULT_TERM
 
 
@@ -127,8 +129,12 @@ def seed() -> None:
         db.add(staff)
         db.add(UserProfile(user_id=staff.id, full_name="Synthetic Secretary", faculty=faculty))
         # Keep the completion fixture independent from the destructive cleanup scenarios.
+        calendar_token = token_urlsafe(32)
+        today = datetime.now(timezone.utc).date()
         completion_user = User(
             id=uuid4(), email="perf-completion@unsa.edu.pe", role="student", is_active=True,
+            calendar_feed_hash=feed_digest(calendar_token),
+            calendar_feed_start=today, calendar_feed_end=today + timedelta(days=30),
         )
         db.add(completion_user)
         db.flush()
@@ -204,6 +210,7 @@ def seed() -> None:
         payload = {
             "students": credentials,
             "staff_token": create_access_token({"sub": str(staff.id)}),
+            "calendar_token": calendar_token,
             "completion_token": create_access_token({"sub": str(completion_user.id)}),
             "completion_assignment_id": str(completion_assignment.id),
             "completion_source_id": str(completion_source.id),

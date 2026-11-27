@@ -576,3 +576,21 @@ export function fetchTicketNotifications(token: string, signal?: AbortSignal): P
 export function acknowledgeTicketNotice(token: string, id: string): Promise<void> {
   return requestTicket(token, `/notifications/${encodeURIComponent(id)}/read`, { method: "PATCH" });
 }
+
+export async function createCalendarSubscription(token: string, endsOn: string): Promise<string> {
+  const payload: components["schemas"]["CalendarSubscriptionRequest"] = { ends_on: endsOn };
+  const base = getApiBaseUrl().replace(/\/+$/, "");
+  const response = await fetch(`${base}/courses/calendar/subscription`, {
+    method: "POST", headers: buildHeaders(token, true), body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new ApiRequestError("Calendar subscription failed", response.status);
+  const data = await response.json() as components["schemas"]["CalendarSubscriptionResponse"];
+  return `${base}${data.path}`;
+}
+
+export async function revokeCalendarSubscription(token: string): Promise<void> {
+  const response = await fetch(`${getApiBaseUrl().replace(/\/+$/, "")}/courses/calendar/subscription`, {
+    method: "DELETE", headers: buildHeaders(token),
+  });
+  if (!response.ok) throw new ApiRequestError("Calendar subscription revocation failed", response.status);
+}
