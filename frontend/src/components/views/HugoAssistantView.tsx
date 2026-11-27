@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { BookOpen, CaretRight, WhatsappLogo } from "@phosphor-icons/react";
+import { BookOpen, CaretRight, Package, WhatsappLogo } from "@phosphor-icons/react";
+import { LostFoundView } from "@/components/views/LostFoundView";
+import { lostFoundMessages as lostFound } from "@/lib/messages/lost-found-messages";
 import { WhatsAppSheet } from "@/components/sheets/WhatsAppSheet";
 import { ProcedureGuide } from "@/components/views/ProcedureGuide";
+import { regulationsMessages as regulations } from "@/lib/messages/regulations-messages";
 import { procedureGuideMessages as guideMessages } from "@/lib/messages/procedure-guide-messages";
 import { taskSyncMessages as syncMessages } from "@/lib/messages/task-board-messages";
 
@@ -13,6 +16,8 @@ export interface HugoAssistantViewProps {
   sheetOpened: boolean;
   onOpenSheet: () => void;
   onCloseSheet: () => void;
+  onSignIn: () => void;
+  onOpenRegulations: () => void;
   supportEntry?: React.ReactNode;
 }
 
@@ -25,9 +30,14 @@ export function HugoAssistantView({
   sheetOpened,
   onOpenSheet,
   onCloseSheet,
+  onOpenRegulations,
   supportEntry,
+  onSignIn,
 }: HugoAssistantViewProps): React.JSX.Element {
   const [guideOpen, setGuideOpen] = useState(false);
+  const [lostFoundOpen, setLostFoundOpen] = useState(false);
+  const lostFoundLauncher = useRef<HTMLButtonElement>(null);
+  const restoreLostFoundFocus = useRef(false);
   const guideLauncher = useRef<HTMLButtonElement>(null);
   const restoreLauncherFocus = useRef(false);
 
@@ -38,6 +48,16 @@ export function HugoAssistantView({
     }
   }, [guideOpen]);
 
+  useEffect(() => {
+    if (!lostFoundOpen && restoreLostFoundFocus.current) {
+      restoreLostFoundFocus.current = false;
+      lostFoundLauncher.current?.focus();
+    }
+  }, [lostFoundOpen]);
+
+  if (lostFoundOpen) {
+    return <LostFoundView key={token || "guest"} token={token} isOnline={isOnline} onBack={() => setLostFoundOpen(false)} onSignIn={onSignIn} />;
+  }
   if (guideOpen) {
     return <ProcedureGuide isOnline={isOnline} onBack={() => setGuideOpen(false)} />;
   }
@@ -83,6 +103,34 @@ export function HugoAssistantView({
             {syncMessages.hugoActionButton}
           </button>
         </div>
+        <button
+          ref={lostFoundLauncher}
+          type="button"
+          onClick={() => {
+            restoreLostFoundFocus.current = true;
+            setLostFoundOpen(true);
+          }}
+          className="interactive-surface flex min-h-[44px] w-full items-center gap-3 rounded-2xl border border-subtle bg-surface-card p-4 text-left"
+        >
+          <Package aria-hidden="true" className="shrink-0 text-brand-action" size={22} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-ios-subhead font-semibold">{lostFound.title}</span>
+            <span className="mt-0.5 block text-ios-footnote text-ink-secondary">{lostFound.launcherDescription}</span>
+          </span>
+          <CaretRight aria-hidden="true" className="shrink-0 text-ink-muted" size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={onOpenRegulations}
+          className="interactive-surface flex min-h-[44px] w-full items-center gap-3 rounded-2xl border border-subtle bg-surface-card p-4 text-left"
+        >
+          <BookOpen aria-hidden="true" className="shrink-0 text-brand-action" size={22} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-ios-subhead font-semibold">{regulations.title}</span>
+            <span className="mt-0.5 block text-ios-footnote text-ink-secondary">{regulations.launcher}</span>
+          </span>
+          <CaretRight aria-hidden="true" className="shrink-0 text-ink-muted" size={16} />
+        </button>
         {supportEntry}
       </div>
       <WhatsAppSheet

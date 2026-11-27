@@ -6,7 +6,7 @@ x-perf-ulimits: &perf-ulimits
 
 services:
   perf-postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:0.8.7-pg16-trixie
     environment:
       POSTGRES_DB: campusunsa_perf
       POSTGRES_USER: perf
@@ -35,6 +35,7 @@ services:
     image: campusunsa-perf-backend
     environment: &perf-environment
       PERF_ISOLATED: "1"
+      PERF_PROFILE: ${PERF_PROFILE:-gate}
       ENVIRONMENT: performance
       DEBUG: "False"
       POSTGRES_SERVER: perf-postgres
@@ -44,6 +45,7 @@ services:
       REDIS_HOST: perf-redis
       SECRET_KEY: isolated_performance_only_not_a_production_secret
       TASK_PARSER_PROVIDER: disabled
+      LOST_FOUND_MEDIA_DIR: /load-data/lost-found
       EVOLUTION_WEBHOOK_API_KEY: isolated_performance_webhook_key
       TELEGRAM_WEBHOOK_SECRET: isolated_performance_telegram_key
       PERF_DELAY_MS: ${PERF_DELAY_MS:-0}
@@ -100,13 +102,14 @@ services:
     working_dir: /app
     environment:
       PYTHONPATH: /app
+      PERF_PROFILE: ${PERF_PROFILE:-gate}
       EVOLUTION_WEBHOOK_API_KEY: isolated_performance_webhook_key
       TELEGRAM_WEBHOOK_SECRET: isolated_performance_telegram_key
     volumes:
       - ../../backend:/app:ro
       - load-identities:/load-data:ro
       - ${PERF_OUTPUT_DIR:-../../perf-results}:/results
-    command: ["-f", "tests/load/locustfile.py", "--headless", "--host", "http://gateway:8080", "--users", "1000", "--spawn-rate", "50", "--run-time", "180s", "--reset-stats", "--stop-timeout", "10", "--csv", "/results/load", "--csv-full-history", "--html", "/results/report.html"]
+    command: ["-f", "tests/load/locustfile.py", "--headless", "--host", "http://gateway:8080", "--users", "1000", "--spawn-rate", "50", "--run-time", "${PERF_RUN_TIME:-180s}", "--reset-stats", "--exit-code-on-error", "${PERF_EXIT_CODE_ON_ERROR:-1}", "--stop-timeout", "10", "--csv", "/results/load", "--csv-full-history", "--html", "/results/report.html"]
     networks: [perf]
 
 volumes:

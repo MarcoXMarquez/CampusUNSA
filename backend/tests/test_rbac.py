@@ -44,8 +44,8 @@ def ticket_db() -> Iterator[Session]:
             try:
                 schema = f"rbac_test_{uuid.uuid4().hex}"
                 connection.exec_driver_sql(f'CREATE SCHEMA "{schema}"')
-                connection.exec_driver_sql(f'SET LOCAL search_path TO "{schema}"')
-                Base.metadata.create_all(connection)
+                connection.exec_driver_sql(f'SET LOCAL search_path TO "{schema}", public')
+                Base.metadata.create_all(connection, checkfirst=False)
                 with Session(
                     bind=connection, join_transaction_mode="create_savepoint"
                 ) as session:

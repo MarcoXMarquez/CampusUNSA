@@ -30,31 +30,28 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Initialize and Validate Wiki Workspace
-        run: |
-          python3 scripts/wiki/wiki_engine.py --init --wiki-dir .wiki_workspace
-          python3 scripts/wiki/wiki_validator.py .wiki_workspace
-
-      - name: Publish Documentation to GitHub Wiki
+      - name: Refresh and Publish the Existing Wiki
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           WIKI_REPO="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git"
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
           TMP_WIKI_DIR=$(mktemp -d)
-          if git clone "$WIKI_REPO" "$TMP_WIKI_DIR"; then
-            cp -r .wiki_workspace/* "$TMP_WIKI_DIR/"
-            cd "$TMP_WIKI_DIR"
-            git add .
-            if git diff-index --quiet HEAD; then
-              echo "No wiki documentation updates detected. Working tree clean."
-            else
-              git commit -m "docs(wiki): synchronize Oppia-caliber documentation pages"
-              git push origin master || git push origin main
-              echo "Wiki successfully synchronized."
-            fi
-          else
+          if ! git clone "$WIKI_REPO" "$TMP_WIKI_DIR"; then
             echo "Notice: Repository wiki is not yet initialized or enabled on GitHub."
+            exit 0
+          fi
+
+          python3 scripts/wiki/wiki_engine.py --init --wiki-dir "$TMP_WIKI_DIR"
+          python3 scripts/wiki/wiki_validator.py "$TMP_WIKI_DIR"
+
+          git -C "$TMP_WIKI_DIR" config user.name "github-actions[bot]"
+          git -C "$TMP_WIKI_DIR" config user.email "github-actions[bot]@users.noreply.github.com"
+          git -C "$TMP_WIKI_DIR" add -- .
+          if git -C "$TMP_WIKI_DIR" diff-index --quiet HEAD; then
+            echo "No wiki documentation updates detected."
+          else
+            git -C "$TMP_WIKI_DIR" commit -m "docs(wiki): synchronize Oppia-caliber documentation pages"
+            git -C "$TMP_WIKI_DIR" push origin HEAD
+            echo "Wiki successfully synchronized."
           fi

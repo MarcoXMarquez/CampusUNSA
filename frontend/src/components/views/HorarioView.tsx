@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowClockwise } from "@phosphor-icons/react";
+import { ArrowClockwise, CaretRight, MapTrifold } from "@phosphor-icons/react";
 import type { AcademicAssignment } from "@/components/sheets/TaskDetailSheet";
 import type { AcademicCourse } from "@/hooks/useAcademicBoard";
 import type {
@@ -17,6 +17,8 @@ import { NextClassHeroCard } from "./horario/NextClassHeroCard";
 import { CourseListSection } from "./horario/CourseListSection";
 import { CourseScheduleEditModal } from "./horario/CourseScheduleEditModal";
 import { LinkCourseSourceModal } from "./horario/LinkCourseSourceModal";
+import { CampusDirectory } from "./campus/CampusDirectory";
+import { campusMessages } from "@/lib/messages/campus-messages";
 
 const PULL_THRESHOLD_PX = 48;
 
@@ -81,6 +83,15 @@ export function HorarioView({
   onLoadGroupSchedule,
   onLinkPendingSource,
 }: HorarioViewProps): React.JSX.Element {
+  const [campusOpen, setCampusOpen] = useState(false);
+  const campusButton = useRef<HTMLButtonElement>(null);
+  const restoreCampusFocus = useRef(false);
+  useEffect(() => {
+    if (!campusOpen && restoreCampusFocus.current) {
+      restoreCampusFocus.current = false;
+      campusButton.current?.focus();
+    }
+  }, [campusOpen]);
   const [liveClock, setLiveClock] = useState<Date>(() => currentTime ?? new Date());
   useEffect(() => {
     if (currentTime) {
@@ -143,6 +154,13 @@ export function HorarioView({
   const nextClassCourseTitle = nextClass
     ? formatAcademicTitle(nextClass.course.name) || nextClass.course.name
     : null;
+
+  if (campusOpen) {
+    return <CampusDirectory isOnline={isOnline} onBack={() => {
+      restoreCampusFocus.current = true;
+      setCampusOpen(false);
+    }} />;
+  }
 
   return (
     <div
@@ -208,6 +226,13 @@ export function HorarioView({
             </button>
           </div>
         )}
+
+        <button ref={campusButton} type="button" onClick={() => setCampusOpen(true)}
+          className="interactive-surface mb-4 flex min-h-12 w-full items-center gap-3 rounded-2xl border border-subtle bg-surface-card px-4 text-left text-ios-body font-semibold">
+          <MapTrifold size={22} aria-hidden="true" className="shrink-0 text-brand-action" />
+          <span className="flex-1">{campusMessages.title}</span>
+          <CaretRight size={16} aria-hidden="true" className="shrink-0 text-ink-secondary" />
+        </button>
 
         <NextClassHeroCard
           nextClass={nextClass}

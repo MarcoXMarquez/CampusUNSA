@@ -13,11 +13,13 @@ from app.core.private_calendar_logs import PrivateCalendarAccessFilter
 from app.core.request_capacity import RequestCapacityMiddleware
 from app.api.v1.health import router as health_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.regulations import router as regulations_router
 from app.api.v1.tickets import router as tickets_router
 from app.api.v1.classroom import router as classroom_router
 from app.api.v1.courses import router as courses_router
 from app.api.v1.calendar import router as calendar_router
 from app.api.v1.dutic import router as dutic_router
+from app.api.v1.lost_found import router as lost_found_router
 from app.api.v1.nlp import get_task_parser, router as nlp_router
 from app.api.v1.webhooks import router as webhooks_router
 from app.services.messaging.gateway import EvolutionWhatsAppGateway
@@ -95,11 +97,13 @@ app.add_middleware(RequestCapacityMiddleware)
 # Include API Routers
 app.include_router(health_router, prefix=settings.API_V1_STR, tags=["Health"])
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["Authentication"])
+app.include_router(regulations_router, prefix=f"{settings.API_V1_STR}/regulations", tags=["Regulations"])
 app.include_router(tickets_router, prefix=f"{settings.API_V1_STR}/tickets", tags=["Tickets"])
 app.include_router(classroom_router, prefix=f"{settings.API_V1_STR}/classroom", tags=["Classroom"])
 app.include_router(courses_router, prefix=f"{settings.API_V1_STR}/courses", tags=["Curriculum Courses"])
 app.include_router(calendar_router, prefix=f"{settings.API_V1_STR}/courses/calendar", tags=["Calendar"])
 app.include_router(dutic_router, prefix=f"{settings.API_V1_STR}/dutic", tags=["DUTIC Moodle"])
+app.include_router(lost_found_router, prefix=f"{settings.API_V1_STR}/lost-found", tags=["Lost and Found"])
 app.include_router(nlp_router, prefix=f"{settings.API_V1_STR}/nlp", tags=["Task Extraction"])
 
 

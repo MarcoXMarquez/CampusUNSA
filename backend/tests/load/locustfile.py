@@ -1,4 +1,4 @@
-"""1,000 real HTTP sessions, 50 spawns/s, then 60 seconds at full population."""
+"""Exercise 1,000 distinct HTTP sessions at 50 spawns per second."""
 
 import itertools
 import json
@@ -14,12 +14,15 @@ import gevent
 from locust import FastHttpUser, constant_pacing, events, task
 from locust.env import Environment
 
-from tests.load.scenarios import SCENARIOS
+from tests.load.scenarios import PEAK_SCENARIOS, SCENARIOS, STANDARD_STEADY_SECONDS
 from tests.load.gate import percentile
 
 dataset = json.loads(Path("/load-data/users.json").read_text())
 students = iter(enumerate(dataset["students"]))
+peak = os.environ.get("PERF_PROFILE") == "peak"
+scenarios = PEAK_SCENARIOS if peak else SCENARIOS
 started: float | None = None
+started_at: float | None = None
 errors = 0
 visited_students: set[str] = set()
 server_timings: dict[str, list[float]] = {}
@@ -38,10 +41,13 @@ def initialize(environment: Environment, **kwargs: object) -> None:
 
 @events.spawning_complete.add_listener
 def full_population(user_count: int, **kwargs: object) -> None:
-    global started
+    global started, started_at
     if user_count == 1000 and started is None and current_environment:
+        if peak:
+            visited_students.clear()
         started = time.monotonic()
-        steady_duration = max(60.1, len(SCENARIOS) * 2.85)
+        started_at = time.time()
+        steady_duration = 300.1 if peak else STANDARD_STEADY_SECONDS
         gevent.spawn_later(steady_duration, current_environment.runner.quit)
 
 
@@ -66,11 +72,14 @@ def write_report(environment: Environment, **kwargs: object) -> None:
             "failures": entry.num_failures,
             "p50": percentile(raw_latencies.get(entry.name, []), 0.50),
             "p95": percentile(raw_latencies.get(entry.name, []), 0.95),
+            **({"p99": percentile(raw_latencies.get(entry.name, []), 0.99)} if peak else {}),
         }
         for entry in environment.stats.entries.values()
     ]
     report = {
         "users": environment.runner.user_count,
+        "measurement_started_at": started_at,
+        "measurement_ended_at": time.time(),
         "spawn_rate": environment.parsed_options.spawn_rate,
         "steady_seconds": time.monotonic() - started if started else 0,
         "user_errors": errors,
@@ -95,7 +104,7 @@ class StudentBrowser(FastHttpUser):
     def on_start(self) -> None:
         index, self.account = next(students)
         self.cases = itertools.cycle(
-            SCENARIOS[index % len(SCENARIOS) :] + SCENARIOS[: index % len(SCENARIOS)]
+            scenarios[index % len(scenarios) :] + scenarios[: index % len(scenarios)]
         )
         self.ticket_review_started = False
         gevent.sleep(random.uniform(0, 2))
@@ -116,8 +125,17 @@ class StudentBrowser(FastHttpUser):
             "PATCH": self.account["review_ticket_id"],
             "DELETE": self.account["withdraw_ticket_id"],
         }.get(case.method, self.account["resolved_ticket_id"])
+        lost_item = {
+            "/api/v1/lost-found/{item_id}/photo": self.account["lost_open_item"],
+            "/api/v1/lost-found/{item_id}/claims": self.account["lost_claimable_item"],
+            "/api/v1/lost-found/{item_id}/claims/{claim_id}": self.account["lost_review_item"],
+            "/api/v1/lost-found/{item_id}": self.account["lost_return_item"],
+        }.get(case.path, "")
         request_path = case.path.format(
+            item_id=lost_item,
+            claim_id=self.account["lost_review_claim"],
             ticket_id=ticket_id,
+            publication_id="c27db700-78ee-4c14-b994-04288afa37a9",
             notice_id=self.account["notice_id"],
             assignment_id=dataset["completion_assignment_id"],
             source_id=dataset.get("completion_source_id", ""),
@@ -143,6 +161,13 @@ class StudentBrowser(FastHttpUser):
                     "message": {"conversation": "Prepare the report"},
                 },
             }
+        elif case.path == "/api/v1/regulations/query":
+            payload = {"question": "What are the official enrollment rules?"}
+        elif case.path == "/api/v1/regulations/documents" and case.method == "POST":
+            request_path += "?title=Performance+Fixture&resolution=0001-2026&category=enrollment"
+            request_path += "&source_url=https%3A%2F%2Ftransparencia.unsa.edu.pe%2Ffixture.pdf"
+        elif case.path == "/api/v1/regulations/documents/{publication_id}":
+            payload = {"active": False}
         elif case.path == "/api/v1/tickets":
             payload = {
                 "request_id": str(uuid.uuid4()), "confirmed": True,
@@ -233,10 +258,29 @@ class StudentBrowser(FastHttpUser):
                 "message": "submit report for SO 2030-01-01T18:00:00Z",
                 "courses": ["SO"],
             }
+        elif case.path == "/api/v1/lost-found" and case.method == "POST":
+            payload = {
+                "title": "Synthetic blue item", "description": "A disposable test report",
+                "location": "QA Engineering", "campus": "engineering", "found_on": "2026-01-01",
+                "request_id": str(uuid.uuid4()), "photo_base64": dataset["lost_photo"],
+            }
+        elif case.path == "/api/v1/lost-found/{item_id}/photo":
+            request_path += "?thumbnail=true"
+        elif case.path == "/api/v1/lost-found/{item_id}/claims":
+            payload = {"proof": "Synthetic claim proof"}
+        elif case.path == "/api/v1/lost-found/{item_id}/claims/{claim_id}":
+            payload = {"decision": "approved", "pickup": "Synthetic private handoff"}
+        elif case.path == "/api/v1/lost-found/{item_id}":
+            payload = {"status": "returned"}
         with self.client.request(
             case.method,
             request_path,
             name=case.name,
+            params=(
+                {"at": "2026-11-30T07:45:00-05:00"}
+                if peak and case.path.endswith("/schedule/weekly")
+                else None
+            ),
             json=payload,
             headers=headers,
             catch_response=True,
@@ -261,6 +305,10 @@ class StudentBrowser(FastHttpUser):
                 if not response.content.startswith(b"BEGIN:VCALENDAR\r\n"):
                     response.failure("Expected an iCalendar feed")
                 return
+            if case.path == "/api/v1/lost-found/{item_id}/photo":
+                if not response.content.startswith(b"\xff\xd8") or response.headers.get("content-type") != "image/jpeg":
+                    response.failure("Expected a JPEG thumbnail")
+                return
             try:
                 body = response.json()
                 if case.path.endswith("/webhooks/whatsapp"):
@@ -276,6 +324,10 @@ class StudentBrowser(FastHttpUser):
                 elif case.expected == 403:
                     assert body["detail"]["code"] == "INSUFFICIENT_PERMISSIONS"
                     response.success()
+                elif case.path == "/api/v1/regulations/query":
+                    assert body["status"] == "not_found" and body["offer_ticket"] is True
+                elif case.path == "/api/v1/regulations/documents":
+                    assert body == []
                 elif case.path == "/api/v1/tickets":
                     assert body["status"] == "OPEN" and body["tracking_code"].startswith("TICK-")
                 elif case.path == "/api/v1/tickets/{ticket_id}":
@@ -293,6 +345,19 @@ class StudentBrowser(FastHttpUser):
                     assert isinstance(body, list) and any(row["id"] == self.account["resolved_ticket_id"] for row in body)
                 elif case.path == "/api/v1/tickets/notifications":
                     assert isinstance(body, list) and all(row["id"] == self.account["notice_id"] for row in body)
+                elif case.path == "/api/v1/lost-found":
+                    if case.method == "GET":
+                        assert isinstance(body, list) and body and "reporter_id" not in body[0]
+                    else:
+                        assert body["status"] == "open" and "reporter_id" not in body
+                elif case.path == "/api/v1/lost-found/claims":
+                    assert isinstance(body, list) and body and all("proof" in row for row in body)
+                elif case.path == "/api/v1/lost-found/{item_id}/claims":
+                    assert body["status"] == "pending" and body["pickup"] is None
+                elif case.path == "/api/v1/lost-found/{item_id}/claims/{claim_id}":
+                    assert body["status"] == "approved" and body["is_reporter"] is True
+                elif case.path == "/api/v1/lost-found/{item_id}":
+                    assert body["status"] == "returned"
                 elif case.path.endswith("/completion"):
                     assert body["is_completed"] is True
                     assert body["id"] == dataset["completion_assignment_id"]
@@ -304,6 +369,8 @@ class StudentBrowser(FastHttpUser):
                     assert "status" in body
                 elif case.path.endswith("/schedule/weekly"):
                     assert isinstance(body.get("days"), list) and len(body["days"]) == 7
+                    if peak:
+                        assert sum(len(day["sessions"]) for day in body["days"]) == 2
                 elif case.method == "GET" and case.path.endswith("/schedule"):
                     assert isinstance(body, list) and len(body) >= 1
                 elif case.method == "PUT" and case.path.endswith("/schedule"):
@@ -317,6 +384,8 @@ class StudentBrowser(FastHttpUser):
                     assert body["origin"] == "manual" and body["title"] == "Perf manual assignment"
                 elif case.path.endswith(("/enrolled", "/pending-links")):
                     assert isinstance(body, list)
+                elif peak and case.path == "/api/v1/courses/assignments":
+                    assert any(row["origin"] == "manual" for row in body)
                 elif case.path.endswith(("/courses", "/assignments", "/tickets/all", "/catalog")):
                     assert isinstance(body, list) and len(body) > 0
                 elif case.path.endswith("/dutic/ical/sync"):

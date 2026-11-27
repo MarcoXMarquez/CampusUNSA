@@ -3,7 +3,9 @@ services:
   # Primary Relational Database: PostgreSQL 16
   # ==============================================================================
   postgres:
-    image: postgres:16-alpine
+    build:
+      context: ./deploy/postgres
+      dockerfile: Dockerfile
     container_name: campusunsa-postgres
     restart: unless-stopped
     environment:
@@ -72,6 +74,8 @@ services:
       - TASK_PARSER_MODEL=${TASK_PARSER_MODEL:-}
       - TASK_PARSER_TIMEOUT_SECONDS=${TASK_PARSER_TIMEOUT_SECONDS:-30}
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - REGULATIONS_EMBEDDING_MODEL=${REGULATIONS_EMBEDDING_MODEL:-}
+      - REGULATIONS_ANSWER_MODEL=${REGULATIONS_ANSWER_MODEL:-}
       - WHATSAPP_TASK_WORKER_ENABLED=${WHATSAPP_TASK_WORKER_ENABLED:-true}
       - EVOLUTION_API_URL=${EVOLUTION_API_URL:-http://evolution-api:8080}
       - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-}
@@ -79,11 +83,16 @@ services:
       - EVOLUTION_INSTANCE_NAME=${EVOLUTION_INSTANCE_NAME:-campusunsa}
       - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME:-}
       - TELEGRAM_WEBHOOK_SECRET=${TELEGRAM_WEBHOOK_SECRET:-}
+      - LOST_FOUND_STORAGE_URL=${LOST_FOUND_STORAGE_URL:-}
+      - LOST_FOUND_STORAGE_BUCKET=${LOST_FOUND_STORAGE_BUCKET:-lost-found}
+      - LOST_FOUND_STORAGE_SERVICE_KEY=${LOST_FOUND_STORAGE_SERVICE_KEY:-}
+      - LOST_FOUND_MEDIA_DIR=${LOST_FOUND_MEDIA_DIR:-/home/appuser/lost-found}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     ports:
       - "${BACKEND_PORT:-9000}:8000"
     volumes:
       - ./backend:/app
+      - lost-found-media:/home/appuser/lost-found
     depends_on:
       postgres:
         condition: service_healthy
@@ -149,6 +158,7 @@ services:
       - campusunsa-net
 
 volumes:
+  lost-found-media:
   postgres_data:
     driver: local
   redis_data:

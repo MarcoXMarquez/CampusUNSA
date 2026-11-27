@@ -25,6 +25,10 @@ BASE_SCENARIOS = (
     Scenario("GET", "/api/v1/auth/me"),
     Scenario("POST", "/api/v1/webhooks/whatsapp"),
     Scenario("POST", "/api/v1/webhooks/whatsapp", expected=401, suffix=" [unauthenticated]"),
+    Scenario("POST", "/api/v1/regulations/query"),
+    Scenario("GET", "/api/v1/regulations/documents", role="secretary"),
+    Scenario("POST", "/api/v1/regulations/documents", expected=403),
+    Scenario("PATCH", "/api/v1/regulations/documents/{publication_id}", expected=403),
     Scenario("GET", "/api/v1/tickets/all", role="secretary"),
     Scenario("GET", "/api/v1/tickets/all", expected=403, suffix=" [student denied]"),
     Scenario("GET", "/api/v1/tickets/mine"),
@@ -68,6 +72,13 @@ BASE_SCENARIOS = (
     Scenario("POST", "/api/v1/auth/otp/verify", expected=400),
     Scenario("GET", "/api/v1/auth/otp/status"),
     Scenario("DELETE", "/api/v1/auth/otp/link/{channel}"),
+    Scenario("GET", "/api/v1/lost-found"),
+    Scenario("POST", "/api/v1/lost-found", expected=201),
+    Scenario("GET", "/api/v1/lost-found/claims"),
+    Scenario("GET", "/api/v1/lost-found/{item_id}/photo"),
+    Scenario("POST", "/api/v1/lost-found/{item_id}/claims", expected=201),
+    Scenario("PATCH", "/api/v1/lost-found/{item_id}/claims/{claim_id}"),
+    Scenario("PATCH", "/api/v1/lost-found/{item_id}"),
 )
 
 
@@ -80,4 +91,16 @@ def scenarios_for(include_task_parser: bool) -> tuple[Scenario, ...]:
 # US-10 is an independent PR; keep this registry compatible with either merge order.
 SCENARIOS = scenarios_for(
     (Path(__file__).resolve().parents[2] / "app/api/v1/nlp.py").is_file()
+)
+
+STANDARD_STEADY_SECONDS = max(60.1, len(SCENARIOS) * 2.85)
+
+
+# Weekly schedule is 40% of reads. Three task board sources split the other 60%.
+PEAK_SCENARIOS = (
+    Scenario("GET", "/api/v1/courses/schedule/weekly"),
+    Scenario("GET", "/api/v1/classroom/assignments"),
+    Scenario("GET", "/api/v1/courses/schedule/weekly"),
+    Scenario("GET", "/api/v1/dutic/assignments"),
+    Scenario("GET", "/api/v1/courses/assignments"),
 )

@@ -4,6 +4,161 @@
  */
 
 export interface paths {
+    "/api/v1/regulations/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Query Regulations */
+        post: operations["query_regulations_api_v1_regulations_query_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/regulations/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Regulations */
+        get: operations["list_regulations_api_v1_regulations_documents_get"];
+        put?: never;
+        /** Publish Regulation */
+        post: operations["publish_regulation_api_v1_regulations_documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/regulations/documents/{publication_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set Regulation Status */
+        patch: operations["set_regulation_status_api_v1_regulations_documents__publication_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/lost-found": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalog */
+        get: operations["catalog_api_v1_lost_found_get"];
+        put?: never;
+        /** Report Item */
+        post: operations["report_item_api_v1_lost_found_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/lost-found/claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List My Claims */
+        get: operations["list_my_claims_api_v1_lost_found_claims_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/lost-found/{item_id}/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Item Photo */
+        get: operations["item_photo_api_v1_lost_found__item_id__photo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/lost-found/{item_id}/claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Claim */
+        post: operations["submit_claim_api_v1_lost_found__item_id__claims_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/lost-found/{item_id}/claims/{claim_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Review Claim */
+        patch: operations["review_claim_api_v1_lost_found__item_id__claims__claim_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/lost-found/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark Returned */
+        patch: operations["mark_returned_api_v1_lost_found__item_id__patch"];
+        trace?: never;
+    };
     "/api/v1/courses/calendar/subscription": {
         parameters: {
             query?: never;
@@ -822,6 +977,150 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        RegulationAnswer: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "answered" | "not_found";
+            /** Answer */
+            answer?: string | null;
+            citation?: components["schemas"]["RegulationCitation"] | null;
+            /** Message */
+            message?: string | null;
+            /**
+             * Offer Ticket
+             * @default false
+             */
+            offer_ticket: boolean;
+        };
+        RegulationCitation: {
+            /** Title */
+            title: string;
+            /** Resolution */
+            resolution: string;
+            /** Article */
+            article: string;
+            /** Page */
+            page: number;
+            /** Source Url */
+            source_url: string;
+        };
+        RegulationDocument: {
+            /** Title */
+            title: string;
+            /** Resolution */
+            resolution: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "enrollment" | "academic" | "graduation" | "admissions" | "other";
+            /** Source Url */
+            source_url: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Active */
+            active: boolean;
+            /** Page Count */
+            page_count: number;
+            /** Article Count */
+            article_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        RegulationQuestion: {
+            /** Question */
+            question: string;
+        };
+        RegulationStatusUpdate: {
+            /** Active */
+            active: boolean;
+        };
+        LostClaimCreate: {
+            /** Proof */
+            proof: string;
+        };
+        LostClaimPrivate: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Item Title */
+            item_title: string;
+            /**
+             * Item Status
+             * @enum {string}
+             */
+            item_status: "open" | "reserved" | "returned";
+            /** Proof */
+            proof: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected";
+            /** Pickup */
+            pickup: string | null;
+            /** Is Reporter */
+            is_reporter: boolean;
+        };
+        LostClaimReview: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "rejected";
+            /** Pickup */
+            pickup?: string | null;
+        };
+        LostItemPublic: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Location */
+            location: string;
+            /**
+             * Campus
+             * @enum {string}
+             */
+            campus: "engineering" | "social" | "biomedical";
+            /**
+             * Found On
+             * Format: date
+             */
+            found_on: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "reserved" | "returned";
+        };
+        LostItemReturn: {
+            /**
+             * Status
+             * @constant
+             */
+            status: "returned";
+        };
         CalendarSubscriptionRequest: {
             /**
              * Ends On
@@ -2029,6 +2328,394 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    query_regulations_api_v1_regulations_query_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegulationQuestion"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegulationAnswer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_regulations_api_v1_regulations_documents_get: {
+        parameters: {
+            query?: {
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegulationDocument"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_regulation_api_v1_regulations_documents_post: {
+        parameters: {
+            query: {
+                title: string;
+                resolution: string;
+                category: "enrollment" | "academic" | "graduation" | "admissions" | "other";
+                source_url: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/pdf": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegulationDocument"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_regulation_status_api_v1_regulations_documents__publication_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                publication_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegulationStatusUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegulationDocument"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    catalog_api_v1_lost_found_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LostItemPublic"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_item_api_v1_lost_found_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Title */
+                    title: string;
+                    /** Description */
+                    description: string;
+                    /** Location */
+                    location: string;
+                    /**
+                     * Campus
+                     * @enum {string}
+                     */
+                    campus: "engineering" | "social" | "biomedical";
+                    /**
+                     * Found On
+                     * Format: date
+                     */
+                    found_on: string;
+                    /**
+                     * Request Id
+                     * Format: uuid
+                     */
+                    request_id: string;
+                    /** Photo Base64 */
+                    photo_base64: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LostItemPublic"];
+                };
+            };
+        };
+    };
+    list_my_claims_api_v1_lost_found_claims_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LostClaimPrivate"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    item_photo_api_v1_lost_found__item_id__photo_get: {
+        parameters: {
+            query?: {
+                thumbnail?: boolean;
+            };
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_claim_api_v1_lost_found__item_id__claims_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LostClaimCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LostClaimPrivate"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_claim_api_v1_lost_found__item_id__claims__claim_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                claim_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LostClaimReview"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LostClaimPrivate"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_returned_api_v1_lost_found__item_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LostItemReturn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LostItemPublic"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_subscription_api_v1_courses_calendar_subscription_post: {
         parameters: {
             query?: never;

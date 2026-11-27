@@ -56,7 +56,7 @@ function isStaticAssetPath(pathname) {
 }
 
 function isCacheableApiPath(pathname) {
-  if (pathname.endsWith("/health")) {
+  if (pathname.endsWith("/health") || pathname.endsWith("/api/v1/lost-found")) {
     return { cacheable: true, requiresAuth: false };
   }
   const matched = CACHEABLE_API_SUFFIXES.some((suffix) => pathname.endsWith(suffix));

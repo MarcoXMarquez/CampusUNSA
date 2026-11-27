@@ -24,7 +24,8 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Create a non-privileged user for security
 RUN groupadd -g 1000 appgroup \
     && useradd -u 1000 -g appgroup -s /bin/bash -m appuser \
-    && chown -R appuser:appgroup /app
+    && mkdir /home/appuser/lost-found \
+    && chown -R appuser:appgroup /app /home/appuser/lost-found
 
 # Copy application source code
 COPY --chown=appuser:appgroup . /app
