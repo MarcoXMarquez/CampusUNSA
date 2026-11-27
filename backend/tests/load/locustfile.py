@@ -135,6 +135,7 @@ class StudentBrowser(FastHttpUser):
             item_id=lost_item,
             claim_id=self.account["lost_review_claim"],
             ticket_id=ticket_id,
+            publication_id="c27db700-78ee-4c14-b994-04288afa37a9",
             notice_id=self.account["notice_id"],
             assignment_id=dataset["completion_assignment_id"],
             source_id=dataset.get("completion_source_id", ""),
@@ -160,6 +161,13 @@ class StudentBrowser(FastHttpUser):
                     "message": {"conversation": "Prepare the report"},
                 },
             }
+        elif case.path == "/api/v1/regulations/query":
+            payload = {"question": "What are the official enrollment rules?"}
+        elif case.path == "/api/v1/regulations/documents" and case.method == "POST":
+            request_path += "?title=Performance+Fixture&resolution=0001-2026&category=enrollment"
+            request_path += "&source_url=https%3A%2F%2Ftransparencia.unsa.edu.pe%2Ffixture.pdf"
+        elif case.path == "/api/v1/regulations/documents/{publication_id}":
+            payload = {"active": False}
         elif case.path == "/api/v1/tickets":
             payload = {
                 "request_id": str(uuid.uuid4()), "confirmed": True,
@@ -316,6 +324,10 @@ class StudentBrowser(FastHttpUser):
                 elif case.expected == 403:
                     assert body["detail"]["code"] == "INSUFFICIENT_PERMISSIONS"
                     response.success()
+                elif case.path == "/api/v1/regulations/query":
+                    assert body["status"] == "not_found" and body["offer_ticket"] is True
+                elif case.path == "/api/v1/regulations/documents":
+                    assert body == []
                 elif case.path == "/api/v1/tickets":
                     assert body["status"] == "OPEN" and body["tracking_code"].startswith("TICK-")
                 elif case.path == "/api/v1/tickets/{ticket_id}":

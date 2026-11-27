@@ -46,6 +46,10 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://ollama:11434"
     GEMINI_API_KEY: SecretStr = SecretStr("")
 
+    # Official regulations use an explicitly configured Ollama service.
+    REGULATIONS_EMBEDDING_MODEL: str = ""
+    REGULATIONS_ANSWER_MODEL: str = ""
+
     # Messaging Gateways & Omnichannel OTP Binding (US-08 / REQ-16 / REQ-36)
     OTP_TTL_SECONDS: int = 300
     OTP_MAX_ATTEMPTS: int = 3

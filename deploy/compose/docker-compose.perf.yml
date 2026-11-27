@@ -6,7 +6,7 @@ x-perf-ulimits: &perf-ulimits
 
 services:
   perf-postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:0.8.7-pg16-trixie
     environment:
       POSTGRES_DB: campusunsa_perf
       POSTGRES_USER: perf

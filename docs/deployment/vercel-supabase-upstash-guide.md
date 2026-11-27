@@ -103,6 +103,15 @@ openssl rand -hex 32   # ENCRYPTION_KEY
 
 4. After deployment succeeds, verify `https://<your-backend>.onrender.com/api/v1/health` returns HTTP 200 with `"status": "healthy"`.
 
+#### Enable the official regulations index
+
+- Make the PostgreSQL `vector` extension available to the migration user. The Docker development and CI profiles use PostgreSQL 16 with pgvector preinstalled.
+- Provide a private Ollama address through `OLLAMA_BASE_URL`. Set `REGULATIONS_EMBEDDING_MODEL=embeddinggemma` and point `REGULATIONS_ANSWER_MODEL` to a multilingual model that supports Ollama structured outputs, such as `qwen2.5:3b`. Download both models on that host before enabling publication.
+- Publish only verified, current official PDF documents from **Hugo > Reglamentos UNSA > Gestionar resoluciones**. Use a direct institutional PDF link when available. Publications start inactive. Review the PDF and amendments, retire superseded publications, then activate the reviewed document.
+- Retrieval ranks by cosine distance. The evidence cutoff is 0.70 on the normalized angular similarity scale.
+- Upload the same PDF with the same metadata after changing the embedding model to rebuild its vectors. Queries only search entries indexed with the currently configured model.
+- The upload requires a text PDF with explicitly numbered articles. For scanned originals, use a reviewed text-searchable copy of the same official document.
+
 ### Step 5: Deploy Frontend (`frontend/`) on Vercel
 
 1. In Vercel, import `MarcoXMarquez/CampusUNSA`.

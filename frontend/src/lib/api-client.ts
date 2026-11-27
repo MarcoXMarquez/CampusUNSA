@@ -653,3 +653,34 @@ export function returnLostItem(token: string, id: string): Promise<LostItem> {
     body: JSON.stringify({ status: "returned" }),
   });
 }
+
+export type RegulationAnswer = components["schemas"]["RegulationAnswer"];
+export type RegulationDocument = components["schemas"]["RegulationDocument"];
+type RegulationMetadata = paths["/api/v1/regulations/documents"]["post"]["parameters"]["query"];
+export type RegulationCategory = RegulationDocument["category"];
+
+async function requestRegulations<T>(token: string, path: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(buildHeaders(token, Boolean(options.body)));
+  if (options.body instanceof File) headers.set("Content-Type", "application/pdf");
+  const response = await fetch(`${getApiBaseUrl()}/regulations${path}`, {
+    ...options, headers, cache: "no-store",
+  });
+  if (!response.ok) throw new ApiRequestError("Regulations request failed", response.status);
+  return response.json();
+}
+
+export function queryRegulations(token: string, question: string): Promise<RegulationAnswer> {
+  return requestRegulations(token, "/query", { method: "POST", body: JSON.stringify({ question }) });
+}
+
+export function listRegulations(token: string, offset: number, signal?: AbortSignal): Promise<RegulationDocument[]> {
+  return requestRegulations(token, `/documents?offset=${offset}`, { signal });
+}
+
+export function publishRegulation(token: string, metadata: RegulationMetadata, pdf: File): Promise<RegulationDocument> {
+  return requestRegulations(token, `/documents?${new URLSearchParams(metadata)}`, { method: "POST", body: pdf });
+}
+
+export function setRegulationStatus(token: string, id: string, active: boolean): Promise<RegulationDocument> {
+  return requestRegulations(token, `/documents/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ active }) });
+}

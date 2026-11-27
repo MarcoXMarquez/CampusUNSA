@@ -6,6 +6,7 @@ import { LostFoundView } from "@/components/views/LostFoundView";
 import { lostFoundMessages as lostFound } from "@/lib/messages/lost-found-messages";
 import { WhatsAppSheet } from "@/components/sheets/WhatsAppSheet";
 import { ProcedureGuide } from "@/components/views/ProcedureGuide";
+import { regulationsMessages as regulations } from "@/lib/messages/regulations-messages";
 import { procedureGuideMessages as guideMessages } from "@/lib/messages/procedure-guide-messages";
 import { taskSyncMessages as syncMessages } from "@/lib/messages/task-board-messages";
 
@@ -16,6 +17,7 @@ export interface HugoAssistantViewProps {
   onOpenSheet: () => void;
   onCloseSheet: () => void;
   onSignIn: () => void;
+  onOpenRegulations: () => void;
   supportEntry?: React.ReactNode;
 }
 
@@ -28,6 +30,7 @@ export function HugoAssistantView({
   sheetOpened,
   onOpenSheet,
   onCloseSheet,
+  onOpenRegulations,
   supportEntry,
   onSignIn,
 }: HugoAssistantViewProps): React.JSX.Element {
@@ -113,6 +116,18 @@ export function HugoAssistantView({
           <span className="min-w-0 flex-1">
             <span className="block text-ios-subhead font-semibold">{lostFound.title}</span>
             <span className="mt-0.5 block text-ios-footnote text-ink-secondary">{lostFound.launcherDescription}</span>
+          </span>
+          <CaretRight aria-hidden="true" className="shrink-0 text-ink-muted" size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={onOpenRegulations}
+          className="interactive-surface flex min-h-[44px] w-full items-center gap-3 rounded-2xl border border-subtle bg-surface-card p-4 text-left"
+        >
+          <BookOpen aria-hidden="true" className="shrink-0 text-brand-action" size={22} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-ios-subhead font-semibold">{regulations.title}</span>
+            <span className="mt-0.5 block text-ios-footnote text-ink-secondary">{regulations.launcher}</span>
           </span>
           <CaretRight aria-hidden="true" className="shrink-0 text-ink-muted" size={16} />
         </button>

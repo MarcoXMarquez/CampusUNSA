@@ -9,6 +9,7 @@ import { TareasSyncView } from "@/components/views/TareasSyncView";
 import { HorarioView } from "@/components/views/HorarioView";
 import { AjustesView } from "@/components/views/AjustesView";
 import { SecretarialTickets, SecretarialTicketsEntry, useTicketNotices } from "@/components/views/SecretarialTickets";
+import { RegulationsView } from "@/components/views/RegulationsView";
 import { HugoAssistantView } from "@/components/views/HugoAssistantView";
 import { BottomTabBar, type AppTab } from "@/components/navigation/BottomTabBar";
 import { LoginModal } from "@/components/sheets/LoginModal";
@@ -41,6 +42,7 @@ export function MainNavigation(): React.JSX.Element {
 }
 
 function NavigationContent(): React.JSX.Element {
+  const [regulationsOpen, setRegulationsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<AppTab>("tareas");
   const [loginModalOpened, setLoginModalOpened] = useState<boolean>(false);
   const [ticketsOpen, setTicketsOpen] = useState(false);
@@ -328,7 +330,20 @@ function NavigationContent(): React.JSX.Element {
           />
         )}
 
-        {activeTab === "hugo" && (ticketsOpen && secretarialViewer ? (
+        {activeTab === "hugo" && (regulationsOpen ? (
+          <RegulationsView
+            key={token || "guest"}
+            token={token}
+            isOnline={isOnline}
+            staff={secretarialViewer?.staff ?? false}
+            onBack={() => setRegulationsOpen(false)}
+            onSignIn={() => setLoginModalOpened(true)}
+            onEscalate={secretarialViewer && !secretarialViewer.staff ? () => {
+              setRegulationsOpen(false);
+              setTicketsOpen(true);
+            } : undefined}
+          />
+        ) : ticketsOpen && secretarialViewer ? (
           <SecretarialTickets
             key={`${secretarialViewer.userId}:${secretarialViewer.staff}`}
             {...secretarialViewer}
@@ -338,6 +353,7 @@ function NavigationContent(): React.JSX.Element {
         ) : (
           <HugoAssistantView
             onSignIn={() => setLoginModalOpened(true)}
+            onOpenRegulations={() => setRegulationsOpen(true)}
             supportEntry={secretarialViewer && (
               <SecretarialTicketsEntry {...secretarialViewer} onOpen={() => setTicketsOpen(true)} />
             )}
