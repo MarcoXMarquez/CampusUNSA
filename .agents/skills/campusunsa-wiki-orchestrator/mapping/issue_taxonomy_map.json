@@ -157,9 +157,9 @@
       "title": "Five-Minute Peak Load Verification"
     },
     "14": {
-      "target_page": "Administrative-Procedures-Guide.md",
+      "target_page": "Official-Regulations.md",
       "category": "student_guidance",
-      "title": "Interactive Bureaucracy Guide"
+      "title": "Official Regulations"
     },
     "23": {
       "target_page": "DUTIC-Moodle-Extraction-Service.md",
@@ -255,6 +255,16 @@
       "target_page": "Study-Tools-and-Calendar.md",
       "category": "academic_hub",
       "title": "Study Tools and Calendar"
+    },
+    "17": {
+      "target_page": "Campus-Map-and-School-Directory.md",
+      "category": "academic_hub",
+      "title": "Campus Map and School Directory"
+    },
+    "18": {
+      "target_page": "Lost-and-Found.md",
+      "category": "student_guidance",
+      "title": "Lost and Found"
     }
   },
   "dynamic_heuristics": {
