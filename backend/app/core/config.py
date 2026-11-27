@@ -61,6 +61,12 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: SecretStr = SecretStr("")
     TELEGRAM_WEBHOOK_SECRET: SecretStr = SecretStr("")
 
+    # Lost and found media
+    LOST_FOUND_STORAGE_URL: str = ""
+    LOST_FOUND_STORAGE_BUCKET: str = Field(default="lost-found", pattern=r"^[a-z0-9][a-z0-9-]{0,62}$")
+    LOST_FOUND_STORAGE_SERVICE_KEY: SecretStr = SecretStr("")
+    LOST_FOUND_MEDIA_DIR: str = ""
+
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",

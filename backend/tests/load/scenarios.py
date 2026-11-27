@@ -68,6 +68,13 @@ BASE_SCENARIOS = (
     Scenario("POST", "/api/v1/auth/otp/verify", expected=400),
     Scenario("GET", "/api/v1/auth/otp/status"),
     Scenario("DELETE", "/api/v1/auth/otp/link/{channel}"),
+    Scenario("GET", "/api/v1/lost-found"),
+    Scenario("POST", "/api/v1/lost-found", expected=201),
+    Scenario("GET", "/api/v1/lost-found/claims"),
+    Scenario("GET", "/api/v1/lost-found/{item_id}/photo"),
+    Scenario("POST", "/api/v1/lost-found/{item_id}/claims", expected=201),
+    Scenario("PATCH", "/api/v1/lost-found/{item_id}/claims/{claim_id}"),
+    Scenario("PATCH", "/api/v1/lost-found/{item_id}"),
 )
 
 

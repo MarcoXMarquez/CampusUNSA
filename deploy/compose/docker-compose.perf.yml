@@ -45,6 +45,7 @@ services:
       REDIS_HOST: perf-redis
       SECRET_KEY: isolated_performance_only_not_a_production_secret
       TASK_PARSER_PROVIDER: disabled
+      LOST_FOUND_MEDIA_DIR: /load-data/lost-found
       EVOLUTION_WEBHOOK_API_KEY: isolated_performance_webhook_key
       TELEGRAM_WEBHOOK_SECRET: isolated_performance_telegram_key
       PERF_DELAY_MS: ${PERF_DELAY_MS:-0}

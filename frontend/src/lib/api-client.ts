@@ -594,3 +594,62 @@ export async function revokeCalendarSubscription(token: string): Promise<void> {
   });
   if (!response.ok) throw new ApiRequestError("Calendar subscription revocation failed", response.status);
 }
+
+export type LostItem = components["schemas"]["LostItemPublic"];
+export type LostClaim = components["schemas"]["LostClaimPrivate"];
+export type LostReportInput = paths["/api/v1/lost-found"]["post"]["requestBody"]["content"]["application/json"];
+type LostClaimInput = components["schemas"]["LostClaimCreate"];
+type LostClaimDecision = components["schemas"]["LostClaimReview"];
+
+export const LOST_FOUND_PAGE_SIZE = 12;
+
+async function requestLostFound<T>(path: string, token?: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${getApiBaseUrl()}/lost-found${path}`, {
+    ...options,
+    cache: "no-store",
+    headers: buildHeaders(token, Boolean(options.body)),
+  });
+  if (!response.ok) {
+    throw new ApiRequestError("Lost and found request failed", response.status);
+  }
+  return response.json();
+}
+
+export function fetchLostItems(offset: number, signal: AbortSignal): Promise<LostItem[]> {
+  return requestLostFound(`?limit=${LOST_FOUND_PAGE_SIZE}&offset=${offset}`, undefined, { signal });
+}
+
+export function fetchMyLostClaims(token: string, offset: number, signal: AbortSignal): Promise<LostClaim[]> {
+  return requestLostFound(`/claims?limit=${LOST_FOUND_PAGE_SIZE}&offset=${offset}`, token, { signal });
+}
+
+export function lostItemPhotoUrl(id: string, thumbnail = false): string {
+  return `${getApiBaseUrl()}/lost-found/${encodeURIComponent(id)}/photo?thumbnail=${thumbnail}`;
+}
+
+export function reportLostItem(token: string, data: LostReportInput): Promise<LostItem> {
+  return requestLostFound("", token, { method: "POST", body: JSON.stringify(data) });
+}
+
+export function submitLostClaim(token: string, id: string, data: LostClaimInput): Promise<LostClaim> {
+  return requestLostFound(`/${encodeURIComponent(id)}/claims`, token, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function reviewLostClaim(
+  token: string, itemId: string, claimId: string, data: LostClaimDecision,
+): Promise<LostClaim> {
+  return requestLostFound(`/${encodeURIComponent(itemId)}/claims/${encodeURIComponent(claimId)}`, token, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function returnLostItem(token: string, id: string): Promise<LostItem> {
+  return requestLostFound(`/${encodeURIComponent(id)}`, token, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "returned" }),
+  });
+}

@@ -125,7 +125,15 @@ class StudentBrowser(FastHttpUser):
             "PATCH": self.account["review_ticket_id"],
             "DELETE": self.account["withdraw_ticket_id"],
         }.get(case.method, self.account["resolved_ticket_id"])
+        lost_item = {
+            "/api/v1/lost-found/{item_id}/photo": self.account["lost_open_item"],
+            "/api/v1/lost-found/{item_id}/claims": self.account["lost_claimable_item"],
+            "/api/v1/lost-found/{item_id}/claims/{claim_id}": self.account["lost_review_item"],
+            "/api/v1/lost-found/{item_id}": self.account["lost_return_item"],
+        }.get(case.path, "")
         request_path = case.path.format(
+            item_id=lost_item,
+            claim_id=self.account["lost_review_claim"],
             ticket_id=ticket_id,
             notice_id=self.account["notice_id"],
             assignment_id=dataset["completion_assignment_id"],
@@ -242,6 +250,20 @@ class StudentBrowser(FastHttpUser):
                 "message": "submit report for SO 2030-01-01T18:00:00Z",
                 "courses": ["SO"],
             }
+        elif case.path == "/api/v1/lost-found" and case.method == "POST":
+            payload = {
+                "title": "Synthetic blue item", "description": "A disposable test report",
+                "location": "QA Engineering", "campus": "engineering", "found_on": "2026-01-01",
+                "request_id": str(uuid.uuid4()), "photo_base64": dataset["lost_photo"],
+            }
+        elif case.path == "/api/v1/lost-found/{item_id}/photo":
+            request_path += "?thumbnail=true"
+        elif case.path == "/api/v1/lost-found/{item_id}/claims":
+            payload = {"proof": "Synthetic claim proof"}
+        elif case.path == "/api/v1/lost-found/{item_id}/claims/{claim_id}":
+            payload = {"decision": "approved", "pickup": "Synthetic private handoff"}
+        elif case.path == "/api/v1/lost-found/{item_id}":
+            payload = {"status": "returned"}
         with self.client.request(
             case.method,
             request_path,
@@ -275,6 +297,10 @@ class StudentBrowser(FastHttpUser):
                 if not response.content.startswith(b"BEGIN:VCALENDAR\r\n"):
                     response.failure("Expected an iCalendar feed")
                 return
+            if case.path == "/api/v1/lost-found/{item_id}/photo":
+                if not response.content.startswith(b"\xff\xd8") or response.headers.get("content-type") != "image/jpeg":
+                    response.failure("Expected a JPEG thumbnail")
+                return
             try:
                 body = response.json()
                 if case.path.endswith("/webhooks/whatsapp"):
@@ -307,6 +333,19 @@ class StudentBrowser(FastHttpUser):
                     assert isinstance(body, list) and any(row["id"] == self.account["resolved_ticket_id"] for row in body)
                 elif case.path == "/api/v1/tickets/notifications":
                     assert isinstance(body, list) and all(row["id"] == self.account["notice_id"] for row in body)
+                elif case.path == "/api/v1/lost-found":
+                    if case.method == "GET":
+                        assert isinstance(body, list) and body and "reporter_id" not in body[0]
+                    else:
+                        assert body["status"] == "open" and "reporter_id" not in body
+                elif case.path == "/api/v1/lost-found/claims":
+                    assert isinstance(body, list) and body and all("proof" in row for row in body)
+                elif case.path == "/api/v1/lost-found/{item_id}/claims":
+                    assert body["status"] == "pending" and body["pickup"] is None
+                elif case.path == "/api/v1/lost-found/{item_id}/claims/{claim_id}":
+                    assert body["status"] == "approved" and body["is_reporter"] is True
+                elif case.path == "/api/v1/lost-found/{item_id}":
+                    assert body["status"] == "returned"
                 elif case.path.endswith("/completion"):
                     assert body["is_completed"] is True
                     assert body["id"] == dataset["completion_assignment_id"]

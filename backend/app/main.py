@@ -18,6 +18,7 @@ from app.api.v1.classroom import router as classroom_router
 from app.api.v1.courses import router as courses_router
 from app.api.v1.calendar import router as calendar_router
 from app.api.v1.dutic import router as dutic_router
+from app.api.v1.lost_found import router as lost_found_router
 from app.api.v1.nlp import get_task_parser, router as nlp_router
 from app.api.v1.webhooks import router as webhooks_router
 from app.services.messaging.gateway import EvolutionWhatsAppGateway
@@ -100,6 +101,7 @@ app.include_router(classroom_router, prefix=f"{settings.API_V1_STR}/classroom", 
 app.include_router(courses_router, prefix=f"{settings.API_V1_STR}/courses", tags=["Curriculum Courses"])
 app.include_router(calendar_router, prefix=f"{settings.API_V1_STR}/courses/calendar", tags=["Calendar"])
 app.include_router(dutic_router, prefix=f"{settings.API_V1_STR}/dutic", tags=["DUTIC Moodle"])
+app.include_router(lost_found_router, prefix=f"{settings.API_V1_STR}/lost-found", tags=["Lost and Found"])
 app.include_router(nlp_router, prefix=f"{settings.API_V1_STR}/nlp", tags=["Task Extraction"])
 
 

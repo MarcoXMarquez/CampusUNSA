@@ -337,6 +337,7 @@ function NavigationContent(): React.JSX.Element {
           />
         ) : (
           <HugoAssistantView
+            onSignIn={() => setLoginModalOpened(true)}
             supportEntry={secretarialViewer && (
               <SecretarialTicketsEntry {...secretarialViewer} onOpen={() => setTicketsOpen(true)} />
             )}

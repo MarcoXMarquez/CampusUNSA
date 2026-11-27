@@ -48,6 +48,12 @@ flowchart LR
    ```
 4. Note that `backend/alembic/env.py` configures `include_object` so Alembic manages only CampusUNSA metadata tables and never alters Supabase internal tables.
 
+#### Provision private storage for Lost and Found
+
+1. Create a private bucket named `lost-found` in Supabase Storage. Allow `image/jpeg` objects with a file size limit of at least 4 MiB.
+2. Set the three `LOST_FOUND_STORAGE_*` variables in the backend service. Keep the `service_role` credential in the backend environment.
+3. In staging, publish an item with a test student account and confirm that both the thumbnail and full photo load from the CampusUNSA API. Confirm that an unrelated account cannot see any claim proof or pickup instructions.
+
 ### Step 2: Provision Redis on Upstash (Free Tier)
 
 1. Create a Regional Redis database in Upstash (`us-east-1`, Free plan).
@@ -85,6 +91,9 @@ openssl rand -hex 32   # ENCRYPTION_KEY
 | `SECRET_KEY` | Generated 64-char hex secret #1 |
 | `ENCRYPTION_KEY` | Generated 64-char hex secret #2 (distinct) |
 | `DATABASE_URL` | Supabase Session Pooler URI with `?sslmode=require` |
+| `LOST_FOUND_STORAGE_URL` | Supabase HTTPS project URL, for example `https://<project-ref>.supabase.co` |
+| `LOST_FOUND_STORAGE_BUCKET` | `lost-found` or the configured private bucket name |
+| `LOST_FOUND_STORAGE_SERVICE_KEY` | Supabase legacy `service_role` key |
 | `REDIS_URL` | Upstash `rediss://...` URI |
 | `BACKEND_CORS_ORIGINS` | `["https://<your-app>.vercel.app"]` |
 | `GOOGLE_CLIENT_ID` | Google Cloud OAuth Client ID |
