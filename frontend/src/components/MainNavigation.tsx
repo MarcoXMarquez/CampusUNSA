@@ -308,6 +308,8 @@ function NavigationContent(): React.JSX.Element {
 
         {activeTab === "horario" && (
           <HorarioView
+            token={token}
+            onSignIn={() => setLoginModalOpened(true)}
             courses={courses}
             assignments={assignments}
             catalogCourses={catalogCourses}

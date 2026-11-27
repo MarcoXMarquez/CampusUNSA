@@ -10,10 +10,16 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import JsonValue, ValidationError
+from starlette.concurrency import run_in_threadpool
+from redis import Redis as SyncRedis
 from redis.asyncio import Redis
+from sqlalchemy.orm import Session
 from redis.exceptions import RedisError
 
 from app.core.config import settings
+from app.core.database import get_db
+from app.core.redis import get_redis
+from app.services.messaging.telegram import TelegramReply, TelegramUpdate, build_telegram_reply
 from app.schemas.webhook import (
     DeadLetterWebhook,
     EvolutionMessageEvent,
@@ -158,3 +164,32 @@ def queue_unavailable(error: Exception) -> HTTPException:
             "message": "The webhook queue is unavailable. Retry the delivery.",
         },
     )
+
+
+async def require_telegram_secret(
+    supplied: Annotated[str | None, Header(alias="X-Telegram-Bot-Api-Secret-Token")] = None,
+) -> None:
+    expected = settings.TELEGRAM_WEBHOOK_SECRET.get_secret_value()
+    if not expected:
+        raise HTTPException(503, detail="Telegram webhook is not configured.")
+    if supplied is None or not hmac.compare_digest(supplied.encode(), expected.encode()):
+        raise HTTPException(401, detail="Invalid Telegram webhook secret.")
+
+
+@router.post("/telegram", dependencies=[Depends(require_telegram_secret)])
+async def receive_telegram_webhook(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    redis: Annotated[SyncRedis, Depends(get_redis)],
+) -> TelegramReply | dict[str, bool]:
+    body = bytearray()
+    async for chunk in request.stream():
+        if len(body) + len(chunk) > MAX_BODY_BYTES:
+            raise HTTPException(413, detail="Telegram update exceeds the 256 KiB limit.")
+        body.extend(chunk)
+    try:
+        update = TelegramUpdate.model_validate_json(body)
+    except ValidationError:
+        raise HTTPException(422, detail="Invalid Telegram update.") from None
+    reply = await run_in_threadpool(build_telegram_reply, update, db, redis)
+    return reply if reply is not None else {"ok": True}

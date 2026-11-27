@@ -12,6 +12,7 @@ import type {
 import { resolveNextClass } from "@/lib/schedule-calculator";
 import { formatAcademicTitle } from "@/lib/text-format";
 import { horarioMessages as messages, taskBoardMessages } from "@/lib/messages/task-board-messages";
+import { StudyTools } from "@/components/study/StudyTools";
 import { NextClassHeroCard } from "./horario/NextClassHeroCard";
 import { CourseListSection } from "./horario/CourseListSection";
 import { CourseScheduleEditModal } from "./horario/CourseScheduleEditModal";
@@ -29,6 +30,8 @@ export interface HorarioViewProps {
   moodleSessionExpired: boolean;
   syncError: string | null;
   currentTime?: Date;
+  token?: string | null;
+  onSignIn?: () => void;
   onRefresh: () => void;
   onReconnectMoodle: () => void;
   onOpenNewTask: (course?: AcademicCourse) => void;
@@ -68,6 +71,8 @@ export function HorarioView({
   moodleSessionExpired,
   syncError,
   currentTime,
+  token = null,
+  onSignIn,
   onRefresh,
   onReconnectMoodle,
   onOpenNewTask,
@@ -211,6 +216,8 @@ export function HorarioView({
           onOpenVerAula={() => setVerAulaOpen(true)}
           onCloseVerAula={() => setVerAulaOpen(false)}
         />
+
+        <StudyTools token={token} isOnline={isOnline} onSignIn={onSignIn} />
 
         {loading && courses.length === 0 ? (
           <div
